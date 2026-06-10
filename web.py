@@ -1,4 +1,4 @@
-import streamlit st
+import streamlit as st
 import requests
 import pandas as pd
 import time
@@ -291,8 +291,9 @@ else:
                 if st.session_state.is_admin:
                     with st.expander("➕ THÊM GIAO DỊCH", expanded=False):
                         with st.form("fund_form", clear_on_submit=True):
-                            f_type = st.selectbox("Loại", ["Thu", "Chi"])
-                            f_amt = st.number_input("Số tiền", min_value=0, step=50000)
+                            c_t, c_a = st.columns([1, 2])
+                            f_type = c_t.selectbox("Loại", ["Thu", "Chi"])
+                            f_amt = c_a.number_input("Số tiền", min_value=0, step=50000)
                             f_desc = st.text_input("Chi tiết / Lý do")
                             if st.form_submit_button("LƯU VÀO SỔ", type="primary", use_container_width=True):
                                 if f_amt > 0 and f_desc:
