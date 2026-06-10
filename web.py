@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # ==========================================
 # CẤU HÌNH GIAO DIỆN & TIÊU DIỆT NÚT THỪA
 # ==========================================
-st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="HTCV by DatTT System", page_icon="⚡", layout="wide")
 
 # CSS CƠ BẢN: ẨN MENU RÁC & NÚT MANAGE APP
 base_css = """
