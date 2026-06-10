@@ -73,17 +73,31 @@ if "theme" not in st.session_state:
 
 db = get_data()
 
-# --- ÉP GIAO DIỆN SÁNG TỐI BẰNG CSS ---
+# --- ÉP GIAO DIỆN SÁNG TỐI BẰNG CSS ĐỈNH CAO ---
 if st.session_state.theme == "Light":
-    light_css = """
+    theme_css = """
     <style>
+        [data-testid="stAppViewContainer"] {background-color: #f1f5f9;}
         .stApp {background-color: #f1f5f9; color: #0f172a;} 
-        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label {color: #0f172a !important;}
+        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span {color: #0f172a !important;}
         div[data-baseweb="tab-list"] button {color: #0f172a !important;}
         div[data-testid="stMetricValue"] {color: #0ea5e9 !important;}
     </style>
     """
-    st.markdown(light_css, unsafe_allow_html=True)
+else: # DARK MODE (MÀU ĐEN THUI OLED)
+    theme_css = """
+    <style>
+        [data-testid="stAppViewContainer"] {background-color: #000000;}
+        .stApp {background-color: #000000; color: #ffffff;} 
+        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span {color: #ffffff !important;}
+        div[data-baseweb="tab-list"] button {color: #ffffff !important;}
+        div[data-testid="stMetricValue"] {color: #0ea5e9 !important;}
+        /* Làm nổi các khung mở rộng trên nền đen */
+        div[data-testid="stExpander"] {background-color: #111111; border-color: #333333; border-radius: 8px;}
+        div[data-testid="stForm"] {background-color: #111111; border-color: #333333;}
+    </style>
+    """
+st.markdown(theme_css, unsafe_allow_html=True)
 
 # ==========================================
 # CƠ CHẾ ĐĂNG NHẬP TỰ ĐỘNG
@@ -155,13 +169,13 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH ĐIỀU HƯỚNG GÓC TRÊN CÙNG (KHÔNG DÙNG SIDEBAR NỮA) ---
+    # --- THANH ĐIỀU HƯỚNG GÓC TRÊN CÙNG ---
     col_name, col_theme, col_out = st.columns([4, 2, 2])
     with col_name:
         role_txt = "👑 Admin" if st.session_state.is_admin else "👤 NV"
         st.markdown(f"<h4 style='color: #0ea5e9; margin-top: 5px;'>{role_txt}: {st.session_state.user.upper()}</h4>", unsafe_allow_html=True)
     with col_theme:
-        # NÚT SÁNG TỐI HIỆN RÕ RÀNG Ở ĐÂY
+        # NÚT SÁNG TỐI
         theme_icon = "🌞 Sáng" if st.session_state.theme == "Dark" else "🌙 Tối"
         if st.button(theme_icon, use_container_width=True):
             st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
@@ -170,7 +184,6 @@ else:
         if st.button("🚪 Đăng xuất", use_container_width=True):
             logout()
             
-    # Phần đổi mật khẩu đặt vào khung mở rộng ngay dưới tên
     with st.expander("🔑 Bấm vào đây để Đổi mật khẩu cá nhân"):
         col_op, col_np, col_btn = st.columns([2, 2, 1])
         old_p = col_op.text_input("Mật khẩu cũ", type="password", label_visibility="collapsed", placeholder="Mật khẩu cũ")
