@@ -1,21 +1,10 @@
 import streamlit as st
 import requests
-import time
-from datetime import datetime, timedelta
 
-# Cấu hình giao diện chuẩn Mobile
-st.set_page_config(page_title="HTCV Mobile", page_icon="📱", layout="wide")
+st.set_page_config(page_title="HTCV Mobile", layout="wide")
 
-# Tàng hình menu thừa
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;} 
-            footer {visibility: hidden;} 
-            header {visibility: hidden;} 
-            [data-testid="stToolbar"] {visibility: hidden !important;} 
-            [data-testid="stDecoration"] {visibility: hidden !important;} 
-            </style>
-            """
+# Code tàng hình giao diện thừa
+hide_st_style = """<style>#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;} [data-testid="stToolbar"] {visibility: hidden !important;}</style>"""
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
@@ -23,69 +12,62 @@ FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 def get_data():
     try:
         r = requests.get(FIREBASE_URL)
-        if r.status_code == 200 and r.json() is not None: return r.json()
+        return r.json() if r.status_code == 200 else {}
     except: return {}
-    return {}
-
-def update_firebase(path, data):
-    requests.patch(f"{FIREBASE_URL.replace('.json', '')}/{path}.json", json=data)
-
-# --- KHỞI TẠO SESSION ---
-if "user" not in st.session_state:
-    st.session_state.user = None
-    st.session_state.page = "login"
 
 db = get_data()
 
-# --- MÀN HÌNH CHÍNH ---
+if "user" not in st.session_state: st.session_state.user = None
+
 if st.session_state.user is None:
-    if st.session_state.page == "login":
-        st.markdown("<h2 style='text-align: center; color: #0ea5e9;'>📱 HTCV MOBILE</h2>", unsafe_allow_html=True)
-        with st.form("login"):
-            username = st.text_input("Tài khoản").strip().lower()
-            password = st.text_input("Mật khẩu", type="password")
-            if st.form_submit_button("ĐĂNG NHẬP", use_container_width=True):
-                users = db.get("users", {})
-                if username in users and users[username]["pass"] == password:
-                    st.session_state.user = username
-                    st.rerun()
-                else: st.error("Sai thông tin!")
-        
-        c1, c2 = st.columns(2)
-        if c1.button("Đăng ký"): st.session_state.page = "register"; st.rerun()
-        if c2.button("Quên mật khẩu"): st.session_state.page = "forgot"; st.rerun()
-
-    elif st.session_state.page == "register":
-        with st.form("reg"):
-            new_u = st.text_input("Tên đăng nhập").strip().lower()
-            new_p = st.text_input("Mật khẩu", type="password")
-            if st.form_submit_button("ĐĂNG KÝ"):
-                update_firebase("pending_users", {new_u: {"pass": new_p}})
-                st.success("Đã gửi yêu cầu!")
-        if st.button("Về đăng nhập"): st.session_state.page = "login"; st.rerun()
-
-    elif st.session_state.page == "forgot":
-        with st.form("forgot"):
-            u = st.text_input("Tài khoản của bạn").strip().lower()
-            new_p = st.text_input("Mật khẩu mới", type="password")
-            secret = st.text_input("Mã xác nhận (do Admin cung cấp)")
-            if st.form_submit_button("RESET MẬT KHẨU"):
-                if secret == "admin123": # Mã bí mật ông quy định
-                    update_firebase("users", {u: {"pass": new_p}})
-                    st.success("Reset thành công!")
-                else: st.error("Mã xác nhận sai!")
-        if st.button("Về đăng nhập"): st.session_state.page = "login"; st.rerun()
-
+    # --- ĐĂNG NHẬP ---
+    st.title("📱 HTCV MOBILE")
+    u = st.text_input("Tài khoản").strip().lower()
+    p = st.text_input("Mật khẩu", type="password")
+    if st.button("ĐĂNG NHẬP"):
+        users = db.get("users", {})
+        if u in users and users[u]["pass"] == p:
+            st.session_state.user = u
+            st.rerun()
+        else: st.error("Sai thông tin!")
 else:
-    # --- SAU ĐĂNG NHẬP ---
-    with st.sidebar:
-        st.write(f"Xin chào, {st.session_state.user}")
-        with st.expander("⚙️ Cài đặt"):
-            old_p = st.text_input("Mật khẩu cũ", type="password")
-            new_p = st.text_input("Mật khẩu mới", type="password")
-            if st.button("Đổi mật khẩu"):
-                # Code check pass cũ và lưu pass mới lên Firebase
-                st.success("Đã đổi pass!")
-        if st.button("Đăng xuất"): st.session_state.user = None; st.rerun()
+    # --- PHÂN QUYỀN VÀ HIỂN THỊ ---
+    u_info = db.get("users", {}).get(st.session_state.user, {})
+    is_admin = u_info.get("role") == "admin"
+    perms = u_info.get("permissions", [])
     
-    st.write("Chào mừng quay lại!")
+    with st.sidebar:
+        st.write(f"👤 Xin chào, {st.session_state.user}")
+        if st.button("Đăng xuất"): st.session_state.user = None; st.rerun()
+
+    # Danh sách chức năng đầy đủ
+    all_tabs = ["🎯 KPI", "🗓️ LỊCH", "💰 QUỸ SHOP", "📦 LẬP HÀNG", "📞 DANH BẠ"]
+    
+    # Lọc tab dựa trên quyền
+    allowed_tabs = []
+    if is_admin: allowed_tabs = all_tabs
+    else:
+        if "XEM LỊCH" in perms: allowed_tabs.append("🗓️ LỊCH")
+        if "TÍCH LŨY" in perms: allowed_tabs.append("🎯 KPI")
+        if "QUỸ SHOP" in perms: allowed_tabs.append("💰 QUỸ SHOP")
+        # ... thêm các quyền khác ở đây nếu cần
+
+    if not allowed_tabs:
+        st.warning("Tài khoản chưa được cấp quyền truy cập tính năng nào!")
+    else:
+        tabs = st.tabs(allowed_tabs)
+        for i, tab_name in enumerate(allowed_tabs):
+            with tabs[i]:
+                if tab_name == "🎯 KPI":
+                    st.subheader("Bảng KPI")
+                    # Hiển thị dữ liệu KPI từ db
+                elif tab_name == "🗓️ LỊCH":
+                    st.subheader("Lịch trực")
+                    # Hiển thị dữ liệu lịch
+                elif tab_name == "💰 QUỸ SHOP":
+                    st.subheader("Quỹ Shop")
+                    # Hiển thị dữ liệu Quỹ
+                elif tab_name == "📦 LẬP HÀNG":
+                    st.subheader("Đối chiếu hàng hóa")
+                elif tab_name == "📞 DANH BẠ":
+                    st.subheader("Danh bạ nhân viên")
