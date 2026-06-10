@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 import requests
 import pandas as pd
 import time
@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide")
 
-# CSS "HỦY DIỆT DIỆN RỘNG" DIỆT MANAGE APP VÀ CHỈNH GIAO DIỆN
+# CSS "HỦY DIỆT DIỆN RỘNG" - KHÓA CHẾT MANAGE APP VÀ ICON RÁC TRÊN ĐIỆN THOẠI
 custom_css = """
 <style>
     /* Xóa Header và Footer mặc định */
@@ -21,15 +21,20 @@ custom_css = """
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
     
-    /* DIỆT TẬN GỐC NÚT MANAGE APP & BIỂU TƯỢNG NỔI (BẢN MỚI NHẤT CỦA STREAMLIT) */
+    /* DIỆT TẬN GỐC NÚT MANAGE APP & BIỂU TƯỢNG NỔI TRÊN ĐIỆN THOẠI */
     .stDeployButton {display: none !important;}
     [data-testid="manage-app-button"] {display: none !important;}
     #manage-app-button {display: none !important;}
     .viewerBadge_container {display: none !important;}
     .viewerBadge_link {display: none !important;}
-    /* Quét sạch mọi iframe quảng cáo của Streamlit ở góc dưới */
     iframe[title*="streamlit"] {display: none !important;}
     div[class^="st-emotion-cache-"] > a[href*="streamlit"] {display: none !important;}
+    
+    /* Tối ưu nút bấm full-width trên giao diện điện thoại */
+    .stButton>button {
+        width: 100% !important;
+        border-radius: 8px !important;
+    }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -69,32 +74,31 @@ if "user" not in st.session_state:
     st.session_state.is_admin = False
     st.session_state.page = "login"
 if "theme" not in st.session_state:
-    st.session_state.theme = "Dark" # Mặc định nền tối
+    st.session_state.theme = "Dark" # Mặc định nền tối OLED
 
 db = get_data()
 
-# --- ÉP GIAO DIỆN SÁNG TỐI BẰNG CSS ĐỈNH CAO ---
+# --- ÉP GIAO DIỆN SÁNG TỐI THEO YÊU CẦU (MÀU ĐEN OLED CHUẨN ĐÊM) ---
 if st.session_state.theme == "Light":
     theme_css = """
     <style>
-        [data-testid="stAppViewContainer"] {background-color: #f1f5f9;}
-        .stApp {background-color: #f1f5f9; color: #0f172a;} 
-        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span {color: #0f172a !important;}
+        [data-testid="stAppViewContainer"] {background-color: #f1f5f9 !important;}
+        .stApp {background-color: #f1f5f9 !important; color: #0f172a !important;} 
+        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #0f172a !important;}
         div[data-baseweb="tab-list"] button {color: #0f172a !important;}
         div[data-testid="stMetricValue"] {color: #0ea5e9 !important;}
     </style>
     """
-else: # DARK MODE (MÀU ĐEN THUI OLED)
+else:
     theme_css = """
     <style>
-        [data-testid="stAppViewContainer"] {background-color: #000000;}
-        .stApp {background-color: #000000; color: #ffffff;} 
-        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span {color: #ffffff !important;}
+        [data-testid="stAppViewContainer"] {background-color: #000000 !important;}
+        .stApp {background-color: #000000 !important; color: #ffffff !important;} 
+        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #ffffff !important;}
         div[data-baseweb="tab-list"] button {color: #ffffff !important;}
         div[data-testid="stMetricValue"] {color: #0ea5e9 !important;}
-        /* Làm nổi các khung mở rộng trên nền đen */
-        div[data-testid="stExpander"] {background-color: #111111; border-color: #333333; border-radius: 8px;}
-        div[data-testid="stForm"] {background-color: #111111; border-color: #333333;}
+        div[data-testid="stExpander"] {background-color: #111111 !important; border-color: #333333 !important;}
+        div[data-testid="stForm"] {background-color: #111111 !important; border-color: #333333 !important;}
     </style>
     """
 st.markdown(theme_css, unsafe_allow_html=True)
@@ -169,26 +173,25 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH ĐIỀU HƯỚNG GÓC TRÊN CÙNG ---
-    col_name, col_theme, col_out = st.columns([4, 2, 2])
-    with col_name:
-        role_txt = "👑 Admin" if st.session_state.is_admin else "👤 NV"
-        st.markdown(f"<h4 style='color: #0ea5e9; margin-top: 5px;'>{role_txt}: {st.session_state.user.upper()}</h4>", unsafe_allow_html=True)
-    with col_theme:
-        # NÚT SÁNG TỐI
-        theme_icon = "🌞 Sáng" if st.session_state.theme == "Dark" else "🌙 Tối"
-        if st.button(theme_icon, use_container_width=True):
-            st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
-            st.rerun()
-    with col_out:
-        if st.button("🚪 Đăng xuất", use_container_width=True):
-            logout()
+    # --- THANH ĐIỀU HƯỚNG ĐÃ ĐƯỢC TỐI ƯU CHIỀU DỌC CHO ĐIỆN THOẠI ---
+    role_txt = "👑 Admin" if st.session_state.is_admin else "👤 NV"
+    st.markdown(f"<h3 style='color: #0ea5e9; text-align: center;'>{role_txt}: {st.session_state.user.upper()}</h3>", unsafe_allow_html=True)
+    
+    # NÚT GẠT ĐỔI MÀU GIAO DIỆN KHÔNG DÙNG CỘT - BAO LÊN ĐIỆN THOẠI CHUẨN 100%
+    current_is_light = (st.session_state.theme == "Light")
+    toggle_light = st.toggle("🌞 Bật chế độ Nền Sáng / 🌙 Tắt để dùng Nền Đen OLED", value=current_is_light)
+    
+    if toggle_light != current_is_light:
+        st.session_state.theme = "Light" if toggle_light else "Dark"
+        st.rerun()
+        
+    if st.button("🚪 ĐĂNG XUẤT HỆ THỐNG", type="secondary"):
+        logout()
             
-    with st.expander("🔑 Bấm vào đây để Đổi mật khẩu cá nhân"):
-        col_op, col_np, col_btn = st.columns([2, 2, 1])
-        old_p = col_op.text_input("Mật khẩu cũ", type="password", label_visibility="collapsed", placeholder="Mật khẩu cũ")
-        new_p = col_np.text_input("Mật khẩu mới", type="password", label_visibility="collapsed", placeholder="Mật khẩu mới")
-        if col_btn.button("Lưu Pass", use_container_width=True):
+    with st.expander("🔑 Thay đổi mật khẩu cá nhân"):
+        old_p = st.text_input("Mật khẩu cũ", type="password", placeholder="Mật khẩu cũ")
+        new_p = st.text_input("Mật khẩu mới", type="password", placeholder="Mật khẩu mới")
+        if st.button("Xác nhận đổi pass mới"):
             if old_p == u_info.get("pass"):
                 update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
                 st.query_params["t"] = get_hash(new_p)
@@ -288,9 +291,8 @@ else:
                 if st.session_state.is_admin:
                     with st.expander("➕ THÊM GIAO DỊCH", expanded=False):
                         with st.form("fund_form", clear_on_submit=True):
-                            c_t, c_a = st.columns([1, 2])
-                            f_type = c_t.selectbox("Loại", ["Thu", "Chi"])
-                            f_amt = c_a.number_input("Số tiền", min_value=0, step=50000)
+                            f_type = st.selectbox("Loại", ["Thu", "Chi"])
+                            f_amt = st.number_input("Số tiền", min_value=0, step=50000)
                             f_desc = st.text_input("Chi tiết / Lý do")
                             if st.form_submit_button("LƯU VÀO SỔ", type="primary", use_container_width=True):
                                 if f_amt > 0 and f_desc:
