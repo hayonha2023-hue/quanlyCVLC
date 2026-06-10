@@ -58,14 +58,19 @@ if "user" not in st.session_state:
     st.session_state.user = None
     st.session_state.is_admin = False
     st.session_state.page = "login"
+if "theme" not in st.session_state:
+    st.session_state.theme = "Dark" # Mặc định là Dark Mode
 
 db = get_data()
+
+# --- Áp dụng Theme Sáng/Tối ---
+if st.session_state.theme == "Light":
+    st.markdown("""<style>.stApp {background-color: #f8fafc; color: #0f172a;} .stMarkdown, .stText {color: #0f172a !important;}</style>""", unsafe_allow_html=True)
 
 # ==========================================
 # CƠ CHẾ ĐĂNG NHẬP TỰ ĐỘNG (AUTO LOGIN)
 # ==========================================
 if st.session_state.user is None:
-    # Nếu trên đường link có chìa khóa, tự động mở cửa
     if "u" in st.query_params and "t" in st.query_params:
         u_url = st.query_params["u"]
         t_url = st.query_params["t"]
@@ -143,16 +148,25 @@ else:
             logout()
     st.divider()
 
-    # --- THANH BÊN (SIDEBAR) CHỈ ĐỂ ĐỔI MẬT KHẨU ---
+    # --- THANH BÊN (SIDEBAR) ĐỔI GIAO DIỆN & MẬT KHẨU ---
     with st.sidebar:
         st.markdown(f"<h3 style='color:#0ea5e9; text-align:center;'>CÀI ĐẶT CÁ NHÂN</h3>", unsafe_allow_html=True)
-        with st.expander("🔑 Đổi mật khẩu", expanded=True):
+        
+        # NÚT ĐỔI MÀU SÁNG / TỐI ĐÃ QUAY TRỞ LẠI!
+        theme_icon = "🌞 Đổi sang Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Đổi sang Giao diện Tối"
+        if st.button(theme_icon, use_container_width=True):
+            st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
+            st.rerun()
+            
+        st.write("") # Dấu cách cho thoáng
+        
+        with st.expander("🔑 Đổi mật khẩu", expanded=False):
             old_p = st.text_input("Mật khẩu cũ", type="password")
             new_p = st.text_input("Mật khẩu mới", type="password")
             if st.button("Xác nhận đổi", use_container_width=True):
                 if old_p == u_info.get("pass"):
                     update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
-                    # Cập nhật lại chìa khóa đăng nhập tự động
+                    # Cập nhật lại chìa khóa đăng nhập tự động để không bị văng
                     st.query_params["t"] = get_hash(new_p)
                     st.success("Đã đổi pass!")
                 else: st.error("Sai mật khẩu cũ!")
