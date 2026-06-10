@@ -9,21 +9,28 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide")
 
-# BÙA CHÚ CSS MỚI NHẤT ĐỂ XÓA "MANAGE APP" VÀ GIAO DIỆN THỪA
+# BÙA CHÚ CSS MẠNH NHẤT ĐỂ DIỆT 2 ICON TRÊN MOBILE VÀ NÚT MANAGE
 custom_css = """
 <style>
     /* Giấu menu, header, footer mặc định */
-    #MainMenu {visibility: hidden;} 
-    footer {visibility: hidden;} 
-    header {visibility: hidden;} 
-    [data-testid="stToolbar"] {display: none !important;} 
-    [data-testid="stDecoration"] {display: none !important;} 
+    header {visibility: hidden !important; display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
     
-    /* DIỆT TẬN GỐC NÚT MANAGE APP CỦA STREAMLIT CLOUD */
-    .stDeployButton {display: none !important;}
+    /* Ẩn các nút nổi (Floating buttons) trên Mobile và PC */
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
+    [data-testid="manage-app-button"] {display: none !important;}
+    [data-testid="stStatusWidget"] {display: none !important;}
+    
+    /* Ẩn cục diện Manage App, Viewer Badge của Streamlit Cloud */
     .viewerBadge_container {display: none !important;}
-    div[data-testid="manage-app-button"] {display: none !important;}
-    div[class^="st-emotion-cache-"] > a {display: none !important;}
+    .viewerBadge_link {display: none !important;}
+    #viewerBadge_container_0 {display: none !important;}
+    .stDeployButton {display: none !important;}
+    
+    /* Chặn triệt để mọi iframe/badge quảng cáo nổi ở góc phải dưới */
+    iframe[title="streamlit_cloud_badges"] {display: none !important;}
+    div[class^="st-emotion-cache-"] > iframe {display: none !important;}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -45,13 +52,22 @@ def update_firebase(path, data):
 def delete_firebase(path):
     requests.delete(f"{FIREBASE_URL.replace('.json', '')}/{path}.json")
 
+def format_vnd(amount):
+    return f"{amount:,.0f} ₫".replace(",", ".")
+
 # Khởi tạo session (biến nhớ)
 if "user" not in st.session_state:
     st.session_state.user = None
     st.session_state.is_admin = False
     st.session_state.page = "login"
+if "theme" not in st.session_state:
+    st.session_state.theme = "Dark"
 
 db = get_data()
+
+# --- Áp dụng Theme Sáng/Tối ---
+if st.session_state.theme == "Light":
+    st.markdown("""<style>.stApp {background-color: #f8fafc; color: #0f172a;} .stMarkdown, .stText {color: #0f172a !important;}</style>""", unsafe_allow_html=True)
 
 # ==========================================
 # MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
@@ -118,6 +134,12 @@ else:
         st.markdown(f"**Xin chào, {st.session_state.user.upper()}**")
         st.divider()
 
+        # NÚT ĐỔI MÀU SÁNG / TỐI
+        theme_icon = "🌞 Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Giao diện Tối"
+        if st.button(theme_icon, use_container_width=True):
+            st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
+            st.rerun()
+
         with st.expander("🔑 Đổi mật khẩu cá nhân"):
             old_p = st.text_input("Mật khẩu cũ", type="password")
             new_p = st.text_input("Mật khẩu mới", type="password")
@@ -166,7 +188,6 @@ else:
                     c3.metric("Tiến độ", f"{(tot_s / tot_t * 100) if tot_t > 0 else 0:.1f}%")
                     st.divider()
 
-                    # Đưa vào Giao Diện Bảng (Dataframe)
                     kpi_list = []
                     for emp, info in kpi_data.items():
                         tgt = info.get("tgt", 0)
@@ -178,7 +199,6 @@ else:
 
                     if st.session_state.is_admin:
                         st.caption("💡 Lời khuyên cho Admin: Bạn có thể click đúp chuột thẳng vào cột 'Đã Bán' ở bảng dưới đây để sửa số lượng, sau đó bấm nút Lưu.")
-                        # Bảng cho phép chỉnh sửa cực đẹp
                         edited_df = st.data_editor(df_kpi, hide_index=True, disabled=["Nhân Viên", "Target", "Còn Thiếu"], use_container_width=True)
                         
                         if st.button("💾 LƯU BẢNG KPI", type="primary"):
@@ -188,7 +208,6 @@ else:
                                 update_firebase(f"kpi/emp/{emp}", {"sold": new_sold})
                             st.success("Đã đồng bộ lên Đám mây thành công!"); time.sleep(0.5); st.rerun()
                     else:
-                        # Bảng chỉ đọc dành cho nhân viên
                         st.dataframe(df_kpi, hide_index=True, use_container_width=True)
 
         # ==========================================
@@ -230,7 +249,6 @@ else:
                 c3.metric("Tổng Chi", f"{tong_chi:,.0f} đ".replace(",", "."))
                 st.divider()
                 
-                # Admin nhập liệu
                 if st.session_state.is_admin:
                     with st.expander("➕ THÊM GIAO DỊCH", expanded=False):
                         with st.form("fund_form", clear_on_submit=True):
@@ -247,7 +265,6 @@ else:
                                     st.success("✅ Đã lưu vào sổ quỹ!"); time.sleep(0.5); st.rerun()
                                 else: st.error("❌ Vui lòng nhập số tiền và chi tiết!")
                 
-                # Giao diện Bảng Lịch sử Quỹ
                 st.markdown("#### 📜 Lịch Sử Giao Dịch")
                 if not qs: st.caption("Sổ quỹ đang trống.")
                 else:
@@ -265,7 +282,6 @@ else:
                     df_quy = pd.DataFrame(quy_list)
                     st.dataframe(df_quy, hide_index=True, use_container_width=True)
                     
-                    # Nút xóa dành riêng cho admin
                     if st.session_state.is_admin:
                         st.caption("Xóa giao dịch (Nếu nhập nhầm):")
                         xoa_id = st.selectbox("Chọn Mã Lệnh cần xóa:", [tx["Mã Lệnh"] for tx in quy_list])
@@ -279,7 +295,6 @@ else:
         # ==========================================
         if "👥 QUẢN LÝ TÀI KHOẢN" in allowed_tabs:
             with tabs[allowed_tabs.index("👥 QUẢN LÝ TÀI KHOẢN")]:
-                # 1. Duyệt tài khoản mới
                 st.markdown("### ⏳ Yêu Cầu Đăng Ký Mới")
                 pending = db.get("pending_users", {})
                 if not pending: st.info("Không có yêu cầu chờ duyệt.")
@@ -297,21 +312,17 @@ else:
                 
                 st.divider()
                 
-                # 2. Cấp quyền nhân viên đang hoạt động
                 st.markdown("### ⚙️ Phân Quyền Nhân Viên")
                 users = db.get("users", {})
                 for u, uinfo in users.items():
                     if uinfo.get("role") != "admin":
                         with st.expander(f"👤 Nhân viên: {u}"):
                             current_perms = uinfo.get("permissions", [])
-                            
-                            # Checklist phân quyền
                             new_perms = st.multiselect("Chức năng được phép xem trên Web:", 
                                 ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"], 
                                 default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"]],
                                 key=f"perm_{u}"
                             )
-                            
                             if st.button("💾 Lưu Quyền", key=f"save_{u}"):
                                 update_firebase(f"users/{u}/permissions", new_perms)
                                 st.success(f"Đã cập nhật quyền thành công!"); time.sleep(0.5); st.rerun()
