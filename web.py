@@ -10,14 +10,26 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide")
 
-# CSS Ẩn giao diện mặc định
+# CSS "HỦY DIỆT DIỆN RỘNG" DIỆT MANAGE APP VÀ CHỈNH GIAO DIỆN
 custom_css = """
 <style>
+    /* Xóa Header và Footer mặc định */
     header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
+    
+    /* Xóa thanh công cụ góc phải trên */
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
+    
+    /* DIỆT TẬN GỐC NÚT MANAGE APP & BIỂU TƯỢNG NỔI (BẢN MỚI NHẤT CỦA STREAMLIT) */
+    .stDeployButton {display: none !important;}
+    [data-testid="manage-app-button"] {display: none !important;}
+    #manage-app-button {display: none !important;}
     .viewerBadge_container {display: none !important;}
+    .viewerBadge_link {display: none !important;}
+    /* Quét sạch mọi iframe quảng cáo của Streamlit ở góc dưới */
+    iframe[title*="streamlit"] {display: none !important;}
+    div[class^="st-emotion-cache-"] > a[href*="streamlit"] {display: none !important;}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -42,33 +54,39 @@ def delete_firebase(path):
 def format_vnd(amount):
     return f"{amount:,.0f} ₫".replace(",", ".")
 
-# Hàm mã hóa mật khẩu để làm chìa khóa tự động đăng nhập an toàn
 def get_hash(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
-# Hàm xử lý Đăng xuất
 def logout():
     st.session_state.user = None
     st.session_state.is_admin = False
-    st.query_params.clear() # Xóa chìa khóa tự động đăng nhập
+    st.query_params.clear()
     st.rerun()
 
-# Khởi tạo session (biến nhớ)
+# Khởi tạo Session
 if "user" not in st.session_state:
     st.session_state.user = None
     st.session_state.is_admin = False
     st.session_state.page = "login"
 if "theme" not in st.session_state:
-    st.session_state.theme = "Dark" # Mặc định là Dark Mode
+    st.session_state.theme = "Dark" # Mặc định nền tối
 
 db = get_data()
 
-# --- Áp dụng Theme Sáng/Tối ---
+# --- ÉP GIAO DIỆN SÁNG TỐI BẰNG CSS ---
 if st.session_state.theme == "Light":
-    st.markdown("""<style>.stApp {background-color: #f8fafc; color: #0f172a;} .stMarkdown, .stText {color: #0f172a !important;}</style>""", unsafe_allow_html=True)
+    light_css = """
+    <style>
+        .stApp {background-color: #f1f5f9; color: #0f172a;} 
+        .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label {color: #0f172a !important;}
+        div[data-baseweb="tab-list"] button {color: #0f172a !important;}
+        div[data-testid="stMetricValue"] {color: #0ea5e9 !important;}
+    </style>
+    """
+    st.markdown(light_css, unsafe_allow_html=True)
 
 # ==========================================
-# CƠ CHẾ ĐĂNG NHẬP TỰ ĐỘNG (AUTO LOGIN)
+# CƠ CHẾ ĐĂNG NHẬP TỰ ĐỘNG
 # ==========================================
 if st.session_state.user is None:
     if "u" in st.query_params and "t" in st.query_params:
@@ -95,7 +113,6 @@ if st.session_state.user is None:
                 if u in users and users[u]["pass"] == p:
                     st.session_state.user = u
                     st.session_state.is_admin = (users[u].get("role") == "admin")
-                    # LƯU CHÌA KHÓA TỰ ĐỘNG ĐĂNG NHẬP VÀO URL
                     st.query_params["u"] = u
                     st.query_params["t"] = get_hash(p)
                     st.rerun()
@@ -103,7 +120,7 @@ if st.session_state.user is None:
                 else: st.error("❌ Sai thông tin đăng nhập!")
                 
         col1, col2 = st.columns(2)
-        if col1.button("📝 Đăng ký mới", use_container_width=True): st.session_state.page = "register"; st.rerun()
+        if col1.button("📝 Đăng ký", use_container_width=True): st.session_state.page = "register"; st.rerun()
         if col2.button("❓ Quên mật khẩu", use_container_width=True): st.session_state.page = "forgot"; st.rerun()
 
     elif st.session_state.page == "register":
@@ -138,38 +155,34 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- HEADER CÓ NÚT ĐĂNG XUẤT RÕ RÀNG ---
-    head_col1, head_col2 = st.columns([3, 1])
-    with head_col1:
-        role_txt = "👑 Admin" if st.session_state.is_admin else "👤 Nhân viên"
-        st.markdown(f"#### {role_txt}: {st.session_state.user.upper()}")
-    with head_col2:
-        if st.button("🚪 Đăng xuất", use_container_width=True, type="secondary"):
-            logout()
-    st.divider()
-
-    # --- THANH BÊN (SIDEBAR) ĐỔI GIAO DIỆN & MẬT KHẨU ---
-    with st.sidebar:
-        st.markdown(f"<h3 style='color:#0ea5e9; text-align:center;'>CÀI ĐẶT CÁ NHÂN</h3>", unsafe_allow_html=True)
-        
-        # NÚT ĐỔI MÀU SÁNG / TỐI ĐÃ QUAY TRỞ LẠI!
-        theme_icon = "🌞 Đổi sang Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Đổi sang Giao diện Tối"
+    # --- THANH ĐIỀU HƯỚNG GÓC TRÊN CÙNG (KHÔNG DÙNG SIDEBAR NỮA) ---
+    col_name, col_theme, col_out = st.columns([4, 2, 2])
+    with col_name:
+        role_txt = "👑 Admin" if st.session_state.is_admin else "👤 NV"
+        st.markdown(f"<h4 style='color: #0ea5e9; margin-top: 5px;'>{role_txt}: {st.session_state.user.upper()}</h4>", unsafe_allow_html=True)
+    with col_theme:
+        # NÚT SÁNG TỐI HIỆN RÕ RÀNG Ở ĐÂY
+        theme_icon = "🌞 Sáng" if st.session_state.theme == "Dark" else "🌙 Tối"
         if st.button(theme_icon, use_container_width=True):
             st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
             st.rerun()
+    with col_out:
+        if st.button("🚪 Đăng xuất", use_container_width=True):
+            logout()
             
-        st.write("") # Dấu cách cho thoáng
-        
-        with st.expander("🔑 Đổi mật khẩu", expanded=False):
-            old_p = st.text_input("Mật khẩu cũ", type="password")
-            new_p = st.text_input("Mật khẩu mới", type="password")
-            if st.button("Xác nhận đổi", use_container_width=True):
-                if old_p == u_info.get("pass"):
-                    update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
-                    # Cập nhật lại chìa khóa đăng nhập tự động để không bị văng
-                    st.query_params["t"] = get_hash(new_p)
-                    st.success("Đã đổi pass!")
-                else: st.error("Sai mật khẩu cũ!")
+    # Phần đổi mật khẩu đặt vào khung mở rộng ngay dưới tên
+    with st.expander("🔑 Bấm vào đây để Đổi mật khẩu cá nhân"):
+        col_op, col_np, col_btn = st.columns([2, 2, 1])
+        old_p = col_op.text_input("Mật khẩu cũ", type="password", label_visibility="collapsed", placeholder="Mật khẩu cũ")
+        new_p = col_np.text_input("Mật khẩu mới", type="password", label_visibility="collapsed", placeholder="Mật khẩu mới")
+        if col_btn.button("Lưu Pass", use_container_width=True):
+            if old_p == u_info.get("pass"):
+                update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
+                st.query_params["t"] = get_hash(new_p)
+                st.success("Đổi thành công!")
+            else: st.error("Sai pass cũ!")
+
+    st.divider()
 
     # --- LỌC TABS DỰA TRÊN QUYỀN ---
     tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "💰 QUỸ SHOP": "QUỸ SHOP"}
