@@ -5,6 +5,18 @@ import time
 from datetime import datetime, timedelta
 
 # Cấu hình giao diện chuẩn Mobile
+# --- CODE TÀNG HÌNH: GIẤU MENU, HEADER, FOOTER VÀ ICON GITHUB ---
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;} 
+            footer {visibility: hidden;} 
+            header {visibility: hidden;} 
+            [data-testid="stToolbar"] {visibility: hidden !important;} 
+            [data-testid="stDecoration"] {visibility: hidden !important;} 
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+# ----------------------------------------------------------------
 st.set_page_config(page_title="HTCV Mobile", page_icon="📱", layout="wide")
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
