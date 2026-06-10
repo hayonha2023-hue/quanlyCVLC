@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import time
+import hashlib
 from datetime import datetime, timedelta
 
 # ==========================================
@@ -9,39 +10,20 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide")
 
-# BÙA CHÚ CSS MẠNH NHẤT ĐỂ DIỆT 2 ICON TRÊN MOBILE VÀ NÚT MANAGE
-# ==========================================
-# CẤU HÌNH GIAO DIỆN & TÀNG HÌNH NÚT THỪA
-# ==========================================
-st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide")
-
-# BÙA CHÚ CSS QUÉT SẠCH MỌI ICON TRÔI NỔI
+# CSS Ẩn giao diện mặc định
 custom_css = """
 <style>
-    /* Xóa Header và Footer mặc định */
     header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
-    
-    /* Xóa thanh công cụ và nút Deploy */
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
-    .stAppDeployButton {display: none !important;}
-    
-    /* Xóa cụm Manage App và Viewer Badge của Streamlit Cloud */
     .viewerBadge_container {display: none !important;}
-    .viewerBadge_link {display: none !important;}
-    [data-testid="manage-app-button"] {display: none !important;}
-    
-    /* LƯỚI BẮT CÁC ICON NỔI NGOÀI LUỒNG TRÊN MOBILE */
-    div[style*="position: fixed"][style*="bottom:"] {display: none !important;}
-    div[style*="position: fixed"][style*="right:"] {display: none !important;}
-    iframe {display: none !important;}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # ==========================================
-# KẾT NỐI CƠ SỞ DỮ LIỆU FIREBASE
+# KẾT NỐI CƠ SỞ DỮ LIỆU & HÀM TIỆN ÍCH
 # ==========================================
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
@@ -60,19 +42,37 @@ def delete_firebase(path):
 def format_vnd(amount):
     return f"{amount:,.0f} ₫".replace(",", ".")
 
+# Hàm mã hóa mật khẩu để làm chìa khóa tự động đăng nhập an toàn
+def get_hash(text):
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
+
+# Hàm xử lý Đăng xuất
+def logout():
+    st.session_state.user = None
+    st.session_state.is_admin = False
+    st.query_params.clear() # Xóa chìa khóa tự động đăng nhập
+    st.rerun()
+
 # Khởi tạo session (biến nhớ)
 if "user" not in st.session_state:
     st.session_state.user = None
     st.session_state.is_admin = False
     st.session_state.page = "login"
-if "theme" not in st.session_state:
-    st.session_state.theme = "Dark"
 
 db = get_data()
 
-# --- Áp dụng Theme Sáng/Tối ---
-if st.session_state.theme == "Light":
-    st.markdown("""<style>.stApp {background-color: #f8fafc; color: #0f172a;} .stMarkdown, .stText {color: #0f172a !important;}</style>""", unsafe_allow_html=True)
+# ==========================================
+# CƠ CHẾ ĐĂNG NHẬP TỰ ĐỘNG (AUTO LOGIN)
+# ==========================================
+if st.session_state.user is None:
+    # Nếu trên đường link có chìa khóa, tự động mở cửa
+    if "u" in st.query_params and "t" in st.query_params:
+        u_url = st.query_params["u"]
+        t_url = st.query_params["t"]
+        users_db = db.get("users", {})
+        if u_url in users_db and get_hash(users_db[u_url]["pass"]) == t_url:
+            st.session_state.user = u_url
+            st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
 
 # ==========================================
 # MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
@@ -90,6 +90,9 @@ if st.session_state.user is None:
                 if u in users and users[u]["pass"] == p:
                     st.session_state.user = u
                     st.session_state.is_admin = (users[u].get("role") == "admin")
+                    # LƯU CHÌA KHÓA TỰ ĐỘNG ĐĂNG NHẬP VÀO URL
+                    st.query_params["u"] = u
+                    st.query_params["t"] = get_hash(p)
                     st.rerun()
                 elif u in db.get("pending_users", {}): st.warning("⏳ Tài khoản đang chờ Admin duyệt!")
                 else: st.error("❌ Sai thông tin đăng nhập!")
@@ -130,35 +133,29 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH BÊN (SIDEBAR) ---
+    # --- HEADER CÓ NÚT ĐĂNG XUẤT RÕ RÀNG ---
+    head_col1, head_col2 = st.columns([3, 1])
+    with head_col1:
+        role_txt = "👑 Admin" if st.session_state.is_admin else "👤 Nhân viên"
+        st.markdown(f"#### {role_txt}: {st.session_state.user.upper()}")
+    with head_col2:
+        if st.button("🚪 Đăng xuất", use_container_width=True, type="secondary"):
+            logout()
+    st.divider()
+
+    # --- THANH BÊN (SIDEBAR) CHỈ ĐỂ ĐỔI MẬT KHẨU ---
     with st.sidebar:
-        st.markdown(f"<h2 style='color:#0ea5e9; text-align:center;'>HTCV SYSTEM</h2>", unsafe_allow_html=True)
-        if st.session_state.is_admin: st.success("👑 QUYỀN ADMIN")
-        else: st.info("👤 QUYỀN NHÂN VIÊN")
-            
-        st.markdown(f"**Xin chào, {st.session_state.user.upper()}**")
-        st.divider()
-
-        # NÚT ĐỔI MÀU SÁNG / TỐI
-        theme_icon = "🌞 Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Giao diện Tối"
-        if st.button(theme_icon, use_container_width=True):
-            st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
-            st.rerun()
-
-        with st.expander("🔑 Đổi mật khẩu cá nhân"):
+        st.markdown(f"<h3 style='color:#0ea5e9; text-align:center;'>CÀI ĐẶT CÁ NHÂN</h3>", unsafe_allow_html=True)
+        with st.expander("🔑 Đổi mật khẩu", expanded=True):
             old_p = st.text_input("Mật khẩu cũ", type="password")
             new_p = st.text_input("Mật khẩu mới", type="password")
             if st.button("Xác nhận đổi", use_container_width=True):
                 if old_p == u_info.get("pass"):
                     update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
+                    # Cập nhật lại chìa khóa đăng nhập tự động
+                    st.query_params["t"] = get_hash(new_p)
                     st.success("Đã đổi pass!")
                 else: st.error("Sai mật khẩu cũ!")
-
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        if st.button("🚪 ĐĂNG XUẤT", type="primary", use_container_width=True):
-            st.session_state.user = None
-            st.session_state.is_admin = False
-            st.rerun()
 
     # --- LỌC TABS DỰA TRÊN QUYỀN ---
     tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "💰 QUỸ SHOP": "QUỸ SHOP"}
@@ -170,7 +167,7 @@ else:
         allowed_tabs = [k for k, v in tab_dict.items() if v in perms]
 
     if not allowed_tabs:
-        st.error("Tài khoản của bạn chưa được cấp quyền truy cập tính năng nào. Báo Admin!")
+        st.error("Tài khoản chưa được cấp quyền truy cập. Báo Admin!")
     else:
         tabs = st.tabs(allowed_tabs)
         
@@ -182,7 +179,7 @@ else:
                 st.markdown("### 🎯 Tiến Độ KPI Tháng Này")
                 kpi_data = db.get("kpi", {}).get("emp", {})
                 
-                if not kpi_data: st.info("Chưa có dữ liệu KPI tháng này.")
+                if not kpi_data: st.info("Chưa có dữ liệu KPI.")
                 else:
                     tot_t = sum(d.get("tgt", 0) for d in kpi_data.values())
                     tot_s = sum(d.get("sold", 0) for d in kpi_data.values())
@@ -203,93 +200,84 @@ else:
                     df_kpi = pd.DataFrame(kpi_list)
 
                     if st.session_state.is_admin:
-                        st.caption("💡 Lời khuyên cho Admin: Bạn có thể click đúp chuột thẳng vào cột 'Đã Bán' ở bảng dưới đây để sửa số lượng, sau đó bấm nút Lưu.")
+                        st.caption("💡 Chạm 2 lần vào số 'Đã Bán' để sửa, sau đó bấm Lưu.")
                         edited_df = st.data_editor(df_kpi, hide_index=True, disabled=["Nhân Viên", "Target", "Còn Thiếu"], use_container_width=True)
-                        
                         if st.button("💾 LƯU BẢNG KPI", type="primary"):
                             for idx, row in edited_df.iterrows():
-                                emp = row["Nhân Viên"]
-                                new_sold = int(row["Đã Bán"])
-                                update_firebase(f"kpi/emp/{emp}", {"sold": new_sold})
-                            st.success("Đã đồng bộ lên Đám mây thành công!"); time.sleep(0.5); st.rerun()
+                                update_firebase(f"kpi/emp/{row['Nhân Viên']}", {"sold": int(row["Đã Bán"])})
+                            st.success("Đã lưu!"); time.sleep(0.5); st.rerun()
                     else:
                         st.dataframe(df_kpi, hide_index=True, use_container_width=True)
 
         # ==========================================
-        # TAB 2: GIAO DIỆN BẢNG LỊCH TRỰC
+        # TAB 2: BẢNG LỊCH TRỰC
         # ==========================================
         if "🗓️ LỊCH TRỰC" in allowed_tabs:
             with tabs[allowed_tabs.index("🗓️ LỊCH TRỰC")]:
                 st.markdown("### 🗓️ Lịch Trực Tuần Gần Nhất")
                 history = db.get("detailed_history", {})
-                
                 if not history: st.info("Chưa có lịch trực.")
                 else:
                     lich_list = []
                     for date_str, shifts in history.items():
                         lich_list.append({
-                            "Ngày Trực": date_str,
-                            "Ca Sáng": ", ".join(shifts.get("Sáng", [])) if shifts.get("Sáng") else "Trống",
-                            "Ca Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "Trống",
-                            "Ca 10h30": ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "Trống"
+                            "Ngày": date_str,
+                            "Sáng": ", ".join(shifts.get("Sáng", [])) if shifts.get("Sáng") else "Trống",
+                            "Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "Trống",
+                            "10h30": ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "Trống"
                         })
-                    df_lich = pd.DataFrame(lich_list)
-                    st.dataframe(df_lich, hide_index=True, use_container_width=True)
+                    st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
-        # TAB 3: BẢNG QUỸ SHOP
+        # TAB 3: QUỸ SHOP
         # ==========================================
         if "💰 QUỸ SHOP" in allowed_tabs:
             with tabs[allowed_tabs.index("💰 QUỸ SHOP")]:
                 st.markdown("### 💰 Sổ Quỹ Cửa Hàng")
                 qs = db.get("quy_shop", {})
-                
                 tong_thu = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Thu")
                 tong_chi = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Chi")
                 ton_quy = tong_thu - tong_chi
                 
                 c1, c2, c3 = st.columns(3)
-                c1.metric("TỒN QUỸ", f"{ton_quy:,.0f} đ".replace(",", "."))
-                c2.metric("Tổng Thu", f"{tong_thu:,.0f} đ".replace(",", "."))
-                c3.metric("Tổng Chi", f"{tong_chi:,.0f} đ".replace(",", "."))
+                c1.metric("TỒN QUỸ", format_vnd(ton_quy))
+                c2.metric("Tổng Thu", format_vnd(tong_thu))
+                c3.metric("Tổng Chi", format_vnd(tong_chi))
                 st.divider()
                 
                 if st.session_state.is_admin:
                     with st.expander("➕ THÊM GIAO DỊCH", expanded=False):
                         with st.form("fund_form", clear_on_submit=True):
                             c_t, c_a = st.columns([1, 2])
-                            f_type = c_t.selectbox("Loại Giao Dịch", ["Thu", "Chi"])
-                            f_amt = c_a.number_input("Số tiền (VNĐ)", min_value=0, step=50000)
-                            f_desc = st.text_input("Chi tiết / Lý do (Vd: Bán hàng, Tiền điện...)")
-                            
+                            f_type = c_t.selectbox("Loại", ["Thu", "Chi"])
+                            f_amt = c_a.number_input("Số tiền", min_value=0, step=50000)
+                            f_desc = st.text_input("Chi tiết / Lý do")
                             if st.form_submit_button("LƯU VÀO SỔ", type="primary", use_container_width=True):
                                 if f_amt > 0 and f_desc:
                                     tx_id = str(int(time.time() * 1000))
                                     now_str = (datetime.utcnow() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M")
                                     update_firebase("quy_shop", {tx_id: {"date": now_str, "type": f_type, "amount": f_amt, "desc": f_desc, "user": st.session_state.user}})
-                                    st.success("✅ Đã lưu vào sổ quỹ!"); time.sleep(0.5); st.rerun()
-                                else: st.error("❌ Vui lòng nhập số tiền và chi tiết!")
+                                    st.success("✅ Đã lưu!"); time.sleep(0.5); st.rerun()
+                                else: st.error("❌ Nhập đủ số tiền và lý do!")
                 
-                st.markdown("#### 📜 Lịch Sử Giao Dịch")
-                if not qs: st.caption("Sổ quỹ đang trống.")
+                st.markdown("#### 📜 Lịch Sử Thu Chi")
+                if not qs: st.caption("Sổ quỹ trống.")
                 else:
                     quy_list = []
                     for tx_id, tx in sorted(qs.items(), key=lambda x: x[0], reverse=True):
                         quy_list.append({
-                            "Mã Lệnh": f"...{tx_id[-5:]}",
-                            "Ngày Giờ": tx.get("date", ""),
+                            "Mã": f"...{tx_id[-5:]}",
+                            "Ngày": tx.get("date", ""),
                             "Loại": "➕ Thu" if tx.get("type") == "Thu" else "➖ Chi",
                             "Số Tiền": f"{float(tx.get('amount', 0)):,.0f} đ".replace(",", "."),
                             "Lý do": tx.get("desc", ""),
                             "Người nhập": tx.get("user", "")
                         })
-                    
-                    df_quy = pd.DataFrame(quy_list)
-                    st.dataframe(df_quy, hide_index=True, use_container_width=True)
+                    st.dataframe(pd.DataFrame(quy_list), hide_index=True, use_container_width=True)
                     
                     if st.session_state.is_admin:
                         st.caption("Xóa giao dịch (Nếu nhập nhầm):")
-                        xoa_id = st.selectbox("Chọn Mã Lệnh cần xóa:", [tx["Mã Lệnh"] for tx in quy_list])
+                        xoa_id = st.selectbox("Chọn Mã cần xóa:", [tx["Mã"] for tx in quy_list])
                         if st.button("Xóa giao dịch này"):
                             full_id = [tid for tid in qs.keys() if tid[-5:] == xoa_id[-5:]][0]
                             delete_firebase(f"quy_shop/{full_id}")
@@ -302,7 +290,7 @@ else:
             with tabs[allowed_tabs.index("👥 QUẢN LÝ TÀI KHOẢN")]:
                 st.markdown("### ⏳ Yêu Cầu Đăng Ký Mới")
                 pending = db.get("pending_users", {})
-                if not pending: st.info("Không có yêu cầu chờ duyệt.")
+                if not pending: st.info("Không có yêu cầu chờ.")
                 else:
                     for pu, pinfo in pending.items():
                         c1, c2, c3 = st.columns([2, 1, 1])
@@ -310,24 +298,23 @@ else:
                         if c2.button("✅ Duyệt", key=f"ok_{pu}", use_container_width=True):
                             update_firebase(f"users/{pu}", {"pass": pinfo["pass"], "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY"]})
                             delete_firebase(f"pending_users/{pu}")
-                            st.success("Đã duyệt!"); time.sleep(0.5); st.rerun()
-                        if c3.button("❌ Từ chối", key=f"rej_{pu}", use_container_width=True):
+                            st.rerun()
+                        if c3.button("❌ Bỏ", key=f"rej_{pu}", use_container_width=True):
                             delete_firebase(f"pending_users/{pu}")
                             st.rerun()
                 
                 st.divider()
-                
                 st.markdown("### ⚙️ Phân Quyền Nhân Viên")
                 users = db.get("users", {})
                 for u, uinfo in users.items():
                     if uinfo.get("role") != "admin":
-                        with st.expander(f"👤 Nhân viên: {u}"):
+                        with st.expander(f"👤 {u}"):
                             current_perms = uinfo.get("permissions", [])
-                            new_perms = st.multiselect("Chức năng được phép xem trên Web:", 
+                            new_perms = st.multiselect("Được xem các bảng:", 
                                 ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"], 
                                 default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"]],
                                 key=f"perm_{u}"
                             )
                             if st.button("💾 Lưu Quyền", key=f"save_{u}"):
                                 update_firebase(f"users/{u}/permissions", new_perms)
-                                st.success(f"Đã cập nhật quyền thành công!"); time.sleep(0.5); st.rerun()
+                                st.success(f"Đã lưu!"); time.sleep(0.5); st.rerun()
