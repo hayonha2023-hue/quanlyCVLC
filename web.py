@@ -10,23 +10,18 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="HTCV by DatTT System", page_icon="⚡", layout="wide")
 
-# CSS CƠ BẢN: ẨN MENU RÁC & LÀM ĐẸP NÚT BẤM
 base_css = """
 <style>
-    /* Ẩn rác mặc định của Streamlit */
     header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
-    
-    /* Diệt nút Manage App */
     .stDeployButton {display: none !important;}
     [data-testid="manage-app-button"] {display: none !important;}
     #manage-app-button {display: none !important;}
     .viewerBadge_container {display: none !important;}
     .viewerBadge_link {display: none !important;}
     
-    /* Thiết kế form đăng nhập bo góc đẹp */
     [data-testid="stForm"] {
         border-radius: 16px !important;
         border: 1px solid rgba(150, 150, 150, 0.2) !important;
@@ -34,7 +29,6 @@ base_css = """
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Tối ưu hiệu ứng nút bấm chung */
     .stButton>button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -46,7 +40,6 @@ base_css = """
         box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     }
     
-    /* Thiết kế thẻ Metric (Tổng thu, Tồn quỹ) */
     [data-testid="stMetric"] {
         border-radius: 16px !important;
         padding: 15px 20px !important;
@@ -55,7 +48,6 @@ base_css = """
         border: 1px solid rgba(150, 150, 150, 0.1) !important;
     }
     
-    /* Bo góc các Expander (Mở rộng) */
     [data-testid="stExpander"] {
         border-radius: 12px !important;
         overflow: hidden !important;
@@ -94,7 +86,6 @@ def logout():
     st.query_params.clear()
     st.rerun()
 
-# --- KHỞI TẠO SESSION ---
 if "user" not in st.session_state:
     st.session_state.user = None
     st.session_state.is_admin = False
@@ -114,7 +105,6 @@ if st.session_state.theme == "Light":
         [data-testid="stMetricValue"] {color: #0ea5e9 !important;}
         [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #ffffff !important;}
         
-        /* CSS Nút phụ (Đăng ký, Đổi pass, Cài đặt...) ở chế độ Sáng */
         button[kind="secondary"] { background-color: #ffffff !important; color: #0369a1 !important; border: 1px solid #cbd5e1 !important; }
         button[kind="secondary"]:hover { background-color: #f0f9ff !important; border-color: #0ea5e9 !important; }
     </style>
@@ -128,7 +118,6 @@ else:
         [data-testid="stMetricValue"] {color: #38bdf8 !important;}
         [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #162032 !important;}
         
-        /* CSS Nút phụ (Đăng ký, Đổi pass, Cài đặt...) ở chế độ Tối -> CHỮ CYAN SÁNG */
         button[kind="secondary"] { background-color: #1e293b !important; color: #38bdf8 !important; border: 1px solid #334155 !important; }
         button[kind="secondary"]:hover { background-color: #0f172a !important; border-color: #38bdf8 !important; }
     </style>
@@ -210,7 +199,7 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH ĐIỀU HƯỚNG MỚI (DỒN HẾT SANG PHẢI, CĂN CHỈNH ĐẸP MẮT) ---
+    # --- THANH ĐIỀU HƯỚNG ---
     c_name, c_space, c_pass, c_theme, c_logout = st.columns([3.5, 3.0, 2.0, 0.75, 0.75])
     
     with c_name:
@@ -258,8 +247,8 @@ else:
 
     st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-    # --- LỌC TABS DỰA TRÊN QUYỀN ---
-    tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH": "XEM LỊCH", "💰 QUỸ": "QUỸ SHOP"}
+    # --- LỌC TABS DỰA TRÊN QUYỀN VÀ THÊM TAB ECOM ---
+    tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH": "XEM LỊCH", "🛒 ECOM": "LỊCH ECOM", "💰 QUỸ": "QUỸ SHOP"}
     allowed_tabs = []
     
     if st.session_state.is_admin: 
@@ -279,7 +268,6 @@ else:
             with tabs[allowed_tabs.index("🎯 KPI")]:
                 st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>🎯 Tiến Độ KPI Tháng Này</h3>", unsafe_allow_html=True)
                 
-                # --- ÉP KIỂU & CHỐNG LỖI FIREBASE BIẾN TÊN SỐ THÀNH MẢNG ---
                 kpi_node = db.get("kpi")
                 if not isinstance(kpi_node, dict): kpi_node = {}
                 
@@ -292,7 +280,7 @@ else:
                 if not kpi_data: 
                     st.info("Chưa có dữ liệu KPI.")
                 else:
-                    # Tính tổng Target theo cấu hình Tháng của Admin
+                    # BẢN NÂNG CẤP: Tính % theo Tổng Target Tháng
                     tot_t = int(kpi_node.get("tot", 0))
                     tot_s = sum(int(d.get("sold", 0)) for d in kpi_data.values() if isinstance(d, dict))
                     pct = (tot_s / tot_t * 100) if tot_t > 0 else 0
@@ -342,6 +330,29 @@ else:
                             "Tối (10h30)": ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
                         })
                     st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
+
+        # ==========================================
+        # TAB ECOM (MỚI THÊM)
+        # ==========================================
+        if "🛒 ECOM" in allowed_tabs:
+            with tabs[allowed_tabs.index("🛒 ECOM")]:
+                st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>🛒 Lịch Trực ECOM</h3>", unsafe_allow_html=True)
+                ecom_data = db.get("ecom_history", {})
+                
+                if not ecom_data:
+                    st.info("Chưa có lịch Ecom.")
+                else:
+                    days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
+                    ecom_list = []
+                    for d in days:
+                        val = ecom_data.get(d, "").strip()
+                        if val:
+                            ecom_list.append({"Ngày": d, "Nhân sự Ecom": val})
+                            
+                    if ecom_list:
+                        st.dataframe(pd.DataFrame(ecom_list), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("Lịch Ecom đang trống (Chưa có nhân sự nào được điền).")
 
         # ==========================================
         # TAB 3: QUỸ SHOP
@@ -417,7 +428,7 @@ else:
                             c1, c2, c3 = st.columns([4, 2, 2])
                             c1.markdown(f"**👤 {pu}**")
                             if c2.button("✅ Duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
-                                update_firebase(f"users/{pu}", {"pass": pinfo["pass"], "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY"]})
+                                update_firebase(f"users/{pu}", {"pass": pinfo["pass"], "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY", "LỊCH ECOM"]})
                                 delete_firebase(f"pending_users/{pu}")
                                 st.rerun()
                             if c3.button("❌ Bỏ", key=f"rej_{pu}", use_container_width=True):
@@ -431,9 +442,10 @@ else:
                     if uinfo.get("role") != "admin":
                         with st.expander(f"👤 Cấp quyền: {u}"):
                             current_perms = uinfo.get("permissions", [])
+                            # BỔ SUNG QUYỀN LỊCH ECOM VÀO BẢNG ĐIỀU KHIỂN
                             new_perms = st.multiselect("Chức năng được xem:", 
-                                ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"], 
-                                default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"]],
+                                ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "QUỸ SHOP"], 
+                                default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "QUỸ SHOP"]],
                                 key=f"perm_{u}"
                             )
                             if st.button("💾 Lưu Quyền Mới", key=f"save_{u}", type="primary", use_container_width=True):
