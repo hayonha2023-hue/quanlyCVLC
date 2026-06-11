@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import requests
 import pandas as pd
 import time
@@ -41,7 +42,7 @@ base_css = """
         transition: all 0.3s ease !important;
     }
     
-    /* EFFECT 3: HIỆU ỨNG NÚT BẤM CỰC NHẠY (MICRO-INTERACTIONS) */
+    /* EFFECT 3: HIỆU ỨNG NÚT BẤM CỰC NHẠY */
     .stButton>button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -57,7 +58,7 @@ base_css = """
         transform: translateY(0px) !important;
     }
     
-    /* EFFECT 4: HIỆU ỨNG PHÁT SÁNG NEON VÀ NỔI KHỐI CHO CÁC THẺ TRẠNG THÁI (METRICS) */
+    /* EFFECT 4: THẺ TRẠNG THÁI (METRICS) CAO CẤP */
     [data-testid="stMetric"] {
         border-radius: 18px !important;
         padding: 20px !important;
@@ -75,7 +76,7 @@ base_css = """
         letter-spacing: -0.5px !important;
     }
     
-    /* BO GÓC MỀM MẠI CHO CÁC HỘP DANH SÁCH MỞ RỘNG */
+    /* BO GÓC CÁC HỘP DANH SÁCH MỞ RỘNG */
     [data-testid="stExpander"] {
         border-radius: 14px !important;
         overflow: hidden !important;
@@ -83,7 +84,7 @@ base_css = """
         box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
     }
 
-    /* EFFECT 5: MENU SIDEBAR CAO CẤP NHƯ BIỂU TƯỢNG APP ĐIỆN THOẠI */
+    /* EFFECT 5: MENU SIDEBAR */
     [data-testid="stSidebar"] div[role="radiogroup"] > label {
         background-color: transparent !important;
         border-radius: 12px !important;
@@ -269,17 +270,52 @@ else:
             selected_tab = st.radio("MENU CHỨC NĂNG", allowed_tabs, label_visibility="collapsed")
             st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1);'><br>", unsafe_allow_html=True)
             
+            # Khai báo tín hiệu tự thu gọn Sidebar
             if st.button("🔑 Cài đặt mật khẩu", use_container_width=True):
                 st.session_state.show_pass = not st.session_state.get("show_pass", False)
+                st.session_state.force_close_sidebar = True
                 
             theme_txt = "☀️ Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Giao diện Tối"
             if st.button(theme_txt, use_container_width=True):
                 st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
-                st.rerun()
+                st.session_state.force_close_sidebar = True
                 
             if st.button("🚪 Đăng xuất tài khoản", use_container_width=True):
                 logout()
 
+        # ==========================================
+        # LOGIC TỰ ĐỘNG THU GỌN SIDEBAR 
+        # ==========================================
+        if "last_tab" not in st.session_state:
+            st.session_state.last_tab = selected_tab
+
+        need_close = False
+        if st.session_state.last_tab != selected_tab:
+            st.session_state.last_tab = selected_tab
+            need_close = True
+            
+        if st.session_state.get("force_close_sidebar", False):
+            need_close = True
+            st.session_state.force_close_sidebar = False
+            
+        if need_close:
+            components.html('''
+                <script>
+                    var doc = window.parent.document;
+                    
+                    // Thử bấm gập Sidebar trên Desktop
+                    var desktopBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button');
+                    if (desktopBtn) { desktopBtn.click(); }
+                    
+                    // Thử bấm nút X trên Mobile hoặc overlay
+                    var mobileBtns = doc.querySelectorAll('button[aria-label="Close"], button[aria-label="Collapse sidebar"], button[title="Collapse sidebar"]');
+                    mobileBtns.forEach(function(btn) { btn.click(); });
+                </script>
+            ''', height=0, width=0)
+
+        # ==========================================
+        # XỬ LÝ NỘI DUNG FORM 
+        # ==========================================
         if st.session_state.get("show_pass", False):
             with st.container():
                 st.markdown("<div style='padding: 22px; border-radius: 16px; background-color: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 25px;'>", unsafe_allow_html=True)
@@ -300,9 +336,6 @@ else:
                         cc3.error("Sai pass cũ!")
                 st.markdown("</div>", unsafe_allow_html=True)
 
-        # ==========================================
-        # XỬ LÝ NỘI DUNG FORM
-        # ==========================================
         if selected_tab == "🎯 BẢNG KPI":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🎯 Tiến Độ Hoàn Thành KPI Tháng Này</h3>", unsafe_allow_html=True)
             kpi_node = db.get("kpi")
