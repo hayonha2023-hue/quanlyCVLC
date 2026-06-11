@@ -275,7 +275,7 @@ else:
                 
                 if not kpi_data: st.info("Chưa có dữ liệu KPI.")
                 else:
-                    tot_t = sum(d.get("tgt", 0) for d in kpi_data.values())
+                    tot_t = sum(d.get("tgt", 0) for d in (kpi_data or {}).values())
                     tot_s = sum(d.get("sold", 0) for d in kpi_data.values())
                     pct = (tot_s / tot_t * 100) if tot_t > 0 else 0
                     
