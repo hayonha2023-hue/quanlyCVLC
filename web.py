@@ -113,7 +113,7 @@ if "user" not in st.session_state:
     st.session_state.is_admin = False
     st.session_state.page = "login"
 if "theme" not in st.session_state:
-    st.session_state.theme = "Dark" # Mặc định nền tối sang trọng
+    st.session_state.theme = "Dark" # Mặc định nền tối
 
 db = get_data()
 
@@ -121,13 +121,13 @@ db = get_data()
 if st.session_state.theme == "Light":
     theme_css = """
     <style>
-        [data-testid="stAppViewContainer"] {background-color: #f8fafc !important;} /* Nền ghi xám nhạt Apple */
+        [data-testid="stAppViewContainer"] {background-color: #f8fafc !important;} 
         .stApp {background-color: #f8fafc !important; color: #0f172a !important;} 
         .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #1e293b !important;}
         div[data-baseweb="tab-list"] button {color: #64748b !important;}
         div[data-baseweb="tab-list"] button[aria-selected="true"] {color: #0ea5e9 !important; border-bottom: 3px solid #0ea5e9 !important;}
         [data-testid="stMetricValue"] {color: #0ea5e9 !important;}
-        [data-testid="stMetric"] {background-color: #ffffff !important;} /* Thẻ trắng tinh */
+        [data-testid="stMetric"] {background-color: #ffffff !important;} 
         [data-testid="stForm"] {background-color: #ffffff !important;}
         [data-testid="stExpander"] {background-color: #ffffff !important;}
     </style>
@@ -135,13 +135,13 @@ if st.session_state.theme == "Light":
 else:
     theme_css = """
     <style>
-        [data-testid="stAppViewContainer"] {background-color: #0b1121 !important;} /* Nền xanh navy cực đậm */
+        [data-testid="stAppViewContainer"] {background-color: #0b1121 !important;} 
         .stApp {background-color: #0b1121 !important; color: #f8fafc !important;} 
         .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #f1f5f9 !important;}
         div[data-baseweb="tab-list"] button {color: #94a3b8 !important;}
         div[data-baseweb="tab-list"] button[aria-selected="true"] {color: #38bdf8 !important; border-bottom: 3px solid #38bdf8 !important;}
         [data-testid="stMetricValue"] {color: #38bdf8 !important;}
-        [data-testid="stMetric"] {background-color: #1e293b !important;} /* Thẻ nổi bật trên nền đậm */
+        [data-testid="stMetric"] {background-color: #1e293b !important;} 
         [data-testid="stForm"] {background-color: #162032 !important;}
         [data-testid="stExpander"] {background-color: #162032 !important;}
     </style>
@@ -164,7 +164,6 @@ if st.session_state.user is None:
 # MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
 # ==========================================
 if st.session_state.user is None:
-    # Căn giữa siêu đẹp trên điện thoại
     _, col_center, _ = st.columns([1, 10, 1])
     with col_center:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -224,30 +223,51 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH ĐIỀU HƯỚNG APP-LIKE (Chuẩn Mobile & PC) ---
-    c_name, c_btn1, c_btn2 = st.columns([6, 2, 2])
+    # --- THANH ĐIỀU HƯỚNG MỚI (TỐI ƯU GIAO DIỆN) ---
+    c_name, c_pass, c_space, c_theme, c_logout = st.columns([3.5, 2.5, 4.5, 0.75, 0.75])
+    
     with c_name:
         role_icon = "👑" if st.session_state.is_admin else "👤"
-        st.markdown(f"<h3 style='margin-bottom:0px; padding-top: 10px;'>{role_icon} {st.session_state.user.upper()}</h3>", unsafe_allow_html=True)
-    with c_btn1:
-        theme_ico = "🌞" if st.session_state.theme == "Dark" else "🌙"
-        if st.button(f"{theme_ico} Đổi màu", use_container_width=True):
+        st.markdown(f"<h3 style='margin-bottom:0px; padding-top: 5px; color: #0ea5e9;'>{role_icon} {st.session_state.user.upper()}</h3>", unsafe_allow_html=True)
+        
+    with c_pass:
+        st.markdown("<div style='padding-top: 5px;'></div>", unsafe_allow_html=True)
+        if st.button("🔑 Cài đặt cá nhân", use_container_width=True):
+            st.session_state.show_pass = not st.session_state.get("show_pass", False)
+            
+    with c_theme:
+        st.markdown("<div style='padding-top: 5px;'></div>", unsafe_allow_html=True)
+        theme_ico = "☀️" if st.session_state.theme == "Dark" else "🌙"
+        if st.button(theme_ico, use_container_width=True):
             st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
             st.rerun()
-    with c_btn2:
-        if st.button("🚪 Thoát", use_container_width=True):
-            logout()
             
-    with st.expander("🔑 Cài đặt cá nhân / Đổi mật khẩu"):
-        col_op, col_np, col_btn = st.columns([3, 3, 2])
-        old_p = col_op.text_input("Mật khẩu cũ", type="password", label_visibility="collapsed", placeholder="Mật khẩu cũ...")
-        new_p = col_np.text_input("Mật khẩu mới", type="password", label_visibility="collapsed", placeholder="Mật khẩu mới...")
-        if col_btn.button("Lưu Pass", type="primary", use_container_width=True):
-            if old_p == u_info.get("pass"):
-                update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
-                st.query_params["t"] = get_hash(new_p)
-                st.success("Đổi thành công!")
-            else: st.error("Sai pass cũ!")
+    with c_logout:
+        st.markdown("<div style='padding-top: 5px;'></div>", unsafe_allow_html=True)
+        if st.button("🚪", use_container_width=True):
+            logout()
+
+    if st.session_state.get("show_pass", False):
+        with st.container():
+            st.markdown("<div style='padding: 20px; border-radius: 12px; background-color: rgba(14, 165, 233, 0.05); border: 1px solid #0ea5e9; margin-top: 10px;'>", unsafe_allow_html=True)
+            st.markdown("<h5 style='margin-top:0px; color: #0ea5e9;'>Đổi mật khẩu bảo mật</h5>", unsafe_allow_html=True)
+            
+            cc1, cc2, cc3 = st.columns([3, 3, 2])
+            old_p = cc1.text_input("Mật khẩu cũ", type="password", placeholder="Nhập mật khẩu hiện tại...")
+            new_p = cc2.text_input("Mật khẩu mới", type="password", placeholder="Nhập mật khẩu mới...")
+            
+            cc3.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True)
+            if cc3.button("💾 Lưu Pass Mới", type="primary", use_container_width=True):
+                if old_p == u_info.get("pass"):
+                    update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
+                    st.query_params["t"] = get_hash(new_p)
+                    st.success("Đổi thành công!")
+                    st.session_state.show_pass = False
+                    time.sleep(1)
+                    st.rerun()
+                else: 
+                    cc3.error("Sai pass cũ!")
+            st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
@@ -268,7 +288,11 @@ else:
         # ==========================================
         # TAB 1: BẢNG KPI
         # ==========================================
-        # --- ÉP KIỂU & CHỐNG LỖI FIREBASE BIẾN TÊN SỐ THÀNH MẢNG ---
+        if "🎯 KPI" in allowed_tabs:
+            with tabs[allowed_tabs.index("🎯 KPI")]:
+                st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>🎯 Tiến Độ KPI Tháng Này</h3>", unsafe_allow_html=True)
+                
+                # --- ÉP KIỂU & CHỐNG LỖI FIREBASE BIẾN TÊN SỐ THÀNH MẢNG ---
                 kpi_node = db.get("kpi")
                 if not isinstance(kpi_node, dict): kpi_node = {}
                 
@@ -279,13 +303,13 @@ else:
                 elif not isinstance(kpi_data, dict): 
                     kpi_data = {}
                 
-                if not kpi_data: st.info("Chưa có dữ liệu KPI.")
+                if not kpi_data: 
+                    st.info("Chưa có dữ liệu KPI.")
                 else:
                     tot_t = sum(d.get("tgt", 0) for d in (kpi_data or {}).values())
                     tot_s = sum(d.get("sold", 0) for d in kpi_data.values())
                     pct = (tot_s / tot_t * 100) if tot_t > 0 else 0
                     
-                    # Các khối thẻ (Cards) hiển thị thông số tổng
                     c1, c2, c3 = st.columns(3)
                     c1.metric("Tổng Target", f"{tot_t}")
                     c2.metric("Đã bán", f"{tot_s}")
@@ -319,7 +343,8 @@ else:
             with tabs[allowed_tabs.index("🗓️ LỊCH")]:
                 st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>🗓️ Lịch Trực Tuần Gần Nhất</h3>", unsafe_allow_html=True)
                 history = db.get("detailed_history", {})
-                if not history: st.info("Chưa có lịch trực.")
+                if not history: 
+                    st.info("Chưa có lịch trực.")
                 else:
                     lich_list = []
                     for date_str, shifts in history.items():
@@ -342,7 +367,6 @@ else:
                 tong_chi = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Chi")
                 ton_quy = tong_thu - tong_chi
                 
-                # Thẻ Tồn Quỹ (To bự)
                 st.metric("🏦 HIỆN TẠI TỒN QUỸ", format_vnd(ton_quy))
                 
                 c1, c2 = st.columns(2)
@@ -365,7 +389,8 @@ else:
                                 else: st.error("❌ Nhập đủ số tiền và lý do!")
                 
                 st.markdown("#### 📜 Lịch Sử Thu Chi Gần Đây")
-                if not qs: st.caption("Sổ quỹ trống.")
+                if not qs: 
+                    st.caption("Sổ quỹ trống.")
                 else:
                     quy_list = []
                     for tx_id, tx in sorted(qs.items(), key=lambda x: x[0], reverse=True):
@@ -397,7 +422,8 @@ else:
                 
                 st.markdown("#### ⏳ Yêu Cầu Đăng Ký Mới")
                 pending = db.get("pending_users", {})
-                if not pending: st.info("Không có yêu cầu chờ.")
+                if not pending: 
+                    st.info("Không có yêu cầu chờ.")
                 else:
                     for pu, pinfo in pending.items():
                         with st.container():
