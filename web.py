@@ -275,9 +275,6 @@ else:
                 st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-
-    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-
     # --- LỌC TABS DỰA TRÊN QUYỀN ---
     tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH": "XEM LỊCH", "💰 QUỸ": "QUỸ SHOP"}
     allowed_tabs = []
