@@ -12,15 +12,23 @@ st.set_page_config(page_title="HTCV by DatTT", page_icon="⚡", layout="wide", i
 
 base_css = """
 <style>
-    header {visibility: hidden !important; display: none !important;}
-    footer {visibility: hidden !important; display: none !important;}
+    /* 1. GIỮ LẠI HEADER ĐỂ HIỆN NÚT MỞ SIDEBAR, CHỈ LÀM TRONG SUỐT NỀN */
+    header {background-color: transparent !important;}
+    
+    /* 2. CHỈ TIÊU DIỆT CÁC NÚT RÁC BÊN PHẢI (Deploy, 3 chấm) */
+    [data-testid="stHeaderActionElements"] {display: none !important;}
     [data-testid="stToolbar"] {display: none !important;}
-    [data-testid="stDecoration"] {display: none !important;}
     .stDeployButton {display: none !important;}
+    
+    /* 3. ẨN CÁC THÀNH PHẦN THỪA KHÁC */
+    footer {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
     [data-testid="manage-app-button"] {display: none !important;}
     #manage-app-button {display: none !important;}
     .viewerBadge_container {display: none !important;}
+    .viewerBadge_link {display: none !important;}
     
+    /* Thiết kế form đăng nhập bo góc đẹp */
     [data-testid="stForm"] {
         border-radius: 16px !important;
         border: 1px solid rgba(150, 150, 150, 0.2) !important;
@@ -28,6 +36,7 @@ base_css = """
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
     }
     
+    /* Tối ưu hiệu ứng nút bấm chung */
     .stButton>button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -38,6 +47,22 @@ base_css = """
         box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     }
     
+    /* Thiết kế thẻ Metric (Tổng thu, Tồn quỹ) */
+    [data-testid="stMetric"] {
+        border-radius: 16px !important;
+        padding: 15px 20px !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+        text-align: center !important;
+        border: 1px solid rgba(150, 150, 150, 0.1) !important;
+    }
+    
+    /* Bo góc các Expander (Mở rộng) */
+    [data-testid="stExpander"] {
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(150, 150, 150, 0.2) !important;
+    }
+
     /* TÙY CHỈNH SIDEBAR RADIO THÀNH MENU APP XỊN XÒ */
     [data-testid="stSidebar"] div[role="radiogroup"] > label {
         background-color: transparent !important;
