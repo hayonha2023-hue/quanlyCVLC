@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="HTCV by DatTT System", page_icon="⚡", layout="wide")
 
-# CSS CƠ BẢN: ẨN MENU RÁC & NÚT MANAGE APP
+# CSS CƠ BẢN: ẨN MENU RÁC & LÀM ĐẸP NÚT BẤM
 base_css = """
 <style>
     /* Ẩn rác mặc định của Streamlit */
@@ -25,8 +25,6 @@ base_css = """
     #manage-app-button {display: none !important;}
     .viewerBadge_container {display: none !important;}
     .viewerBadge_link {display: none !important;}
-    iframe[title*="streamlit"] {display: none !important;}
-    div[class^="st-emotion-cache-"] > a[href*="streamlit"] {display: none !important;}
     
     /* Thiết kế form đăng nhập bo góc đẹp */
     [data-testid="stForm"] {
@@ -36,18 +34,16 @@ base_css = """
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Tối ưu hiệu ứng nút bấm (Nổi lên khi di chuột) */
+    /* Tối ưu hiệu ứng nút bấm chung */
     .stButton>button {
         border-radius: 12px !important;
         font-weight: 700 !important;
         letter-spacing: 0.5px !important;
         transition: all 0.3s ease !important;
-        border: none !important;
     }
     .stButton>button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 7px 14px rgba(0,0,0,0.15) !important;
-        filter: brightness(1.1);
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     }
     
     /* Thiết kế thẻ Metric (Tổng thu, Tồn quỹ) */
@@ -64,15 +60,6 @@ base_css = """
         border-radius: 12px !important;
         overflow: hidden !important;
         border: 1px solid rgba(150, 150, 150, 0.2) !important;
-    }
-    
-    /* Làm đẹp thanh Tabs */
-    button[data-baseweb="tab"] {
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        border-radius: 8px 8px 0 0 !important;
-        padding-bottom: 12px !important;
-        padding-top: 12px !important;
     }
 </style>
 """
@@ -113,23 +100,23 @@ if "user" not in st.session_state:
     st.session_state.is_admin = False
     st.session_state.page = "login"
 if "theme" not in st.session_state:
-    st.session_state.theme = "Dark" # Mặc định nền tối
+    st.session_state.theme = "Dark" 
 
 db = get_data()
 
-# --- ÉP MÀU UI CHO SÁNG/TỐI (CARD DESIGN) ---
+# --- ÉP MÀU NÚT BẤM CHO SÁNG/TỐI TRÁNH LỖI TÀNG HÌNH ---
 if st.session_state.theme == "Light":
     theme_css = """
     <style>
         [data-testid="stAppViewContainer"] {background-color: #f8fafc !important;} 
         .stApp {background-color: #f8fafc !important; color: #0f172a !important;} 
         .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #1e293b !important;}
-        div[data-baseweb="tab-list"] button {color: #64748b !important;}
-        div[data-baseweb="tab-list"] button[aria-selected="true"] {color: #0ea5e9 !important; border-bottom: 3px solid #0ea5e9 !important;}
         [data-testid="stMetricValue"] {color: #0ea5e9 !important;}
-        [data-testid="stMetric"] {background-color: #ffffff !important;} 
-        [data-testid="stForm"] {background-color: #ffffff !important;}
-        [data-testid="stExpander"] {background-color: #ffffff !important;}
+        [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #ffffff !important;}
+        
+        /* CSS Nút phụ (Đăng ký, Đổi pass, Cài đặt...) ở chế độ Sáng */
+        button[kind="secondary"] { background-color: #ffffff !important; color: #0369a1 !important; border: 1px solid #cbd5e1 !important; }
+        button[kind="secondary"]:hover { background-color: #f0f9ff !important; border-color: #0ea5e9 !important; }
     </style>
     """
 else:
@@ -138,12 +125,12 @@ else:
         [data-testid="stAppViewContainer"] {background-color: #0b1121 !important;} 
         .stApp {background-color: #0b1121 !important; color: #f8fafc !important;} 
         .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #f1f5f9 !important;}
-        div[data-baseweb="tab-list"] button {color: #94a3b8 !important;}
-        div[data-baseweb="tab-list"] button[aria-selected="true"] {color: #38bdf8 !important; border-bottom: 3px solid #38bdf8 !important;}
         [data-testid="stMetricValue"] {color: #38bdf8 !important;}
-        [data-testid="stMetric"] {background-color: #1e293b !important;} 
-        [data-testid="stForm"] {background-color: #162032 !important;}
-        [data-testid="stExpander"] {background-color: #162032 !important;}
+        [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #162032 !important;}
+        
+        /* CSS Nút phụ (Đăng ký, Đổi pass, Cài đặt...) ở chế độ Tối -> CHỮ CYAN SÁNG */
+        button[kind="secondary"] { background-color: #1e293b !important; color: #38bdf8 !important; border: 1px solid #334155 !important; }
+        button[kind="secondary"]:hover { background-color: #0f172a !important; border-color: #38bdf8 !important; }
     </style>
     """
 st.markdown(theme_css, unsafe_allow_html=True)
@@ -188,8 +175,8 @@ if st.session_state.user is None:
                     else: st.error("❌ Sai thông tin đăng nhập!")
                     
             c1, c2 = st.columns(2)
-            if c1.button("📝 Đăng ký", use_container_width=True): st.session_state.page = "register"; st.rerun()
-            if c2.button("❓ Quên pass", use_container_width=True): st.session_state.page = "forgot"; st.rerun()
+            if c1.button("📝 Đăng ký tài khoản", use_container_width=True): st.session_state.page = "register"; st.rerun()
+            if c2.button("❓ Quên mật khẩu", use_container_width=True): st.session_state.page = "forgot"; st.rerun()
 
         elif st.session_state.page == "register":
             with st.form("reg_form"):
@@ -223,8 +210,8 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH ĐIỀU HƯỚNG MỚI (TỐI ƯU GIAO DIỆN) ---
-    c_name, c_pass, c_space, c_theme, c_logout = st.columns([3.5, 2.5, 4.5, 0.75, 0.75])
+    # --- THANH ĐIỀU HƯỚNG MỚI (DỒN HẾT SANG PHẢI, CĂN CHỈNH ĐẸP MẮT) ---
+    c_name, c_space, c_pass, c_theme, c_logout = st.columns([3.5, 3.0, 2.0, 0.75, 0.75])
     
     with c_name:
         role_icon = "👑" if st.session_state.is_admin else "👤"
@@ -298,7 +285,6 @@ else:
                 
                 kpi_data = kpi_node.get("emp")
                 if isinstance(kpi_data, list):
-                    # Dịch ngược mảng về lại tên số cho bản Web
                     kpi_data = {str(i): v for i, v in enumerate(kpi_data) if v is not None}
                 elif not isinstance(kpi_data, dict): 
                     kpi_data = {}
