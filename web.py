@@ -224,107 +224,33 @@ else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH ĐIỀU HƯỚNG MỚI (TỐI ƯU GIAO DIỆN) ---
-        c_name, c_pass, c_space, c_theme, c_logout = st.columns([3.5, 2.5, 4.5, 0.75, 0.75])
-        
-        with c_name:
-            role_icon = "👑" if st.session_state.is_admin else "👤"
-            st.markdown(f"<h3 style='margin-bottom:0px; padding-top: 5px; color: #0ea5e9;'>{role_icon} {st.session_state.user.upper()}</h3>", unsafe_allow_html=True)
+    # --- THANH ĐIỀU HƯỚNG APP-LIKE (Chuẩn Mobile & PC) ---
+    c_name, c_btn1, c_btn2 = st.columns([6, 2, 2])
+    with c_name:
+        role_icon = "👑" if st.session_state.is_admin else "👤"
+        st.markdown(f"<h3 style='margin-bottom:0px; padding-top: 10px;'>{role_icon} {st.session_state.user.upper()}</h3>", unsafe_allow_html=True)
+    with c_btn1:
+        theme_ico = "🌞" if st.session_state.theme == "Dark" else "🌙"
+        if st.button(f"{theme_ico} Đổi màu", use_container_width=True):
+            st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
+            st.rerun()
+    with c_btn2:
+        if st.button("🚪 Thoát", use_container_width=True):
+            logout()
             
-        with c_pass:
-            st.markdown("<div style='padding-top: 5px;'></div>", unsafe_allow_html=True)
-            # Nút cài đặt cá nhân nằm ngay cạnh tên Admin
-            if st.button("🔑 Cài đặt cá nhân", use_container_width=True):
-                st.session_state.show_pass = not st.session_state.get("show_pass", False)
-                
-        with c_theme:
-            st.markdown("<div style='padding-top: 5px;'></div>", unsafe_allow_html=True)
-            # Icon Đổi màu siêu sáng, đẩy tít góc phải
-            theme_ico = "☀️" if st.session_state.theme == "Dark" else "🌙"
-            if st.button(theme_ico, use_container_width=True):
-                st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
-                st.rerun()
-                
-        with c_logout:
-            st.markdown("<div style='padding-top: 5px;'></div>", unsafe_allow_html=True)
-            # Nút thoát cực kỳ gọn nhẹ chỉ có icon
-            if st.button("🚪", use_container_width=True):
-                logout()
+    with st.expander("🔑 Cài đặt cá nhân / Đổi mật khẩu"):
+        col_op, col_np, col_btn = st.columns([3, 3, 2])
+        old_p = col_op.text_input("Mật khẩu cũ", type="password", label_visibility="collapsed", placeholder="Mật khẩu cũ...")
+        new_p = col_np.text_input("Mật khẩu mới", type="password", label_visibility="collapsed", placeholder="Mật khẩu mới...")
+        if col_btn.button("Lưu Pass", type="primary", use_container_width=True):
+            if old_p == u_info.get("pass"):
+                update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
+                st.query_params["t"] = get_hash(new_p)
+                st.success("Đổi thành công!")
+            else: st.error("Sai pass cũ!")
 
-        # Khung đổi mật khẩu hiển thị mượt mà ngay dưới thanh công cụ
-        if st.session_state.get("show_pass", False):
-            with st.container():
-                st.markdown("<div style='padding: 20px; border-radius: 12px; background-color: rgba(14, 165, 233, 0.05); border: 1px solid #0ea5e9; margin-top: 10px;'>", unsafe_allow_html=True)
-                st.markdown("<h5 style='margin-top:0px; color: #0ea5e9;'>Đổi mật khẩu bảo mật</h5>", unsafe_allow_html=True)
-                
-                cc1, cc2, cc3 = st.columns([3, 3, 2])
-                old_p = cc1.text_input("Mật khẩu cũ", type="password", placeholder="Nhập mật khẩu hiện tại...")
-                new_p = cc2.text_input("Mật khẩu mới", type="password", placeholder="Nhập mật khẩu mới...")
-                
-                cc3.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True)
-                if cc3.button("💾 Lưu Pass Mới", type="primary", use_container_width=True):
-                    if old_p == u_info.get("pass"):
-                        update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
-                        st.query_params["t"] = get_hash(new_p)
-                        st.success("Đổi thành công!")
-                        st.session_state.show_pass = False
-                        time.sleep(1)
-                        st.rerun()
-                    else: 
-                        cc3.error("Sai pass cũ!")
-                st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-        st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-
-        # Khung đổi mật khẩu hiển thị mượt mà ngay dưới thanh công cụ
-        if st.session_state.get("show_pass", False):
-            with st.container():
-                st.markdown("<div style='padding: 20px; border-radius: 12px; background-color: rgba(14, 165, 233, 0.05); border: 1px solid #0ea5e9; margin-top: 10px;'>", unsafe_allow_html=True)
-                st.markdown("<h5 style='margin-top:0px; color: #0ea5e9;'>Đổi mật khẩu bảo mật</h5>", unsafe_allow_html=True)
-                
-                cc1, cc2, cc3 = st.columns([3, 3, 2])
-                old_p = cc1.text_input("Mật khẩu cũ", type="password", placeholder="Nhập mật khẩu hiện tại...")
-                new_p = cc2.text_input("Mật khẩu mới", type="password", placeholder="Nhập mật khẩu mới...")
-                
-                cc3.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True)
-                if cc3.button("💾 Lưu Pass Mới", type="primary", use_container_width=True):
-                    if old_p == u_info.get("pass"):
-                        update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
-                        st.query_params["t"] = get_hash(new_p)
-                        st.success("Đổi thành công!")
-                        st.session_state.show_pass = False
-                        time.sleep(1)
-                        st.rerun()
-                    else: 
-                        cc3.error("Sai pass cũ!")
-                st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-
-        # Khung đổi mật khẩu hiển thị mượt mà ngay dưới thanh công cụ
-        if st.session_state.get("show_pass", False):
-            with st.container():
-                st.markdown("<div style='padding: 20px; border-radius: 12px; background-color: rgba(14, 165, 233, 0.05); border: 1px solid #0ea5e9; margin-top: 10px;'>", unsafe_allow_html=True)
-                st.markdown("<h5 style='margin-top:0px; color: #0ea5e9;'>Đổi mật khẩu bảo mật</h5>", unsafe_allow_html=True)
-                
-                cc1, cc2, cc3 = st.columns([3, 3, 2])
-                old_p = cc1.text_input("Mật khẩu cũ", type="password", placeholder="Nhập mật khẩu hiện tại...")
-                new_p = cc2.text_input("Mật khẩu mới", type="password", placeholder="Nhập mật khẩu mới...")
-                
-                cc3.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True)
-                if cc3.button("💾 Lưu Pass Mới", type="primary", use_container_width=True):
-                    if old_p == u_info.get("pass"):
-                        update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms})
-                        st.query_params["t"] = get_hash(new_p)
-                        st.success("Đổi thành công!")
-                        st.session_state.show_pass = False
-                        time.sleep(1)
-                        st.rerun()
-                    else: 
-                        cc3.error("Sai pass cũ!")
-                st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
     # --- LỌC TABS DỰA TRÊN QUYỀN ---
     tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH": "XEM LỊCH", "💰 QUỸ": "QUỸ SHOP"}
     allowed_tabs = []
@@ -345,55 +271,40 @@ else:
         if "🎯 KPI" in allowed_tabs:
             with tabs[allowed_tabs.index("🎯 KPI")]:
                 st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>🎯 Tiến Độ KPI Tháng Này</h3>", unsafe_allow_html=True)
+                kpi_data = db.get("kpi", {}).get("emp", {})
                 
-                # --- ÉP KIỂU & CHỐNG LỖI FIREBASE BIẾN TÊN SỐ THÀNH MẢNG ---
-                kpi_node = db.get("kpi")
-                if not isinstance(kpi_node, dict): kpi_node = {}
-                
-                kpi_data = kpi_node.get("emp")
-                if isinstance(kpi_data, list):
-                    # Dịch ngược mảng về lại tên số cho bản Web
-                    kpi_data = {str(i): v for i, v in enumerate(kpi_data) if v is not None}
-                elif not isinstance(kpi_data, dict): 
-                    kpi_data = {}
-                
-                if not kpi_data: 
-                    st.info("Chưa có dữ liệu KPI.")
+                if not kpi_data: st.info("Chưa có dữ liệu KPI.")
                 else:
-                    tot_t = 0
-                    tot_s = 0
-                    kpi_list = []
-                    
-                    for emp, info in kpi_data.items():
-                        if not isinstance(info, dict): continue
-                        tgt = info.get("tgt", 0)
-                        sold = info.get("sold", 0)
-                        tot_t += tgt
-                        tot_s += sold
-                        rem = tgt - sold if tgt - sold > 0 else 0
-                        kpi_list.append({"Nhân Viên": emp, "Đã Bán": sold, "Target": tgt, "Còn Thiếu": rem})
-                        
+                    tot_t = sum(d.get("tgt", 0) for d in (kpi_data or {}).values())
+                    tot_s = sum(d.get("sold", 0) for d in kpi_data.values())
                     pct = (tot_s / tot_t * 100) if tot_t > 0 else 0
                     
+                    # Các khối thẻ (Cards) hiển thị thông số tổng
                     c1, c2, c3 = st.columns(3)
                     c1.metric("Tổng Target", f"{tot_t}")
                     c2.metric("Đã bán", f"{tot_s}")
                     c3.metric("Hoàn thành", f"{pct:.1f}%")
                     st.markdown("<br>", unsafe_allow_html=True)
 
-                    if kpi_list:
-                        df_kpi = pd.DataFrame(kpi_list)
+                    kpi_list = []
+                    for emp, info in kpi_data.items():
+                        tgt = info.get("tgt", 0)
+                        sold = info.get("sold", 0)
+                        rem = tgt - sold if tgt - sold > 0 else 0
+                        kpi_list.append({"Nhân Viên": emp, "Đã Bán": sold, "Target": tgt, "Còn Thiếu": rem})
+                    
+                    df_kpi = pd.DataFrame(kpi_list)
 
-                        if st.session_state.is_admin:
-                            st.caption("💡 Chạm 2 lần vào ô 'Đã Bán' để sửa nhanh số lượng.")
-                            edited_df = st.data_editor(df_kpi, hide_index=True, disabled=["Nhân Viên", "Target", "Còn Thiếu"], use_container_width=True)
-                            st.markdown("<br>", unsafe_allow_html=True)
-                            if st.button("💾 LƯU CẬP NHẬT KPI", type="primary", use_container_width=True):
-                                for idx, row in edited_df.iterrows():
-                                    update_firebase(f"kpi/emp/{row['Nhân Viên']}", {"sold": int(row["Đã Bán"])})
-                                st.success("Đã lưu!"); time.sleep(0.5); st.rerun()
-                        else:
-                            st.dataframe(df_kpi, hide_index=True, use_container_width=True)
+                    if st.session_state.is_admin:
+                        st.caption("💡 Chạm 2 lần vào ô 'Đã Bán' để sửa nhanh số lượng.")
+                        edited_df = st.data_editor(df_kpi, hide_index=True, disabled=["Nhân Viên", "Target", "Còn Thiếu"], use_container_width=True)
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        if st.button("💾 LƯU CẬP NHẬT KPI", type="primary", use_container_width=True):
+                            for idx, row in edited_df.iterrows():
+                                update_firebase(f"kpi/emp/{row['Nhân Viên']}", {"sold": int(row["Đã Bán"])})
+                            st.success("Đã lưu!"); time.sleep(0.5); st.rerun()
+                    else:
+                        st.dataframe(df_kpi, hide_index=True, use_container_width=True)
 
         # ==========================================
         # TAB 2: BẢNG LỊCH TRỰC
@@ -401,25 +312,18 @@ else:
         if "🗓️ LỊCH" in allowed_tabs:
             with tabs[allowed_tabs.index("🗓️ LỊCH")]:
                 st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>🗓️ Lịch Trực Tuần Gần Nhất</h3>", unsafe_allow_html=True)
-                
-                # --- ÉP KIỂU AN TOÀN TUYỆT ĐỐI ---
-                history = db.get("detailed_history")
-                if not isinstance(history, dict): history = {}
-                
-                if not history: 
-                    st.info("Chưa có lịch trực.")
+                history = db.get("detailed_history", {})
+                if not history: st.info("Chưa có lịch trực.")
                 else:
                     lich_list = []
                     for date_str, shifts in history.items():
-                        if not isinstance(shifts, dict): continue
                         lich_list.append({
                             "Ngày": date_str,
-                            "Sáng": ", ".join(shifts.get("Sáng", [])) if isinstance(shifts.get("Sáng"), list) else "-",
-                            "Chiều": ", ".join(shifts.get("Chiều", [])) if isinstance(shifts.get("Chiều"), list) else "-",
-                            "Tối (10h30)": ", ".join(shifts.get("10h30", [])) if isinstance(shifts.get("10h30"), list) else "-"
+                            "Sáng": ", ".join(shifts.get("Sáng", [])) if shifts.get("Sáng") else "-",
+                            "Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "-",
+                            "Tối (10h30)": ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
                         })
-                    if lich_list:
-                        st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
+                    st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
         # TAB 3: QUỸ SHOP
@@ -427,15 +331,12 @@ else:
         if "💰 QUỸ" in allowed_tabs:
             with tabs[allowed_tabs.index("💰 QUỸ")]:
                 st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>💰 Quản Lý Sổ Quỹ</h3>", unsafe_allow_html=True)
-                
-                # --- ÉP KIỂU AN TOÀN TUYỆT ĐỐI ---
-                qs = db.get("quy_shop")
-                if not isinstance(qs, dict): qs = {}
-                
-                tong_thu = sum(float(i.get("amount", 0)) for i in qs.values() if isinstance(i, dict) and i.get("type") == "Thu")
-                tong_chi = sum(float(i.get("amount", 0)) for i in qs.values() if isinstance(i, dict) and i.get("type") == "Chi")
+                qs = db.get("quy_shop", {})
+                tong_thu = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Thu")
+                tong_chi = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Chi")
                 ton_quy = tong_thu - tong_chi
                 
+                # Thẻ Tồn Quỹ (To bự)
                 st.metric("🏦 HIỆN TẠI TỒN QUỸ", format_vnd(ton_quy))
                 
                 c1, c2 = st.columns(2)
@@ -458,31 +359,30 @@ else:
                                 else: st.error("❌ Nhập đủ số tiền và lý do!")
                 
                 st.markdown("#### 📜 Lịch Sử Thu Chi Gần Đây")
-                if not qs: 
-                    st.caption("Sổ quỹ trống.")
+                if not qs: st.caption("Sổ quỹ trống.")
                 else:
                     quy_list = []
                     for tx_id, tx in sorted(qs.items(), key=lambda x: x[0], reverse=True):
-                        if not isinstance(tx, dict): continue
                         quy_list.append({
-                            "Mã": f"...{str(tx_id)[-4:]}",
+                            "Mã": f"...{tx_id[-4:]}",
                             "Ngày": tx.get("date", ""),
                             "Loại": "➕ Thu" if tx.get("type") == "Thu" else "➖ Chi",
                             "Số Tiền": f"{float(tx.get('amount', 0)):,.0f} ₫".replace(",", "."),
                             "Lý do": tx.get("desc", ""),
                             "Người nhập": tx.get("user", "")
                         })
-                    if quy_list:
-                        st.dataframe(pd.DataFrame(quy_list), hide_index=True, use_container_width=True)
-                        
-                        if st.session_state.is_admin:
-                            st.caption("Xóa giao dịch (Nếu nhập nhầm):")
-                            c_sel, c_del = st.columns([3, 1])
-                            xoa_id = c_sel.selectbox("Mã giao dịch:", [tx["Mã"] for tx in quy_list], label_visibility="collapsed")
-                            if c_del.button("❌ Xóa", type="primary", use_container_width=True):
-                                full_id = [tid for tid in qs.keys() if str(tid)[-4:] == str(xoa_id)[-4:]][0]
-                                delete_firebase(f"quy_shop/{full_id}")
-                                st.success("Đã xóa!"); time.sleep(0.5); st.rerun()
+                    st.dataframe(pd.DataFrame(quy_list), hide_index=True, use_container_width=True)
+                    
+                    if st.session_state.is_admin:
+                        st.caption("Xóa giao dịch (Nếu nhập nhầm):")
+                        c_sel, c_del = st.columns([3, 1])
+                        xoa_id = c_sel.selectbox("Mã giao dịch:", [tx["Mã"] for tx in quy_list], label_visibility="collapsed")
+                        if c_del.button("❌ Xóa", type="primary", use_container_width=True):
+                            full_id = [tid for tid in qs.keys() if tid[-4:] == xoa_id[-4:]][0]
+                            delete_firebase(f"quy_shop/{full_id}")
+                            st.success("Đã xóa!"); time.sleep(0.5); st.rerun()
+
+        # ==========================================
         # TAB 4: ADMIN (PHÂN QUYỀN)
         # ==========================================
         if "👥 ADMIN" in allowed_tabs:
