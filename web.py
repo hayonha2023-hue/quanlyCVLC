@@ -12,8 +12,17 @@ st.set_page_config(page_title="HTCV by DatTT", page_icon="⚡", layout="wide", i
 
 base_css = """
 <style>
-    /* 1. GIỮ LẠI HEADER ĐỂ HIỆN NÚT MỞ SIDEBAR, CHỈ LÀM TRONG SUỐT NỀN */
-    header {background-color: transparent !important;}
+    /* 1. ÉP BUỘC HIỆN HEADER VÀ NÚT MỞ SIDEBAR VĨNH VIỄN */
+    header[data-testid="stHeader"] {
+        visibility: visible !important; 
+        display: block !important; 
+        background-color: transparent !important;
+    }
+    [data-testid="collapsedControl"] {
+        visibility: visible !important;
+        display: flex !important;
+        z-index: 999999 !important;
+    }
     
     /* 2. CHỈ TIÊU DIỆT CÁC NÚT RÁC BÊN PHẢI (Deploy, 3 chấm) */
     [data-testid="stHeaderActionElements"] {display: none !important;}
@@ -26,7 +35,6 @@ base_css = """
     [data-testid="manage-app-button"] {display: none !important;}
     #manage-app-button {display: none !important;}
     .viewerBadge_container {display: none !important;}
-    .viewerBadge_link {display: none !important;}
     
     /* Thiết kế form đăng nhập bo góc đẹp */
     [data-testid="stForm"] {
