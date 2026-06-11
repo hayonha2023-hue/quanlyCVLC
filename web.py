@@ -272,11 +272,16 @@ else:
             with tabs[allowed_tabs.index("🎯 KPI")]:
                 st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>🎯 Tiến Độ KPI Tháng Này</h3>", unsafe_allow_html=True)
                 
-                # --- ÉP KIỂU AN TOÀN TUYỆT ĐỐI CHỐNG LỖI FIREBASE ---
+                # --- ÉP KIỂU & CHỐNG LỖI FIREBASE BIẾN TÊN SỐ THÀNH MẢNG ---
                 kpi_node = db.get("kpi")
                 if not isinstance(kpi_node, dict): kpi_node = {}
+                
                 kpi_data = kpi_node.get("emp")
-                if not isinstance(kpi_data, dict): kpi_data = {}
+                if isinstance(kpi_data, list):
+                    # Dịch ngược mảng về lại tên số cho bản Web
+                    kpi_data = {str(i): v for i, v in enumerate(kpi_data) if v is not None}
+                elif not isinstance(kpi_data, dict): 
+                    kpi_data = {}
                 
                 if not kpi_data: 
                     st.info("Chưa có dữ liệu KPI.")
