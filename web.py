@@ -6,45 +6,32 @@ import hashlib
 from datetime import datetime, timedelta
 
 # ==========================================
-# CẤU HÌNH GIAO DIỆN & TIÊU DIỆT NÚT THỪA
+# CẤU HÌNH GIAO DIỆN
 # ==========================================
 st.set_page_config(page_title="HTCV by DatTT", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 
+# CSS MỚI NHẤT: BẢO TOÀN HEADER, CHỈ BẮN TỈA NÚT RÁC
 base_css = """
 <style>
-    /* 1. ÉP BUỘC HIỆN HEADER VÀ NÚT MỞ SIDEBAR VĨNH VIỄN */
-    header[data-testid="stHeader"] {
-        visibility: visible !important; 
-        display: block !important; 
-        background-color: transparent !important;
-    }
-    [data-testid="collapsedControl"] {
-        visibility: visible !important;
-        display: flex !important;
-        z-index: 999999 !important;
-    }
+    /* BẢO TOÀN HEADER ĐỂ NÚT MỞ SIDEBAR LUÔN HOẠT ĐỘNG */
+    header { background-color: transparent !important; }
     
-    /* 2. CHỈ TIÊU DIỆT CÁC NÚT RÁC BÊN PHẢI (Deploy, 3 chấm) */
+    /* CHỈ TIÊU DIỆT CÁC NÚT RÁC BÊN PHẢI (Deploy, Github, 3 chấm) */
     [data-testid="stHeaderActionElements"] {display: none !important;}
-    [data-testid="stToolbar"] {display: none !important;}
     .stDeployButton {display: none !important;}
-    
-    /* 3. ẨN CÁC THÀNH PHẦN THỪA KHÁC */
-    footer {visibility: hidden !important; display: none !important;}
-    [data-testid="stDecoration"] {display: none !important;}
-    [data-testid="manage-app-button"] {display: none !important;}
     #manage-app-button {display: none !important;}
+    
+    /* ẨN FOOTER VÀ CÁC LOGO STREAMLIT */
+    footer {display: none !important;}
     .viewerBadge_container {display: none !important;}
     
-    /* Thiết kế form đăng nhập bo góc đẹp */
+    /* THIẾT KẾ FORM & NÚT BẤM */
     [data-testid="stForm"] {
         border-radius: 16px !important;
         border: 1px solid rgba(150, 150, 150, 0.2) !important;
         padding: 20px !important;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
     }
-    
-    /* Tối ưu hiệu ứng nút bấm chung */
     .stButton>button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -55,7 +42,7 @@ base_css = """
         box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     }
     
-    /* Thiết kế thẻ Metric (Tổng thu, Tồn quỹ) */
+    /* THIẾT KẾ THẺ METRIC & EXPANDER */
     [data-testid="stMetric"] {
         border-radius: 16px !important;
         padding: 15px 20px !important;
@@ -63,15 +50,13 @@ base_css = """
         text-align: center !important;
         border: 1px solid rgba(150, 150, 150, 0.1) !important;
     }
-    
-    /* Bo góc các Expander (Mở rộng) */
     [data-testid="stExpander"] {
         border-radius: 12px !important;
         overflow: hidden !important;
         border: 1px solid rgba(150, 150, 150, 0.2) !important;
     }
 
-    /* TÙY CHỈNH SIDEBAR RADIO THÀNH MENU APP XỊN XÒ */
+    /* TÙY CHỈNH MENU SIDEBAR XỊN XÒ */
     [data-testid="stSidebar"] div[role="radiogroup"] > label {
         background-color: transparent !important;
         border-radius: 10px !important;
@@ -88,7 +73,7 @@ base_css = """
         border-left: 5px solid #0ea5e9 !important;
     }
     [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child {
-        display: none !important; /* Ẩn chấm tròn radio */
+        display: none !important; /* Ẩn chấm tròn */
     }
     [data-testid="stSidebar"] div[role="radiogroup"] > label p {
         font-size: 16px !important;
