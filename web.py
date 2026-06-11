@@ -345,15 +345,20 @@ else:
                     days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
                     ecom_list = []
                     for d in days:
-                        val = ecom_data.get(d, "").strip()
-                        if val:
-                            ecom_list.append({"Ngày": d, "Nhân sự Ecom": val})
+                        val = ecom_data.get(d, {})
+                        if isinstance(val, str): 
+                            if val.strip():
+                                ecom_list.append({"Ngày": d, "Sáng": val.strip(), "Chiều": "-"})
+                        elif isinstance(val, dict):
+                            s = val.get("Sáng", "").strip()
+                            c = val.get("Chiều", "").strip()
+                            if s or c:
+                                ecom_list.append({"Ngày": d, "Sáng": s if s else "-", "Chiều": c if c else "-"})
                             
                     if ecom_list:
                         st.dataframe(pd.DataFrame(ecom_list), hide_index=True, use_container_width=True)
                     else:
                         st.info("Lịch Ecom đang trống (Chưa có nhân sự nào được điền).")
-
         # ==========================================
         # TAB 3: QUỸ SHOP
         # ==========================================
