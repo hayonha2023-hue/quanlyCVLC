@@ -57,9 +57,6 @@ base_css = """
 """
 st.markdown(base_css, unsafe_allow_html=True)
 
-# ==========================================
-# KẾT NỐI FIREBASE & HÀM TIỆN ÍCH
-# ==========================================
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
 def get_data():
@@ -95,7 +92,6 @@ if "theme" not in st.session_state:
 
 db = get_data()
 
-# --- ÉP MÀU NÚT BẤM CHO SÁNG/TỐI TRÁNH LỖI TÀNG HÌNH ---
 if st.session_state.theme == "Light":
     theme_css = """
     <style>
@@ -124,9 +120,6 @@ else:
     """
 st.markdown(theme_css, unsafe_allow_html=True)
 
-# ==========================================
-# CƠ CHẾ ĐĂNG NHẬP TỰ ĐỘNG
-# ==========================================
 if st.session_state.user is None:
     if "u" in st.query_params and "t" in st.query_params:
         u_url = st.query_params["u"]
@@ -136,9 +129,6 @@ if st.session_state.user is None:
             st.session_state.user = u_url
             st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
 
-# ==========================================
-# MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
-# ==========================================
 if st.session_state.user is None:
     _, col_center, _ = st.columns([1, 10, 1])
     with col_center:
@@ -192,14 +182,10 @@ if st.session_state.user is None:
                     else: st.error("❌ Mã bảo mật sai!")
             if st.button("⬅ Quay lại", use_container_width=True): st.session_state.page = "login"; st.rerun()
 
-# ==========================================
-# MÀN HÌNH CHÍNH (SAU KHI ĐĂNG NHẬP)
-# ==========================================
 else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
     
-    # --- THANH ĐIỀU HƯỚNG ---
     c_name, c_space, c_pass, c_theme, c_logout = st.columns([3.5, 3.0, 2.0, 0.75, 0.75])
     
     with c_name:
@@ -247,8 +233,8 @@ else:
 
     st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-    # --- LỌC TABS DỰA TRÊN QUYỀN VÀ THÊM TAB ECOM ---
-    tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH": "XEM LỊCH", "🛒 ECOM": "LỊCH ECOM", "💰 QUỸ": "QUỸ SHOP"}
+    # --- ĐÃ BỔ SUNG TAB THỊ TRƯỜNG VÀO HỆ THỐNG ---
+    tab_dict = {"🎯 KPI": "TÍCH LŨY", "🗓️ LỊCH": "XEM LỊCH", "🛒 ECOM": "LỊCH ECOM", "📍 THỊ TRƯỜNG": "THỊ TRƯỜNG", "💰 QUỸ": "QUỸ SHOP"}
     allowed_tabs = []
     
     if st.session_state.is_admin: 
@@ -280,7 +266,6 @@ else:
                 if not kpi_data: 
                     st.info("Chưa có dữ liệu KPI.")
                 else:
-                    # BẢN NÂNG CẤP: Tính % theo Tổng Target Tháng
                     tot_t = int(kpi_node.get("tot", 0))
                     tot_s = sum(int(d.get("sold", 0)) for d in kpi_data.values() if isinstance(d, dict))
                     pct = (tot_s / tot_t * 100) if tot_t > 0 else 0
@@ -332,7 +317,7 @@ else:
                     st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
-        # TAB ECOM (MỚI THÊM)
+        # TAB 3: ECOM
         # ==========================================
         if "🛒 ECOM" in allowed_tabs:
             with tabs[allowed_tabs.index("🛒 ECOM")]:
@@ -359,8 +344,36 @@ else:
                         st.dataframe(pd.DataFrame(ecom_list), hide_index=True, use_container_width=True)
                     else:
                         st.info("Lịch Ecom đang trống (Chưa có nhân sự nào được điền).")
+
         # ==========================================
-        # TAB 3: QUỸ SHOP
+        # TAB 4: THỊ TRƯỜNG (MỚI THÊM)
+        # ==========================================
+        if "📍 THỊ TRƯỜNG" in allowed_tabs:
+            with tabs[allowed_tabs.index("📍 THỊ TRƯỜNG")]:
+                st.markdown("<h3 style='margin-top: 10px; margin-bottom: 20px;'>📍 Lịch Đi Thị Trường</h3>", unsafe_allow_html=True)
+                market_data = db.get("market_history", {})
+                
+                if not market_data:
+                    st.info("Chưa có lịch thị trường.")
+                else:
+                    days_order = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
+                    market_list = []
+                    for d in days_order:
+                        if d in market_data:
+                            inf = market_data[d]
+                            market_list.append({
+                                "Ngày": d,
+                                "📍 Địa điểm": inf.get("dia_diem", ""),
+                                "👥 Nhân viên": ", ".join(inf.get("nhan_vien", []))
+                            })
+                            
+                    if market_list:
+                        st.dataframe(pd.DataFrame(market_list), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("Lịch thị trường đang trống.")
+
+        # ==========================================
+        # TAB 5: QUỸ SHOP
         # ==========================================
         if "💰 QUỸ" in allowed_tabs:
             with tabs[allowed_tabs.index("💰 QUỸ")]:
@@ -417,7 +430,7 @@ else:
                             st.success("Đã xóa!"); time.sleep(0.5); st.rerun()
 
         # ==========================================
-        # TAB 4: ADMIN (PHÂN QUYỀN)
+        # TAB 6: ADMIN (PHÂN QUYỀN)
         # ==========================================
         if "👥 ADMIN" in allowed_tabs:
             with tabs[allowed_tabs.index("👥 ADMIN")]:
@@ -433,7 +446,8 @@ else:
                             c1, c2, c3 = st.columns([4, 2, 2])
                             c1.markdown(f"**👤 {pu}**")
                             if c2.button("✅ Duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
-                                update_firebase(f"users/{pu}", {"pass": pinfo["pass"], "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY", "LỊCH ECOM"]})
+                                # Đã bổ sung tự động cấp quyền THỊ TRƯỜNG cho nhân viên mới duyệt
+                                update_firebase(f"users/{pu}", {"pass": pinfo["pass"], "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY", "LỊCH ECOM", "THỊ TRƯỜNG"]})
                                 delete_firebase(f"pending_users/{pu}")
                                 st.rerun()
                             if c3.button("❌ Bỏ", key=f"rej_{pu}", use_container_width=True):
@@ -447,10 +461,10 @@ else:
                     if uinfo.get("role") != "admin":
                         with st.expander(f"👤 Cấp quyền: {u}"):
                             current_perms = uinfo.get("permissions", [])
-                            # BỔ SUNG QUYỀN LỊCH ECOM VÀO BẢNG ĐIỀU KHIỂN
+                            # BỔ SUNG QUYỀN THỊ TRƯỜNG VÀO BẢNG ĐIỀU KHIỂN CẤP QUYỀN
                             new_perms = st.multiselect("Chức năng được xem:", 
-                                ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "QUỸ SHOP"], 
-                                default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "QUỸ SHOP"]],
+                                ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"], 
+                                default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"]],
                                 key=f"perm_{u}"
                             )
                             if st.button("💾 Lưu Quyền Mới", key=f"save_{u}", type="primary", use_container_width=True):
