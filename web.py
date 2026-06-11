@@ -284,7 +284,7 @@ else:
                 logout()
 
         # ==========================================
-        # LOGIC TỰ ĐỘNG THU GỌN SIDEBAR 
+        # LOGIC TỰ ĐỘNG THU GỌN SIDEBAR (FIX)
         # ==========================================
         if "last_tab" not in st.session_state:
             st.session_state.last_tab = selected_tab
@@ -299,17 +299,18 @@ else:
             st.session_state.force_close_sidebar = False
             
         if need_close:
-            components.html('''
-                <script>
+            # Gắn biến time.time() vào để ép trình duyệt luôn chạy lại lệnh đóng
+            components.html(f'''
+                <script id="auto-close-{time.time()}">
                     var doc = window.parent.document;
                     
                     // Thử bấm gập Sidebar trên Desktop
                     var desktopBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button');
-                    if (desktopBtn) { desktopBtn.click(); }
+                    if (desktopBtn) {{ desktopBtn.click(); }}
                     
                     // Thử bấm nút X trên Mobile hoặc overlay
                     var mobileBtns = doc.querySelectorAll('button[aria-label="Close"], button[aria-label="Collapse sidebar"], button[title="Collapse sidebar"]');
-                    mobileBtns.forEach(function(btn) { btn.click(); });
+                    mobileBtns.forEach(function(btn) {{ btn.click(); }});
                 </script>
             ''', height=0, width=0)
 
