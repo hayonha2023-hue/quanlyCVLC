@@ -292,8 +292,9 @@ else:
                 if not kpi_data: 
                     st.info("Chưa có dữ liệu KPI.")
                 else:
-                    tot_t = sum(d.get("tgt", 0) for d in (kpi_data or {}).values())
-                    tot_s = sum(d.get("sold", 0) for d in kpi_data.values())
+                    # Tính tổng Target theo cấu hình Tháng của Admin
+                    tot_t = int(kpi_node.get("tot", 0))
+                    tot_s = sum(int(d.get("sold", 0)) for d in kpi_data.values() if isinstance(d, dict))
                     pct = (tot_s / tot_t * 100) if tot_t > 0 else 0
                     
                     c1, c2, c3 = st.columns(3)
