@@ -379,16 +379,12 @@ else:
                             delete_firebase("kpi_image")
                             st.rerun()
 
-            # HIỂN THỊ ẢNH KHUNG VUỐT NGANG (GIẢI QUYẾT TRIỆT ĐỂ LỖI ĐIỆN THOẠI)
+            # Hiển thị ảnh (Trả lại tính năng bấm để phóng to nét căng)
             if kpi_img_b64 and isinstance(kpi_img_b64, str):
                 with st.expander("📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI", expanded=False):
                     try:
-                        st.markdown(f'''
-                        <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid rgba(150,150,150,0.2); border-radius: 8px;">
-                            <img src="data:image/jpeg;base64,{kpi_img_b64}" style="min-width: 900px; width: 100%; height: auto; display: block; border-radius: 8px;">
-                        </div>
-                        <p style="text-align: center; color: #0ea5e9; font-size: 13px; font-style: italic; margin-top: 10px;">👈 Mẹo: Dùng ngón tay vuốt ảnh sang trái/phải để xem 👉</p>
-                        ''', unsafe_allow_html=True)
+                        img_bytes = base64.b64decode(kpi_img_b64)
+                        st.image(img_bytes, use_container_width=True)
                     except:
                         st.error("Lỗi hiển thị ảnh. Vui lòng báo Admin tải lại.")
                         
@@ -482,14 +478,10 @@ else:
                 with st.expander(f"📄 MỞ XEM BỘ ẢNH LỊCH TRỰC ({len(sched_imgs)} trang)", expanded=False):
                     for idx, img_b64 in enumerate(sched_imgs):
                         try:
-                            # HIỂN THỊ ẢNH KHUNG VUỐT NGANG (GIẢI QUYẾT TRIỆT ĐỂ LỖI ĐIỆN THOẠI)
+                            # Khôi phục tính năng bấm phóng to ảnh
+                            img_bytes = base64.b64decode(img_b64)
                             st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 15px; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
-                            st.markdown(f'''
-                            <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid rgba(150,150,150,0.2); border-radius: 8px;">
-                                <img src="data:image/jpeg;base64,{img_b64}" style="min-width: 900px; width: 100%; height: auto; display: block; border-radius: 8px;">
-                            </div>
-                            <p style="text-align: center; color: #0ea5e9; font-size: 13px; font-style: italic; margin-top: 8px;">👈 Mẹo: Dùng ngón tay vuốt ảnh sang trái/phải để xem 👉</p>
-                            ''', unsafe_allow_html=True)
+                            st.image(img_bytes, use_container_width=True)
                         except:
                             st.error(f"Lỗi hiển thị ảnh trang {idx + 1}.")
                         
