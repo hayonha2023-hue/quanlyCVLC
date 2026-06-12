@@ -112,6 +112,29 @@ base_css = """
         font-weight: 600 !important;
         letter-spacing: 0.2px !important;
     }
+
+    /* EFFECT 6: SỬA LỖI KẸT ẢNH TRÊN ĐIỆN THOẠI - LÀM TO NÚT (X) ĐÓNG ẢNH VÀ CHUYỂN MÀU ĐỎ */
+    div[data-testid="StyledFullScreenFrame"] button {
+        top: 60px !important; 
+        right: 20px !important;
+        width: 55px !important;
+        height: 55px !important;
+        background-color: rgba(239, 68, 68, 0.95) !important; /* Đỏ rực dễ thấy */
+        border-radius: 50% !important;
+        opacity: 1 !important;
+        z-index: 9999999 !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.6) !important;
+        border: 2px solid white !important;
+    }
+    div[data-testid="StyledFullScreenFrame"] button:hover {
+        background-color: rgba(220, 38, 38, 1) !important;
+    }
+    div[data-testid="StyledFullScreenFrame"] button svg {
+        color: white !important;
+        fill: white !important;
+        width: 28px !important;
+        height: 28px !important;
+    }
 </style>
 """
 st.markdown(base_css, unsafe_allow_html=True)
@@ -273,7 +296,6 @@ else:
             selected_tab = st.radio("MENU CHỨC NĂNG", allowed_tabs, label_visibility="collapsed")
             st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1);'><br>", unsafe_allow_html=True)
             
-            # Khai báo tín hiệu tự thu gọn Sidebar
             if st.button("🔑 Cài đặt mật khẩu", use_container_width=True):
                 st.session_state.show_pass = not st.session_state.get("show_pass", False)
                 st.session_state.force_close_sidebar = True
@@ -287,7 +309,7 @@ else:
                 logout()
 
         # ==========================================
-        # LOGIC TỰ ĐỘNG THU GỌN SIDEBAR (FIX)
+        # LOGIC TỰ ĐỘNG THU GỌN SIDEBAR
         # ==========================================
         if "last_tab" not in st.session_state:
             st.session_state.last_tab = selected_tab
@@ -350,7 +372,6 @@ else:
                         st.session_state.rot_angle = 0
                         
                     if uploaded_file is not None:
-                        # Dùng PIL để đọc và tự xoay dựa vào cảm biến của camera
                         img = Image.open(uploaded_file)
                         img = ImageOps.exif_transpose(img)
                         
@@ -364,7 +385,6 @@ else:
                         st.image(img, caption="Bản xem trước. Nếu đọc được chữ thì hãy bấm Lưu", use_container_width=True)
                         
                         if c_save.button("💾 LƯU BẢNG NÀY CHO NHÂN VIÊN XEM", type="primary", use_container_width=True):
-                            # Nén dung lượng cực thấp để không làm chậm Firebase
                             img.thumbnail((1600, 1600)) 
                             buffered = io.BytesIO()
                             img.convert("RGB").save(buffered, format="JPEG", quality=85)
@@ -381,11 +401,12 @@ else:
                             delete_firebase("kpi_image")
                             st.rerun()
 
-            # Hiển thị ảnh cho mọi người xem (Đã vô hiệu hóa bấm phóng to gây kẹt)
+            # Hiển thị ảnh cho mọi người xem (Đã khôi phục chế độ phóng to an toàn)
             if kpi_img_b64 and isinstance(kpi_img_b64, str):
                 with st.expander("📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI", expanded=False):
                     try:
-                        st.markdown(f'<img src="data:image/jpeg;base64,{kpi_img_b64}" style="width:100%; border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">', unsafe_allow_html=True)
+                        img_bytes = base64.b64decode(kpi_img_b64)
+                        st.image(img_bytes, use_container_width=True)
                     except:
                         st.error("Lỗi hiển thị ảnh. Vui lòng báo Admin tải lại.")
                         
@@ -461,11 +482,9 @@ else:
                                 img_str = base64.b64encode(buffered.getvalue()).decode()
                                 new_img_list.append(img_str)
                             
-                            # CỘNG DỒN ẢNH VÀO ALBUM CŨ
                             sched_imgs.extend(new_img_list)
-                            
                             update_firebase("schedule_images", sched_imgs)
-                            if old_single: delete_firebase("schedule_image") # Dọn rác
+                            if old_single: delete_firebase("schedule_image")
                             
                             st.success(f"✅ Đã thêm {len(new_img_list)} ảnh mới vào Album!")
                             time.sleep(1)
@@ -481,9 +500,10 @@ else:
                 with st.expander(f"📄 MỞ XEM BỘ ẢNH LỊCH TRỰC ({len(sched_imgs)} trang)", expanded=False):
                     for idx, img_b64 in enumerate(sched_imgs):
                         try:
-                            # Hiển thị ảnh bằng HTML gốc để không bị kẹt màn hình điện thoại
+                            # Khôi phục tính năng phóng to an toàn
+                            img_bytes = base64.b64decode(img_b64)
                             st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
-                            st.markdown(f'<img src="data:image/jpeg;base64,{img_b64}" style="width:100%; border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px;">', unsafe_allow_html=True)
+                            st.image(img_bytes, use_container_width=True)
                         except:
                             st.error(f"Lỗi hiển thị ảnh trang {idx + 1}.")
                         
