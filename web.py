@@ -338,55 +338,55 @@ else:
         if selected_tab == "🎯 BẢNG KPI":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🎯 Tiến Độ Hoàn Thành KPI Tháng Này</h3>", unsafe_allow_html=True)
             
-            # --- TÍNH NĂNG QUẢN LÝ ẢNH BẢNG TÍNH KPI ---
-            kpi_img_b64 = db.get("kpi_image", "")
+            # --- TÍNH NĂNG QUẢN LÝ ẢNH BẢNG TÍNH KPI (HỖ TRỢ NHIỀU ẢNH - TỰ ĐỘNG XÓA CŨ) ---
+            kpi_imgs = db.get("kpi_images", [])
+            if not isinstance(kpi_imgs, list): kpi_imgs = []
+            
+            old_kpi_single = db.get("kpi_image", "")
+            if old_kpi_single and not kpi_imgs:
+                kpi_imgs = [old_kpi_single]
             
             if st.session_state.is_admin:
                 with st.expander("📸 QUẢN LÝ ẢNH DANH MỤC KPI (Chỉ Admin)"):
-                    st.markdown("💡 *Khi tải lên ảnh mới, ảnh cũ sẽ tự động bị xóa hoàn toàn khỏi Đám mây để không tốn bộ nhớ lưu trữ.*")
-                    uploaded_file = st.file_uploader("Chọn ảnh Bảng tính KPI từ điện thoại/máy tính", type=["png", "jpg", "jpeg"])
+                    st.markdown("💡 *Khi tải lên bộ ảnh mới, toàn bộ ảnh cũ sẽ TỰ ĐỘNG BỊ XÓA SẠCH để không tốn dung lượng Đám mây.*")
+                    uploaded_files = st.file_uploader("Chọn nhiều ảnh Bảng tính KPI", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kpi_up")
                     
-                    if 'rot_angle' not in st.session_state:
-                        st.session_state.rot_angle = 0
-                        
-                    if uploaded_file is not None:
-                        img = Image.open(uploaded_file)
-                        img = ImageOps.exif_transpose(img)
-                        
-                        c_rot, c_save = st.columns(2)
-                        if c_rot.button("🔄 Bấm vào đây để xoay ảnh 90 độ (nếu bị lộn ngược)", use_container_width=True):
-                            st.session_state.rot_angle = (st.session_state.rot_angle - 90) % 360
+                    if uploaded_files:
+                        if st.button("💾 LƯU BỘ ẢNH NÀY (GHI ĐÈ ẢNH CŨ)", type="primary", use_container_width=True, key="kpi_save"):
+                            new_img_list = []
+                            for up_file in uploaded_files:
+                                img = Image.open(up_file)
+                                img = ImageOps.exif_transpose(img)
+                                img.thumbnail((1600, 1600)) 
+                                buffered = io.BytesIO()
+                                img.convert("RGB").save(buffered, format="JPEG", quality=85)
+                                img_str = base64.b64encode(buffered.getvalue()).decode()
+                                new_img_list.append(img_str)
                             
-                        if st.session_state.rot_angle != 0:
-                            img = img.rotate(st.session_state.rot_angle, expand=True)
+                            # GHI ĐÈ BỘ ẢNH MỚI VÀO DATA (Luật "Có mới nới cũ")
+                            update_firebase("kpi_images", new_img_list)
+                            if old_kpi_single: delete_firebase("kpi_image")
                             
-                        st.image(img, caption="Bản xem trước. Nếu đọc được chữ thì hãy bấm Lưu", use_container_width=True)
-                        
-                        if c_save.button("💾 LƯU BẢNG NÀY CHO NHÂN VIÊN XEM", type="primary", use_container_width=True):
-                            img.thumbnail((1600, 1600)) 
-                            buffered = io.BytesIO()
-                            img.convert("RGB").save(buffered, format="JPEG", quality=85)
-                            img_str = base64.b64encode(buffered.getvalue()).decode()
-                            
-                            update_firebase("kpi_image", img_str)
-                            st.session_state.rot_angle = 0
-                            st.success("✅ Đã lưu thành công! Ảnh cũ đã bị xóa khỏi hệ thống.")
+                            st.success(f"✅ Đã tải lên {len(new_img_list)} ảnh thành công! Dữ liệu cũ đã bị xóa sạch.")
                             time.sleep(1)
                             st.rerun()
                             
-                    elif kpi_img_b64:
-                        if st.button("🗑️ Xóa vĩnh viễn ảnh hiện tại (Cho gọn máy)", type="primary"):
+                    if kpi_imgs:
+                        if st.button("🗑️ Xóa vĩnh viễn TOÀN BỘ ảnh KPI hiện tại", type="primary", key="kpi_del"):
+                            delete_firebase("kpi_images")
                             delete_firebase("kpi_image")
                             st.rerun()
 
             # Hiển thị ảnh (Trả lại tính năng bấm để phóng to nét căng)
-            if kpi_img_b64 and isinstance(kpi_img_b64, str):
-                with st.expander("📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI", expanded=False):
-                    try:
-                        img_bytes = base64.b64decode(kpi_img_b64)
-                        st.image(img_bytes, use_container_width=True)
-                    except:
-                        st.error("Lỗi hiển thị ảnh. Vui lòng báo Admin tải lại.")
+            if kpi_imgs:
+                with st.expander(f"📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI ({len(kpi_imgs)} trang)", expanded=False):
+                    for idx, img_b64 in enumerate(kpi_imgs):
+                        try:
+                            st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 15px; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
+                            img_bytes = base64.b64decode(img_b64)
+                            st.image(img_bytes, use_container_width=True)
+                        except:
+                            st.error(f"Lỗi hiển thị ảnh trang {idx + 1}. Vui lòng báo Admin tải lại.")
                         
             st.markdown("<hr style='border-color: rgba(150,150,150,0.1); margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
             
