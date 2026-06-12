@@ -4,6 +4,9 @@ import requests
 import pandas as pd
 import time
 import hashlib
+import io
+import base64
+from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
 # ==========================================
@@ -299,16 +302,11 @@ else:
             st.session_state.force_close_sidebar = False
             
         if need_close:
-            # Gắn biến time.time() vào để ép trình duyệt luôn chạy lại lệnh đóng
             components.html(f'''
                 <script id="auto-close-{time.time()}">
                     var doc = window.parent.document;
-                    
-                    // Thử bấm gập Sidebar trên Desktop
                     var desktopBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button');
                     if (desktopBtn) {{ desktopBtn.click(); }}
-                    
-                    // Thử bấm nút X trên Mobile hoặc overlay
                     var mobileBtns = doc.querySelectorAll('button[aria-label="Close"], button[aria-label="Collapse sidebar"], button[title="Collapse sidebar"]');
                     mobileBtns.forEach(function(btn) {{ btn.click(); }});
                 </script>
@@ -339,6 +337,62 @@ else:
 
         if selected_tab == "🎯 BẢNG KPI":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🎯 Tiến Độ Hoàn Thành KPI Tháng Này</h3>", unsafe_allow_html=True)
+            
+            # --- TÍNH NĂNG QUẢN LÝ ẢNH BẢNG TÍNH KPI ---
+            kpi_img_b64 = db.get("kpi_image", "")
+            
+            if st.session_state.is_admin:
+                with st.expander("📸 QUẢN LÝ ẢNH DANH MỤC KPI (Chỉ Admin)"):
+                    st.markdown("💡 *Khi tải lên ảnh mới, ảnh cũ sẽ tự động bị xóa hoàn toàn khỏi Đám mây để không tốn bộ nhớ lưu trữ.*")
+                    uploaded_file = st.file_uploader("Chọn ảnh Bảng tính KPI từ điện thoại/máy tính", type=["png", "jpg", "jpeg"])
+                    
+                    if 'rot_angle' not in st.session_state:
+                        st.session_state.rot_angle = 0
+                        
+                    if uploaded_file is not None:
+                        # Dùng PIL để đọc và tự xoay dựa vào cảm biến của camera
+                        img = Image.open(uploaded_file)
+                        img = ImageOps.exif_transpose(img)
+                        
+                        c_rot, c_save = st.columns(2)
+                        if c_rot.button("🔄 Bấm vào đây để xoay ảnh 90 độ (nếu bị lộn ngược)", use_container_width=True):
+                            st.session_state.rot_angle = (st.session_state.rot_angle - 90) % 360
+                            
+                        if st.session_state.rot_angle != 0:
+                            img = img.rotate(st.session_state.rot_angle, expand=True)
+                            
+                        st.image(img, caption="Bản xem trước. Nếu đọc được chữ thì hãy bấm Lưu", use_container_width=True)
+                        
+                        if c_save.button("💾 LƯU BẢNG NÀY CHO NHÂN VIÊN XEM", type="primary", use_container_width=True):
+                            # Nén dung lượng cực thấp để không làm chậm Firebase
+                            img.thumbnail((1600, 1600)) 
+                            buffered = io.BytesIO()
+                            img.convert("RGB").save(buffered, format="JPEG", quality=85)
+                            img_str = base64.b64encode(buffered.getvalue()).decode()
+                            
+                            update_firebase("kpi_image", img_str)
+                            st.session_state.rot_angle = 0
+                            st.success("✅ Đã lưu thành công! Ảnh cũ đã bị xóa khỏi hệ thống.")
+                            time.sleep(1)
+                            st.rerun()
+                            
+                    elif kpi_img_b64:
+                        if st.button("🗑️ Xóa vĩnh viễn ảnh hiện tại (Cho gọn máy)", type="primary"):
+                            delete_firebase("kpi_image")
+                            st.rerun()
+
+            # Hiển thị ảnh cho mọi người xem
+            if kpi_img_b64 and isinstance(kpi_img_b64, str):
+                with st.expander("📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI", expanded=False):
+                    try:
+                        img_bytes = base64.b64decode(kpi_img_b64)
+                        st.image(img_bytes, use_container_width=True)
+                    except:
+                        st.error("Lỗi hiển thị ảnh. Vui lòng báo Admin tải lại.")
+                        
+            st.markdown("<hr style='border-color: rgba(150,150,150,0.1); margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+            
+            # --- BẢNG THỐNG KÊ KPI ---
             kpi_node = db.get("kpi")
             if not isinstance(kpi_node, dict): kpi_node = {}
             kpi_data = kpi_node.get("emp")
