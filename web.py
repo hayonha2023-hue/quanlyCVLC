@@ -112,29 +112,6 @@ base_css = """
         font-weight: 600 !important;
         letter-spacing: 0.2px !important;
     }
-
-    /* EFFECT 6: SỬA LỖI KẸT ẢNH TRÊN ĐIỆN THOẠI - LÀM TO NÚT (X) ĐÓNG ẢNH VÀ CHUYỂN MÀU ĐỎ */
-    div[data-testid="StyledFullScreenFrame"] button {
-        top: 60px !important; 
-        right: 20px !important;
-        width: 55px !important;
-        height: 55px !important;
-        background-color: rgba(239, 68, 68, 0.95) !important; /* Đỏ rực dễ thấy */
-        border-radius: 50% !important;
-        opacity: 1 !important;
-        z-index: 9999999 !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.6) !important;
-        border: 2px solid white !important;
-    }
-    div[data-testid="StyledFullScreenFrame"] button:hover {
-        background-color: rgba(220, 38, 38, 1) !important;
-    }
-    div[data-testid="StyledFullScreenFrame"] button svg {
-        color: white !important;
-        fill: white !important;
-        width: 28px !important;
-        height: 28px !important;
-    }
 </style>
 """
 st.markdown(base_css, unsafe_allow_html=True)
@@ -296,6 +273,7 @@ else:
             selected_tab = st.radio("MENU CHỨC NĂNG", allowed_tabs, label_visibility="collapsed")
             st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1);'><br>", unsafe_allow_html=True)
             
+            # Khai báo tín hiệu tự thu gọn Sidebar
             if st.button("🔑 Cài đặt mật khẩu", use_container_width=True):
                 st.session_state.show_pass = not st.session_state.get("show_pass", False)
                 st.session_state.force_close_sidebar = True
@@ -401,12 +379,16 @@ else:
                             delete_firebase("kpi_image")
                             st.rerun()
 
-            # Hiển thị ảnh cho mọi người xem (Đã khôi phục chế độ phóng to an toàn)
+            # HIỂN THỊ ẢNH KHUNG VUỐT NGANG (GIẢI QUYẾT TRIỆT ĐỂ LỖI ĐIỆN THOẠI)
             if kpi_img_b64 and isinstance(kpi_img_b64, str):
                 with st.expander("📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI", expanded=False):
                     try:
-                        img_bytes = base64.b64decode(kpi_img_b64)
-                        st.image(img_bytes, use_container_width=True)
+                        st.markdown(f'''
+                        <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid rgba(150,150,150,0.2); border-radius: 8px;">
+                            <img src="data:image/jpeg;base64,{kpi_img_b64}" style="min-width: 900px; width: 100%; height: auto; display: block; border-radius: 8px;">
+                        </div>
+                        <p style="text-align: center; color: #0ea5e9; font-size: 13px; font-style: italic; margin-top: 10px;">👈 Mẹo: Dùng ngón tay vuốt ảnh sang trái/phải để xem 👉</p>
+                        ''', unsafe_allow_html=True)
                     except:
                         st.error("Lỗi hiển thị ảnh. Vui lòng báo Admin tải lại.")
                         
@@ -500,10 +482,14 @@ else:
                 with st.expander(f"📄 MỞ XEM BỘ ẢNH LỊCH TRỰC ({len(sched_imgs)} trang)", expanded=False):
                     for idx, img_b64 in enumerate(sched_imgs):
                         try:
-                            # Khôi phục tính năng phóng to an toàn
-                            img_bytes = base64.b64decode(img_b64)
-                            st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
-                            st.image(img_bytes, use_container_width=True)
+                            # HIỂN THỊ ẢNH KHUNG VUỐT NGANG (GIẢI QUYẾT TRIỆT ĐỂ LỖI ĐIỆN THOẠI)
+                            st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 15px; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
+                            st.markdown(f'''
+                            <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid rgba(150,150,150,0.2); border-radius: 8px;">
+                                <img src="data:image/jpeg;base64,{img_b64}" style="min-width: 900px; width: 100%; height: auto; display: block; border-radius: 8px;">
+                            </div>
+                            <p style="text-align: center; color: #0ea5e9; font-size: 13px; font-style: italic; margin-top: 8px;">👈 Mẹo: Dùng ngón tay vuốt ảnh sang trái/phải để xem 👉</p>
+                            ''', unsafe_allow_html=True)
                         except:
                             st.error(f"Lỗi hiển thị ảnh trang {idx + 1}.")
                         
