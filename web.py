@@ -351,23 +351,57 @@ else:
                     st.markdown("💡 *Khi tải lên bộ ảnh mới, toàn bộ ảnh cũ sẽ TỰ ĐỘNG BỊ XÓA SẠCH để không tốn dung lượng Đám mây.*")
                     uploaded_files = st.file_uploader("Chọn nhiều ảnh Bảng tính KPI", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kpi_up")
                     
+                    if 'rot_angles_kpi' not in st.session_state:
+                        st.session_state.rot_angles_kpi = {}
+                        
                     if uploaded_files:
+                        st.markdown("<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 10px;'>👀 BẢN XEM TRƯỚC TỪNG ẢNH:</p>", unsafe_allow_html=True)
+                        
+                        # Hiển thị xem trước và nút xoay ĐỘC LẬP cho từng ảnh KPI
+                        for i, up_file in enumerate(uploaded_files):
+                            fname = up_file.name
+                            if fname not in st.session_state.rot_angles_kpi:
+                                st.session_state.rot_angles_kpi[fname] = 0
+                                
+                            preview_img = Image.open(up_file)
+                            preview_img = ImageOps.exif_transpose(preview_img)
+                            
+                            angle = st.session_state.rot_angles_kpi[fname]
+                            if angle != 0:
+                                preview_img = preview_img.rotate(angle, expand=True)
+                                
+                            st.caption(f"Ảnh {i+1}: {fname}")
+                            st.image(preview_img, use_container_width=True)
+                            
+                            # NÚT XOAY RIÊNG TỪNG ẢNH
+                            if st.button(f"🔄 Xoay riêng ảnh {i+1} này 90 độ", key=f"rot_kpi_{i}_{fname}", use_container_width=True):
+                                st.session_state.rot_angles_kpi[fname] = (st.session_state.rot_angles_kpi[fname] - 90) % 360
+                                st.rerun()
+                                
+                            st.markdown("<hr style='border-color: rgba(150,150,150,0.2);'>", unsafe_allow_html=True)
+                            
                         if st.button("💾 LƯU BỘ ẢNH NÀY (GHI ĐÈ ẢNH CŨ)", type="primary", use_container_width=True, key="kpi_save"):
                             new_img_list = []
                             for up_file in uploaded_files:
+                                fname = up_file.name
                                 img = Image.open(up_file)
                                 img = ImageOps.exif_transpose(img)
+                                
+                                angle = st.session_state.rot_angles_kpi.get(fname, 0)
+                                if angle != 0:
+                                    img = img.rotate(angle, expand=True)
+                                    
                                 img.thumbnail((1600, 1600)) 
                                 buffered = io.BytesIO()
                                 img.convert("RGB").save(buffered, format="JPEG", quality=85)
                                 img_str = base64.b64encode(buffered.getvalue()).decode()
                                 new_img_list.append(img_str)
                             
-                            # GHI ĐÈ BỘ ẢNH MỚI VÀO DATA (Luật "Có mới nới cũ")
                             update_firebase("kpi_images", new_img_list)
                             if old_kpi_single: delete_firebase("kpi_image")
                             
-                            st.success(f"✅ Đã tải lên {len(new_img_list)} ảnh thành công! Dữ liệu cũ đã bị xóa sạch.")
+                            st.session_state.rot_angles_kpi = {} # Xóa nhớ góc xoay sau khi lưu
+                            st.success(f"✅ Đã tải lên {len(new_img_list)} ảnh đúng chiều! Dữ liệu cũ đã bị xóa sạch.")
                             time.sleep(1)
                             st.rerun()
                             
@@ -377,7 +411,6 @@ else:
                             delete_firebase("kpi_image")
                             st.rerun()
 
-            # Hiển thị ảnh (Trả lại tính năng bấm để phóng to nét căng)
             if kpi_imgs:
                 with st.expander(f"📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI ({len(kpi_imgs)} trang)", expanded=False):
                     for idx, img_b64 in enumerate(kpi_imgs):
@@ -435,7 +468,7 @@ else:
         elif selected_tab == "🗓️ LỊCH TRỰC":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🗓️ Bảng Phân Phối Lịch Trực Tuần</h3>", unsafe_allow_html=True)
             
-            # --- BẮT ĐẦU: QUẢN LÝ ẢNH LỊCH TRỰC (TỰ ĐỘNG XÓA ẢNH CŨ) ---
+            # --- BẮT ĐẦU: QUẢN LÝ ẢNH LỊCH TRỰC (TỰ ĐỘNG XÓA ẢNH CŨ + XOAY ĐỘC LẬP) ---
             sched_imgs = db.get("schedule_images", [])
             if not isinstance(sched_imgs, list): sched_imgs = []
             
@@ -448,23 +481,57 @@ else:
                     st.markdown("💡 *Khi tải lên bộ ảnh mới, toàn bộ lịch cũ sẽ TỰ ĐỘNG BỊ XÓA SẠCH để không tốn dung lượng Đám mây.*")
                     uploaded_files = st.file_uploader("Chọn bộ ảnh Lịch trực để thay thế", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="sched_up")
                     
+                    if 'rot_angles_sched' not in st.session_state:
+                        st.session_state.rot_angles_sched = {}
+                        
                     if uploaded_files:
+                        st.markdown("<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 10px;'>👀 BẢN XEM TRƯỚC TỪNG ẢNH:</p>", unsafe_allow_html=True)
+                        
+                        # Hiển thị xem trước và nút xoay ĐỘC LẬP cho từng ảnh lịch
+                        for i, up_file in enumerate(uploaded_files):
+                            fname = up_file.name
+                            if fname not in st.session_state.rot_angles_sched:
+                                st.session_state.rot_angles_sched[fname] = 0
+                                
+                            preview_img = Image.open(up_file)
+                            preview_img = ImageOps.exif_transpose(preview_img)
+                            
+                            angle = st.session_state.rot_angles_sched[fname]
+                            if angle != 0:
+                                preview_img = preview_img.rotate(angle, expand=True)
+                                
+                            st.caption(f"Ảnh {i+1}: {fname}")
+                            st.image(preview_img, use_container_width=True)
+                            
+                            # NÚT XOAY RIÊNG TỪNG ẢNH
+                            if st.button(f"🔄 Xoay riêng ảnh {i+1} này 90 độ", key=f"rot_sched_{i}_{fname}", use_container_width=True):
+                                st.session_state.rot_angles_sched[fname] = (st.session_state.rot_angles_sched[fname] - 90) % 360
+                                st.rerun()
+                                
+                            st.markdown("<hr style='border-color: rgba(150,150,150,0.2);'>", unsafe_allow_html=True)
+                            
                         if st.button("💾 LƯU BỘ LỊCH NÀY (GHI ĐÈ LỊCH CŨ)", type="primary", use_container_width=True, key="sched_save"):
                             new_img_list = []
                             for up_file in uploaded_files:
+                                fname = up_file.name
                                 img = Image.open(up_file)
                                 img = ImageOps.exif_transpose(img)
+                                
+                                angle = st.session_state.rot_angles_sched.get(fname, 0)
+                                if angle != 0:
+                                    img = img.rotate(angle, expand=True)
+                                    
                                 img.thumbnail((1600, 1600)) 
                                 buffered = io.BytesIO()
                                 img.convert("RGB").save(buffered, format="JPEG", quality=85)
                                 img_str = base64.b64encode(buffered.getvalue()).decode()
                                 new_img_list.append(img_str)
                             
-                            # GHI ĐÈ ẢNH MỚI VÀO BỘ NHỚ (Xóa sạch ảnh cũ)
                             update_firebase("schedule_images", new_img_list)
                             if old_single: delete_firebase("schedule_image")
                             
-                            st.success(f"✅ Đã tải lên {len(new_img_list)} ảnh mới! Lịch cũ đã bị xóa sạch.")
+                            st.session_state.rot_angles_sched = {} # Xóa nhớ góc xoay sau khi lưu
+                            st.success(f"✅ Đã tải lên {len(new_img_list)} ảnh đúng chiều! Lịch cũ đã bị xóa sạch.")
                             time.sleep(1)
                             st.rerun()
                             
