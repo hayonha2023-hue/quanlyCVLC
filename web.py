@@ -381,12 +381,11 @@ else:
                             delete_firebase("kpi_image")
                             st.rerun()
 
-            # Hiển thị ảnh cho mọi người xem
+            # Hiển thị ảnh cho mọi người xem (Đã vô hiệu hóa bấm phóng to gây kẹt)
             if kpi_img_b64 and isinstance(kpi_img_b64, str):
                 with st.expander("📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI", expanded=False):
                     try:
-                        img_bytes = base64.b64decode(kpi_img_b64)
-                        st.image(img_bytes, use_container_width=True)
+                        st.markdown(f'<img src="data:image/jpeg;base64,{kpi_img_b64}" style="width:100%; border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">', unsafe_allow_html=True)
                     except:
                         st.error("Lỗi hiển thị ảnh. Vui lòng báo Admin tải lại.")
                         
@@ -482,9 +481,9 @@ else:
                 with st.expander(f"📄 MỞ XEM BỘ ẢNH LỊCH TRỰC ({len(sched_imgs)} trang)", expanded=False):
                     for idx, img_b64 in enumerate(sched_imgs):
                         try:
-                            img_bytes = base64.b64decode(img_b64)
-                            st.image(img_bytes, caption=f"Trang {idx + 1}", use_container_width=True)
-                            st.markdown("<br>", unsafe_allow_html=True)
+                            # Hiển thị ảnh bằng HTML gốc để không bị kẹt màn hình điện thoại
+                            st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
+                            st.markdown(f'<img src="data:image/jpeg;base64,{img_b64}" style="width:100%; border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 15px;">', unsafe_allow_html=True)
                         except:
                             st.error(f"Lỗi hiển thị ảnh trang {idx + 1}.")
                         
