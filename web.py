@@ -437,19 +437,21 @@ else:
         elif selected_tab == "🗓️ LỊCH TRỰC":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🗓️ Bảng Phân Phối Lịch Trực Tuần</h3>", unsafe_allow_html=True)
             
-            # --- BẮT ĐẦU: QUẢN LÝ ẢNH LỊCH TRỰC (HỖ TRỢ NHIỀU ẢNH) ---
+            # --- BẮT ĐẦU: QUẢN LÝ ẢNH LỊCH TRỰC (CỘNG DỒN ALBUM) ---
             sched_imgs = db.get("schedule_images", [])
+            if not isinstance(sched_imgs, list): sched_imgs = []
+            
             old_single = db.get("schedule_image", "")
-            if old_single and not sched_imgs:
-                sched_imgs = [old_single]
+            if old_single and old_single not in sched_imgs:
+                sched_imgs.insert(0, old_single)
             
             if st.session_state.is_admin:
-                with st.expander("📸 QUẢN LÝ ẢNH BẢNG LỊCH TRỰC (Chỉ Admin)"):
-                    st.markdown("💡 *Có thể chọn nhiều ảnh cùng lúc. Tải lên mới sẽ tự động xóa bộ ảnh cũ.*")
-                    uploaded_files = st.file_uploader("Chọn nhiều ảnh Lịch trực", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="sched_up")
+                with st.expander("📸 THÊM ẢNH VÀO BẢNG LỊCH TRỰC (Chỉ Admin)"):
+                    st.markdown("💡 *Bạn có thể tải từng ảnh một, hệ thống sẽ tự động nối tiếp thành 1 Album dài.*")
+                    uploaded_files = st.file_uploader("Chọn ảnh Lịch trực để thêm", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="sched_up")
                     
                     if uploaded_files:
-                        if st.button("💾 LƯU TẤT CẢ ẢNH NÀY", type="primary", use_container_width=True, key="sched_save"):
+                        if st.button("➕ THÊM VÀO ALBUM LỊCH TRỰC", type="primary", use_container_width=True, key="sched_save"):
                             new_img_list = []
                             for up_file in uploaded_files:
                                 img = Image.open(up_file)
@@ -460,14 +462,18 @@ else:
                                 img_str = base64.b64encode(buffered.getvalue()).decode()
                                 new_img_list.append(img_str)
                             
-                            update_firebase("schedule_images", new_img_list)
-                            delete_firebase("schedule_image")
-                            st.success(f"✅ Đã lưu {len(new_img_list)} ảnh thành công!")
+                            # CỘNG DỒN ẢNH VÀO ALBUM CŨ
+                            sched_imgs.extend(new_img_list)
+                            
+                            update_firebase("schedule_images", sched_imgs)
+                            if old_single: delete_firebase("schedule_image") # Dọn rác
+                            
+                            st.success(f"✅ Đã thêm {len(new_img_list)} ảnh mới vào Album!")
                             time.sleep(1)
                             st.rerun()
                             
-                    elif sched_imgs:
-                        if st.button("🗑️ Xóa vĩnh viễn toàn bộ ảnh hiện tại", type="primary", key="sched_del"):
+                    if sched_imgs:
+                        if st.button("🗑️ Xóa vĩnh viễn TOÀN BỘ Album hiện tại làm lại từ đầu", type="primary", key="sched_del"):
                             delete_firebase("schedule_images")
                             delete_firebase("schedule_image")
                             st.rerun()
