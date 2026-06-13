@@ -552,15 +552,15 @@ else:
                         
                         st.markdown("**1. Cấp quyền XEM (Chỉ được mở đọc dữ liệu):**")
                         new_perms = st.multiselect("Bật/tắt các Tab hiển thị trên điện thoại:", 
-                            ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"], 
-                            default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"]],
+                            ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP", "XUẤT EXCEL", "GỬI ZALO"], 
+                            default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP", "XUẤT EXCEL", "GỬI ZALO"]],
                             key=f"perm_{u}"
                         )
                         
                         st.markdown("**2. Cấp quyền CHỈNH SỬA (Được phép Up Ảnh, Sửa Số, Ghi Sổ...):**")
                         new_edits = st.multiselect("Bật/tắt quyền thao tác trực tiếp:", 
-                            ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"], 
-                            default=[p for p in current_edits if p in ["TÍCH LŨY", "XEM LỊCH", "QUỸ SHOP"]],
+                            ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"], 
+                            default=[p for p in current_edits if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"]],
                             key=f"edit_{u}"
                         )
                         
