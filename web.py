@@ -247,7 +247,7 @@ else:
             if old_kpi_single and not kpi_imgs: kpi_imgs = [old_kpi_single]
             
             # Kiểm tra quyền: Là Admin HOẶC được cấp quyền Sửa Tích Lũy
-            if st.session_state.is_admin or "TÍCH LŨY" in edit_perms:
+            if st.session_state.is_admin or "SỬA SỐ KPI" in edit_perms:
                 with st.expander("📸 QUẢN LÝ ẢNH DANH MỤC KPI (Quyền thao tác)"):
                     st.markdown("💡 *Khi tải lên bộ ảnh mới, ảnh cũ sẽ TỰ ĐỘNG BỊ XÓA SẠCH.*")
                     uploaded_files = st.file_uploader("Chọn nhiều ảnh Bảng tính KPI", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kpi_up")
