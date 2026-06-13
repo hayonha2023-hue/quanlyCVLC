@@ -147,15 +147,32 @@ if st.session_state.user is None:
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Biểu tượng Khiên Bảo Mật (Shield Lock) tròn, nét mỏng tinh tế
-        st.markdown("""
-        <div style='text-align: center; margin-bottom: 25px;'>
+        # Đọc file ảnh logo từ Github và hiển thị
+        import os, base64
+        logo_html = ""
+        
+        # Hệ thống sẽ ưu tiên tìm Logo.png, nếu không có thì tìm Logo.ico
+        img_path = "Logo.png" if os.path.exists("Logo.png") else ("Logo.ico" if os.path.exists("Logo.ico") else "")
+        
+        if img_path:
+            with open(img_path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+                # Hiển thị ảnh bo góc mượt, viền sáng xanh tone-sur-tone với logo
+                logo_html = f"<img src='data:image/png;base64,{b64}' style='width: 100px; height: 100px; border-radius: 24px; box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4); margin-bottom: 15px; border: 1px solid rgba(14,165,233,0.3);'>"
+        else:
+            # Nếu ông chưa up ảnh lên Github hoặc đặt sai tên, nó sẽ hiện tạm cái khiên bảo mật
+            logo_html = """
             <div style='display: inline-flex; align-items: center; justify-content: center; width: 85px; height: 85px; border-radius: 50%; background: rgba(14, 165, 233, 0.05); border: 2px solid rgba(14, 165, 233, 0.4); box-shadow: 0 0 25px rgba(14, 165, 233, 0.15); margin-bottom: 15px;'>
                 <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     <rect x="9" y="10" width="6" height="6" rx="1" ry="1"></rect>
                     <path d="M12 10v-2a2 2 0 1 1 4 0v2"></path>
                 </svg>
-            </div>
+            </div>"""
+
+        st.markdown(f"""
+        <div style='text-align: center; margin-bottom: 25px;'>
+            {logo_html}
             <h1 style='color: #0ea5e9; font-size: 2.5rem; font-weight:900; margin: 0; letter-spacing: 1.5px;'>HTCV by DatTT</h1>
         </div>
         """, unsafe_allow_html=True)
