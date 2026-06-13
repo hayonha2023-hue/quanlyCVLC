@@ -107,20 +107,36 @@ if st.session_state.user is None:
         if u_url in users_db and get_hash(users_db[u_url]["pass"]) == t_url:
             st.session_state.user = u_url
             st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
-
 # ==========================================
 # MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
 # ==========================================
 if st.session_state.user is None:
-    _, col_center, _ = st.columns([1, 10, 1])
+    # Căn chỉnh lại form thu gọn vào giữa màn hình cho chuẩn form đăng nhập hiện đại
+    _, col_center, _ = st.columns([1, 1.5, 1])
     with col_center:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #0ea5e9; font-size: 2.8rem; font-weight:900;'>⚡ HTCV SYSTEM</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; margin-bottom: 40px; opacity: 0.6;'>Hệ Thống Quản Lý Số Cửa Hàng Chuyên Nghiệp</p>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Biểu tượng Quản lý Tòa nhà chuyên nghiệp + Gradient nền thay cho dấu sét
+        st.markdown("""
+        <div style='text-align: center; margin-bottom: 35px;'>
+            <div style='display: inline-flex; align-items: center; justify-content: center; width: 85px; height: 85px; border-radius: 22px; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4); margin-bottom: 20px;'>
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"></path>
+                    <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                    <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"></path>
+                    <path d="M10 9h.01"></path>
+                    <path d="M14 9h.01"></path>
+                    <path d="M10 13h.01"></path>
+                    <path d="M14 13h.01"></path>
+                </svg>
+            </div>
+            <h1 style='color: #0ea5e9; font-size: 2.8rem; font-weight:900; margin: 0; letter-spacing: 2px;'>HTCV by DatTT</h1>
+        </div>
+        """, unsafe_allow_html=True)
         
         if st.session_state.page == "login":
             with st.form("login_form"):
-                st.markdown("<h4 style='text-align: center; margin-bottom: 25px; font-weight:800;'>XÁC THỰC TÀI KHOẢN</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='text-align: center; margin-bottom: 25px; font-weight:800; letter-spacing:1px;'>XÁC THỰC TÀI KHOẢN</h4>", unsafe_allow_html=True)
                 u = st.text_input("👤 TÀI KHOẢN TRUY CẬP").strip().lower()
                 p = st.text_input("🔑 MẬT KHẨU BẢO MẬT", type="password")
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -147,8 +163,21 @@ if st.session_state.user is None:
                 if st.form_submit_button("GỬI YÊU CẦU DUYỆT", type="primary", use_container_width=True):
                     if new_u and new_p:
                         update_firebase("pending_users", {new_u: {"pass": new_p}})
-                        st.success("✅ Đã gửi thành công! Vui lòng báo Ban Quản Trị duyệt.")
+                        st.success("✅ Đã gửi thành công! Vui lòng báo Admin duyệt.")
                     else: st.error("Nhập đủ thông tin!")
+            if st.button("⬅ Quay lại đăng nhập", use_container_width=True): st.session_state.page = "login"; st.rerun()
+
+        elif st.session_state.page == "forgot":
+            with st.form("forgot_form"):
+                st.markdown("<h4 style='text-align: center; font-weight:800;'>KHÔI PHỤC MẬT KHẨU</h4>", unsafe_allow_html=True)
+                u = st.text_input("Tài khoản cần khôi phục").strip().lower()
+                new_p = st.text_input("Mật khẩu mới", type="password")
+                secret = st.text_input("Mã xác thực Admin")
+                if st.form_submit_button("XÁC NHẬN", type="primary", use_container_width=True):
+                    if secret == "admin123":
+                        update_firebase("users", {u: {"pass": new_p}})
+                        st.success("✅ Đổi thành công! Vui lòng quay lại đăng nhập.")
+                    else: st.error("❌ Mã bảo mật sai!")
             if st.button("⬅ Quay lại đăng nhập", use_container_width=True): st.session_state.page = "login"; st.rerun()
 
         elif st.session_state.page == "forgot":
