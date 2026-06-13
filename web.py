@@ -22,21 +22,52 @@ base_css = """
     }
     [data-testid="stMainBlockContainer"] { animation: SAFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     header { background-color: transparent !important; }
-    [data-testid="stHeaderActionElements"] {display: none !important;}
-    .stDeployButton {display: none !important;}
-    #manage-app-button {display: none !important;}
-    footer {display: none !important;}
+    [data-testid="stHeaderActionElements"], .stDeployButton, #manage-app-button, footer {display: none !important;}
     
+    /* 1. LÀM ĐẸP FORM ĐĂNG NHẬP (Làm mờ nền, bo góc sâu) */
     [data-testid="stForm"] {
-        border-radius: 20px !important; border: 1px solid rgba(150, 150, 150, 0.15) !important;
-        padding: 30px !important; background: rgba(255, 255, 255, 0.02) !important;
-        backdrop-filter: blur(10px) !important; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
+        border-radius: 20px !important; 
+        border: 1px solid rgba(150, 150, 150, 0.2) !important;
+        padding: 40px !important; 
+        background: rgba(150, 150, 150, 0.03) !important;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
     }
+    
+    /* 2. LÀM RÕ CỰC ĐỘ Ô NHẬP TÀI KHOẢN/MẬT KHẨU */
+    [data-testid="stTextInput"] label p {
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        color: #0ea5e9 !important; /* Chữ tiêu đề màu xanh cho dễ nhìn */
+        letter-spacing: 1px !important;
+        margin-bottom: 8px !important;
+    }
+    div[data-baseweb="input"] {
+        border-radius: 12px !important;
+        border: 2px solid rgba(150, 150, 150, 0.2) !important;
+        background-color: transparent !important;
+    }
+    div[data-baseweb="input"]:focus-within {
+        border-color: #0ea5e9 !important;
+        box-shadow: 0 0 10px rgba(14, 165, 233, 0.2) !important; /* Hiệu ứng phát sáng khi gõ */
+        background-color: rgba(14, 165, 233, 0.05) !important;
+    }
+    div[data-baseweb="input"] input {
+        padding: 16px 15px !important; /* Tăng độ cao ô nhập để dễ bấm trên điện thoại */
+        font-size: 16px !important;
+        font-weight: 600 !important;
+    }
+
+    /* 3. LÀM ĐẸP NÚT BẤM */
     .stButton>button {
-        border-radius: 12px !important; font-weight: 700 !important;
+        border-radius: 12px !important; 
+        font-weight: 700 !important;
+        height: 48px !important; /* Tăng chiều cao nút */
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
-    .stButton>button:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3) !important; }
+    .stButton>button:hover { 
+        transform: translateY(-2px) !important; 
+        box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3) !important; 
+    }
     
     [data-testid="stMetric"] { border-radius: 18px !important; padding: 20px !important; border: 1px solid rgba(14, 165, 233, 0.15) !important; }
     [data-testid="stMetric"]:hover { transform: translateY(-4px) !important; border-color: #0ea5e9 !important; box-shadow: 0 12px 24px rgba(14, 165, 233, 0.15) !important; }
@@ -54,7 +85,6 @@ base_css = """
     [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
     [data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 16px !important; font-weight: 600 !important; }
 
-    /* NÚT THOÁT ẢNH MÀU ĐỎ DÀNH CHO ĐIỆN THOẠI */
     div[data-testid="StyledFullScreenFrame"] button {
         top: 60px !important; right: 20px !important; width: 55px !important; height: 55px !important;
         background-color: rgba(239, 68, 68, 0.95) !important; border-radius: 50% !important;
@@ -111,36 +141,32 @@ if st.session_state.user is None:
 # MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
 # ==========================================
 if st.session_state.user is None:
-    # Căn chỉnh lại form thu gọn vào giữa màn hình cho chuẩn form đăng nhập hiện đại
-    _, col_center, _ = st.columns([1, 1.5, 1])
+    # Mở rộng cột giữa (từ 1.5 lên 1.8) để các ô nhập liệu được dài ra, thoáng mắt hơn
+    _, col_center, _ = st.columns([1, 1.8, 1])
     with col_center:
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Biểu tượng Quản lý Tòa nhà chuyên nghiệp + Gradient nền thay cho dấu sét
+        # Biểu tượng Khiên Bảo Mật (Shield Lock) tròn, nét mỏng tinh tế
         st.markdown("""
-        <div style='text-align: center; margin-bottom: 35px;'>
-            <div style='display: inline-flex; align-items: center; justify-content: center; width: 85px; height: 85px; border-radius: 22px; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4); margin-bottom: 20px;'>
-                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 21h18"></path>
-                    <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
-                    <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"></path>
-                    <path d="M10 9h.01"></path>
-                    <path d="M14 9h.01"></path>
-                    <path d="M10 13h.01"></path>
-                    <path d="M14 13h.01"></path>
+        <div style='text-align: center; margin-bottom: 25px;'>
+            <div style='display: inline-flex; align-items: center; justify-content: center; width: 85px; height: 85px; border-radius: 50%; background: rgba(14, 165, 233, 0.05); border: 2px solid rgba(14, 165, 233, 0.4); box-shadow: 0 0 25px rgba(14, 165, 233, 0.15); margin-bottom: 15px;'>
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <rect x="9" y="10" width="6" height="6" rx="1" ry="1"></rect>
+                    <path d="M12 10v-2a2 2 0 1 1 4 0v2"></path>
                 </svg>
             </div>
-            <h1 style='color: #0ea5e9; font-size: 2.8rem; font-weight:900; margin: 0; letter-spacing: 2px;'>HTCV by DatTT</h1>
+            <h1 style='color: #0ea5e9; font-size: 2.5rem; font-weight:900; margin: 0; letter-spacing: 1.5px;'>HTCV by DatTT</h1>
         </div>
         """, unsafe_allow_html=True)
         
         if st.session_state.page == "login":
             with st.form("login_form"):
-                st.markdown("<h4 style='text-align: center; margin-bottom: 25px; font-weight:800; letter-spacing:1px;'>XÁC THỰC TÀI KHOẢN</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='text-align: center; margin-bottom: 30px; font-weight:800; color: #64748b;'>XÁC THỰC TÀI KHOẢN</h4>", unsafe_allow_html=True)
                 u = st.text_input("👤 TÀI KHOẢN TRUY CẬP").strip().lower()
                 p = st.text_input("🔑 MẬT KHẨU BẢO MẬT", type="password")
                 st.markdown("<br>", unsafe_allow_html=True)
-                if st.form_submit_button("🚀 ĐĂNG NHẬP HỆ THỐNG", type="primary", use_container_width=True):
+                if st.form_submit_button("🚀 ĐĂNG NHẬP", type="primary", use_container_width=True):
                     users = db.get("users", {})
                     if u in users and users[u]["pass"] == p:
                         st.session_state.user = u
@@ -148,7 +174,7 @@ if st.session_state.user is None:
                         st.query_params["u"] = u
                         st.query_params["t"] = get_hash(p)
                         st.rerun()
-                    elif u in db.get("pending_users", {}): st.warning("⏳ Tài khoản đang chờ Admin duyệt!")
+                    elif u in db.get("pending_users", {}): st.warning("⏳ Tài khoản đang chờ duyệt!")
                     else: st.error("❌ Sai thông tin đăng nhập!")
                     
             c1, c2 = st.columns(2)
@@ -157,16 +183,30 @@ if st.session_state.user is None:
 
         elif st.session_state.page == "register":
             with st.form("reg_form"):
-                st.markdown("<h4 style='text-align: center; font-weight:800;'>ĐĂNG KÝ TÀI KHOẢN MỚI</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='text-align: center; margin-bottom: 30px; font-weight:800; color: #64748b;'>ĐĂNG KÝ MỚI</h4>", unsafe_allow_html=True)
                 new_u = st.text_input("Tên đăng nhập").strip().lower()
                 new_p = st.text_input("Mật khẩu truy cập", type="password")
+                st.markdown("<br>", unsafe_allow_html=True)
                 if st.form_submit_button("GỬI YÊU CẦU DUYỆT", type="primary", use_container_width=True):
                     if new_u and new_p:
                         update_firebase("pending_users", {new_u: {"pass": new_p}})
-                        st.success("✅ Đã gửi thành công! Vui lòng báo Admin duyệt.")
+                        st.success("✅ Đã gửi! Vui lòng báo Admin duyệt.")
                     else: st.error("Nhập đủ thông tin!")
-            if st.button("⬅ Quay lại đăng nhập", use_container_width=True): st.session_state.page = "login"; st.rerun()
+            if st.button("⬅ Quay lại", use_container_width=True): st.session_state.page = "login"; st.rerun()
 
+        elif st.session_state.page == "forgot":
+            with st.form("forgot_form"):
+                st.markdown("<h4 style='text-align: center; margin-bottom: 30px; font-weight:800; color: #64748b;'>KHÔI PHỤC MẬT KHẨU</h4>", unsafe_allow_html=True)
+                u = st.text_input("Tài khoản cần khôi phục").strip().lower()
+                new_p = st.text_input("Mật khẩu mới", type="password")
+                secret = st.text_input("Mã xác thực Admin", type="password")
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.form_submit_button("XÁC NHẬN", type="primary", use_container_width=True):
+                    if secret == "admin123":
+                        update_firebase("users", {u: {"pass": new_p}})
+                        st.success("✅ Đổi thành công! Vui lòng đăng nhập lại.")
+                    else: st.error("❌ Mã bảo mật sai!")
+            if st.button("⬅ Quay lại", use_container_width=True): st.session_state.page = "login"; st.rerun()
         elif st.session_state.page == "forgot":
             with st.form("forgot_form"):
                 st.markdown("<h4 style='text-align: center; font-weight:800;'>KHÔI PHỤC MẬT KHẨU</h4>", unsafe_allow_html=True)
