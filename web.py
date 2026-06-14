@@ -620,14 +620,15 @@ else:
                     with st.container():
                         c1, c2, c3 = st.columns([4, 2, 2])
                         c1.markdown(f"**👤 Tài khoản: {pu}**")
-                        if c2.button("✅ Phê duyệt cấp quyền", key=f"ok_{pu}", type="primary", use_container_width=True):
-                            update_firebase(f"users/{pu}", {"pass": pinfo["pass"], "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY", "LỊCH ECOM", "THỊ TRƯỜNG"]})
+                        if c2.button("✅ Phê duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
+                            # Khắc phục lỗi tương thích Pass khi đăng ký đa nền tảng
+                            pwd = pinfo.get("pass", "123456") if isinstance(pinfo, dict) else pinfo
+                            update_firebase(f"users/{pu}", {"pass": pwd, "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY"], "edit_permissions": []})
                             delete_firebase(f"pending_users/{pu}"); st.rerun()
                         if c3.button("❌ Bác bỏ", key=f"rej_{pu}", use_container_width=True):
                             delete_firebase(f"pending_users/{pu}"); st.rerun()
             
             st.divider()
-            # BẢNG PHÂN QUYỀN 2 LỚP SIÊU CHI TIẾT
             st.markdown("#### 🔑 Phân Quyền Hạn Tùy Chỉnh (Xem & Sửa) Cho Từng Nhân Sự")
             users = db.get("users", {})
             for u, uinfo in users.items():
@@ -637,20 +638,23 @@ else:
                         current_edits = uinfo.get("edit_permissions", [])
                         
                         st.markdown("**1. Cấp quyền XEM (Chỉ được mở đọc dữ liệu):**")
+                        # Cập nhật đúng 13 chức năng chuẩn của App Window
+                        view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "TARGET KPI", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM"]
                         new_perms = st.multiselect("Bật/tắt các Tab hiển thị trên điện thoại:", 
-                            ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP", "XUẤT EXCEL", "GỬI ZALO"], 
-                            default=[p for p in current_perms if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP", "XUẤT EXCEL", "GỬI ZALO"]],
+                            view_options, 
+                            default=[p for p in current_perms if p in view_options],
                             key=f"perm_{u}"
                         )
                         
                         st.markdown("**2. Cấp quyền CHỈNH SỬA (Được phép Up Ảnh, Sửa Số, Ghi Sổ...):**")
+                        edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP"]
                         new_edits = st.multiselect("Bật/tắt quyền thao tác trực tiếp:", 
-                            ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"], 
-                            default=[p for p in current_edits if p in ["TÍCH LŨY", "XEM LỊCH", "LỊCH ECOM", "THỊ TRƯỜNG", "QUỸ SHOP"]],
+                            edit_options, 
+                            default=[p for p in current_edits if p in edit_options],
                             key=f"edit_{u}"
                         )
                         
                         if st.button("💾 LƯU BẢNG PHÂN QUYỀN NÀY", key=f"save_{u}", type="primary", use_container_width=True):
-                            update_firebase(f"users/{u}/permissions", new_perms)
-                            update_firebase(f"users/{u}/edit_permissions", new_edits)
-                            st.success(f"Đã cập nhật bảng phân quyền chi tiết cho tài khoản {u}!"); time.sleep(0.5); st.rerun()
+                            # SỬA LỖI PHÂN QUYỀN KHÔNG ĂN: Dùng 1 lệnh đè thẳng mảng cũ thay vì trộn
+                            update_firebase(f"users/{u}", {"permissions": new_perms, "edit_permissions": new_edits})
+                            st.success(f"Đã cập nhật bảng phân quyền cho tài khoản {u}!"); time.sleep(0.5); st.rerun()
