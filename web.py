@@ -137,6 +137,7 @@ if st.session_state.user is None:
         if u_url in users_db and get_hash(users_db[u_url]["pass"]) == t_url:
             st.session_state.user = u_url
             st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
+
 # ==========================================
 # MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
 # ==========================================
@@ -224,31 +225,6 @@ if st.session_state.user is None:
                         st.success("✅ Đổi thành công! Vui lòng đăng nhập lại.")
                     else: st.error("❌ Mã bảo mật sai!")
             if st.button("⬅ Quay lại", use_container_width=True): st.session_state.page = "login"; st.rerun()
-        elif st.session_state.page == "forgot":
-            with st.form("forgot_form"):
-                st.markdown("<h4 style='text-align: center; font-weight:800;'>KHÔI PHỤC MẬT KHẨU</h4>", unsafe_allow_html=True)
-                u = st.text_input("Tài khoản cần khôi phục").strip().lower()
-                new_p = st.text_input("Mật khẩu mới", type="password")
-                secret = st.text_input("Mã xác thực Admin")
-                if st.form_submit_button("XÁC NHẬN", type="primary", use_container_width=True):
-                    if secret == "admin123":
-                        update_firebase("users", {u: {"pass": new_p}})
-                        st.success("✅ Đổi thành công! Vui lòng quay lại đăng nhập.")
-                    else: st.error("❌ Mã bảo mật sai!")
-            if st.button("⬅ Quay lại đăng nhập", use_container_width=True): st.session_state.page = "login"; st.rerun()
-
-        elif st.session_state.page == "forgot":
-            with st.form("forgot_form"):
-                st.markdown("<h4 style='text-align: center; font-weight:800;'>KHÔI PHỤC MẬT KHẨU</h4>", unsafe_allow_html=True)
-                u = st.text_input("Tài khoản cần khôi phục").strip().lower()
-                new_p = st.text_input("Mật khẩu mới", type="password")
-                secret = st.text_input("Mã xác thực Admin")
-                if st.form_submit_button("XÁC NHẬN", type="primary", use_container_width=True):
-                    if secret == "admin123":
-                        update_firebase("users", {u: {"pass": new_p}})
-                        st.success("✅ Đổi thành công! Vui lòng quay lại đăng nhập.")
-                    else: st.error("❌ Mã bảo mật sai!")
-            if st.button("⬅ Quay lại đăng nhập", use_container_width=True): st.session_state.page = "login"; st.rerun()
 
 # ==========================================
 # MÀN HÌNH CHÍNH & SIDEBAR
@@ -256,7 +232,7 @@ if st.session_state.user is None:
 else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
     perms = u_info.get("permissions", [])
-    edit_perms = u_info.get("edit_permissions", []) # Khai báo bộ quyền Edit mới
+    edit_perms = u_info.get("edit_permissions", []) 
     
     tab_dict = {"🎯 BẢNG KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP"}
     allowed_tabs = []
@@ -264,13 +240,13 @@ else:
     # Đọc danh sách bị ẩn từ Đám mây
     hidden = db.get("settings", {}).get("hidden_features", [])
 
-        if st.session_state.is_admin: 
-            allowed_tabs = [k for k, v in tab_dict.items() if v not in hidden] + ["👥 QUẢN TRỊ ADMIN"]
-        else: 
-            allowed_tabs = [k for k, v in tab_dict.items() if (v in perms) and (v not in hidden)]
+    if st.session_state.is_admin: 
+        allowed_tabs = [k for k, v in tab_dict.items() if v not in hidden] + ["👥 QUẢN TRỊ ADMIN"]
+    else: 
+        allowed_tabs = [k for k, v in tab_dict.items() if (v in perms) and (v not in hidden)]
 
     if not allowed_tabs:
-        st.error("Tài khoản chưa được cấp quyền truy cập.")
+        st.error("Tài khoản chưa được cấp quyền truy cập hoặc chức năng đang bị ẩn.")
         if st.button("Thoát"): logout()
     else:
         with st.sidebar:
@@ -424,7 +400,7 @@ else:
                 df_kpi = pd.DataFrame(kpi_list)
 
                 # Quyền Sửa Số KPI
-                if st.session_state.is_admin or "TÍCH LŨY" in edit_perms:
+                if st.session_state.is_admin or "SỬA SỐ KPI" in edit_perms:
                     st.caption("💡 Chạm 2 lần vào ô 'Đã Bán (Số lượng)' để sửa nhanh.")
                     edited_df = st.data_editor(df_kpi, hide_index=True, disabled=["Nhân Viên", "Target Giao", "Còn Thiếu KPI"], use_container_width=True)
                     st.markdown("<br>", unsafe_allow_html=True)
@@ -447,7 +423,7 @@ else:
             if old_single and old_single not in sched_imgs: sched_imgs.insert(0, old_single)
             
             # Kiểm tra quyền Sửa Lịch
-            if st.session_state.is_admin or "XEM LỊCH" in edit_perms:
+            if st.session_state.is_admin or "UP ẢNH LỊCH TRỰC" in edit_perms:
                 with st.expander("📸 QUẢN LÝ ẢNH BẢNG LỊCH TRỰC (Quyền thao tác)"):
                     st.markdown("💡 *Khi tải lên bộ ảnh mới, toàn bộ lịch cũ sẽ TỰ ĐỘNG BỊ XÓA SẠCH.*")
                     uploaded_files = st.file_uploader("Chọn bộ ảnh Lịch trực để thay thế", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="sched_up")
@@ -506,12 +482,11 @@ else:
                         except: st.error(f"Lỗi hiển thị ảnh trang {idx + 1}.")
             
             st.markdown("<hr style='border-color: rgba(150,150,150,0.1); margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+            
             history = db.get("detailed_history", {})
             if not history: st.info("Chưa có thông tin phân lịch tự động.")
             else:
-        # Lọc ẩn Ca 10h30 nếu Admin đã tắt
                 hidden = db.get("settings", {}).get("hidden_features", [])
-                
                 lich_list = []
                 for date_str, shifts in history.items():
                     row_data = {
@@ -519,12 +494,12 @@ else:
                         "Ca Sáng": ", ".join(shifts.get("Sáng", [])) if shifts.get("Sáng") else "-",
                         "Ca Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "-"
                     }
-                    # Chỉ thêm cột Ca 10h30 vào bảng nếu nó KHÔNG nằm trong danh sách ẩn
                     if "CA 10H30" not in hidden:
                         row_data["Ca Đêm (10h30)"] = ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
                         
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
+
         # ==========================================
         # 3. TAB LỊCH ECOM & THỊ TRƯỜNG (Chỉ xem)
         # ==========================================
@@ -576,7 +551,7 @@ else:
             st.markdown("<br>", unsafe_allow_html=True)
             
             # Quyền Sửa Sổ Quỹ
-            if st.session_state.is_admin or "QUỸ SHOP" in edit_perms:
+            if st.session_state.is_admin or "QUẢN LÝ QUỸ SHOP" in edit_perms:
                 with st.expander("➕ HÀNH ĐỘNG GHI CHỨNG TỪ THU / CHI MỚI (Quyền thao tác)", expanded=False):
                     with st.form("fund_form", clear_on_submit=True):
                         f_type = st.selectbox("Phân loại dòng tiền", ["Thu", "Chi"])
@@ -606,7 +581,7 @@ else:
                 st.dataframe(pd.DataFrame(quy_list), hide_index=True, use_container_width=True)
                 
                 # Quyền Xóa Chứng Từ
-                if st.session_state.is_admin or "QUỸ SHOP" in edit_perms:
+                if st.session_state.is_admin or "QUẢN LÝ QUỸ SHOP" in edit_perms:
                     st.caption("Hủy chứng từ sai sót (Chỉ dành cho Admin/Quản lý Quỹ):")
                     c_sel, c_del = st.columns([3, 1])
                     xoa_id = c_sel.selectbox("Chọn mã chứng từ hủy:", [tx["Mã CT"] for tx in quy_list], label_visibility="collapsed")
@@ -616,7 +591,7 @@ else:
                         st.success("Đã xóa bỏ chứng từ khỏi sổ gốc!"); time.sleep(0.5); st.rerun()
 
         # ==========================================
-        # 5. TAB ADMIN (MỚI: PHÂN QUYỀN VIEW VÀ EDIT ĐỘC LẬP)
+        # 5. TAB ADMIN (PHÂN QUYỀN VIEW VÀ EDIT ĐỘC LẬP)
         # ==========================================
         elif selected_tab == "👥 QUẢN TRỊ ADMIN":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>⚙️ Trung Tâm Điều Hành Quản Trị Hệ Thống</h3>", unsafe_allow_html=True)
@@ -647,7 +622,6 @@ else:
                         current_edits = uinfo.get("edit_permissions", [])
                         
                         st.markdown("**1. Cấp quyền XEM (Chỉ được mở đọc dữ liệu):**")
-                        # Cập nhật đúng 13 chức năng chuẩn của App Window
                         view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "TARGET KPI", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM"]
                         new_perms = st.multiselect("Bật/tắt các Tab hiển thị trên điện thoại:", 
                             view_options, 
@@ -656,7 +630,7 @@ else:
                         )
                         
                         st.markdown("**2. Cấp quyền CHỈNH SỬA (Được phép Up Ảnh, Sửa Số, Ghi Sổ...):**")
-                        edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP"]
+                        edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA"]
                         new_edits = st.multiselect("Bật/tắt quyền thao tác trực tiếp:", 
                             edit_options, 
                             default=[p for p in current_edits if p in edit_options],
@@ -664,6 +638,5 @@ else:
                         )
                         
                         if st.button("💾 LƯU BẢNG PHÂN QUYỀN NÀY", key=f"save_{u}", type="primary", use_container_width=True):
-                            # SỬA LỖI PHÂN QUYỀN KHÔNG ĂN: Dùng 1 lệnh đè thẳng mảng cũ thay vì trộn
                             update_firebase(f"users/{u}", {"permissions": new_perms, "edit_permissions": new_edits})
                             st.success(f"Đã cập nhật bảng phân quyền cho tài khoản {u}!"); time.sleep(0.5); st.rerun()
