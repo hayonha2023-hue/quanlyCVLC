@@ -509,7 +509,7 @@ else:
             history = db.get("detailed_history", {})
             if not history: st.info("Chưa có thông tin phân lịch tự động.")
             else:
-                # Lọc ẩn Ca 10h30 nếu Admin đã tắt
+        # Lọc ẩn Ca 10h30 nếu Admin đã tắt
                 hidden = db.get("settings", {}).get("hidden_features", [])
                 
                 lich_list = []
@@ -525,7 +525,6 @@ else:
                         
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
-
         # ==========================================
         # 3. TAB LỊCH ECOM & THỊ TRƯỜNG (Chỉ xem)
         # ==========================================
