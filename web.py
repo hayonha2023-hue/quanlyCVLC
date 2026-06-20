@@ -262,7 +262,7 @@ else:
     allowed_tabs = []
     
     # Đọc danh sách bị ẩn từ Đám mây
-        hidden = db.get("settings", {}).get("hidden_features", [])
+    hidden = db.get("settings", {}).get("hidden_features", [])
 
         if st.session_state.is_admin: 
             allowed_tabs = [k for k, v in tab_dict.items() if v not in hidden] + ["👥 QUẢN TRỊ ADMIN"]
