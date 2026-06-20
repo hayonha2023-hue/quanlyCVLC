@@ -261,10 +261,13 @@ else:
     tab_dict = {"🎯 BẢNG KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP"}
     allowed_tabs = []
     
-    if st.session_state.is_admin: 
-        allowed_tabs = list(tab_dict.keys()) + ["👥 QUẢN TRỊ ADMIN"]
-    else: 
-        allowed_tabs = [k for k, v in tab_dict.items() if v in perms]
+    # Đọc danh sách bị ẩn từ Đám mây
+        hidden = db.get("settings", {}).get("hidden_features", [])
+
+        if st.session_state.is_admin: 
+            allowed_tabs = [k for k, v in tab_dict.items() if v not in hidden] + ["👥 QUẢN TRỊ ADMIN"]
+        else: 
+            allowed_tabs = [k for k, v in tab_dict.items() if (v in perms) and (v not in hidden)]
 
     if not allowed_tabs:
         st.error("Tài khoản chưa được cấp quyền truy cập.")
@@ -506,14 +509,21 @@ else:
             history = db.get("detailed_history", {})
             if not history: st.info("Chưa có thông tin phân lịch tự động.")
             else:
+                # Lọc ẩn Ca 10h30 nếu Admin đã tắt
+                hidden = db.get("settings", {}).get("hidden_features", [])
+                
                 lich_list = []
                 for date_str, shifts in history.items():
-                    lich_list.append({
+                    row_data = {
                         "Mốc Thời Gian": date_str,
                         "Ca Sáng": ", ".join(shifts.get("Sáng", [])) if shifts.get("Sáng") else "-",
-                        "Ca Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "-",
-                        "Ca Đêm (10h30)": ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
-                    })
+                        "Ca Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "-"
+                    }
+                    # Chỉ thêm cột Ca 10h30 vào bảng nếu nó KHÔNG nằm trong danh sách ẩn
+                    if "CA 10H30" not in hidden:
+                        row_data["Ca Đêm (10h30)"] = ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
+                        
+                    lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
