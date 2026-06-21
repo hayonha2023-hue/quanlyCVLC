@@ -234,8 +234,7 @@ else:
     perms = u_info.get("permissions", [])
     edit_perms = u_info.get("edit_permissions", []) 
     
-    tab_dict = {"🎯 BẢNG KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP"}
-    allowed_tabs = []
+    tab_dict = {"🎯 BẢNG KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP", "🤖 AI TƯ VẤN": "AI TƯ VẤN"}
     
     # Đọc danh sách bị ẩn từ Đám mây
     hidden = db.get("settings", {}).get("hidden_features", [])
@@ -590,6 +589,74 @@ else:
                         delete_firebase(f"quy_shop/{full_id}")
                         st.success("Đã xóa bỏ chứng từ khỏi sổ gốc!"); time.sleep(0.5); st.rerun()
 
+        # ==========================================
+        # 6. TAB AI TƯ VẤN VẮC XIN (TRÊN WEB)
+        # ==========================================
+        elif selected_tab == "🤖 AI TƯ VẤN":
+            st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🤖 Trợ Lý AI Tư Vấn Y Khoa</h3>", unsafe_allow_html=True)
+            
+            # Khởi tạo bộ nhớ tạm để lưu lịch sử chat không tốn dung lượng Đám mây
+            if "vaccine_chat" not in st.session_state:
+                st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ chuyên gia tư vấn Vắc xin. Bạn cần hỗ trợ thông tin gì về các loại vắc xin, phác đồ tiêm hay chống chỉ định không?"}]
+
+            # Khu vực hiển thị tin nhắn (Giao diện bong bóng chat)
+            chat_container = st.container()
+            with chat_container:
+                for msg in st.session_state.vaccine_chat:
+                    with st.chat_message(msg["role"]):
+                        st.markdown(msg["content"])
+
+            # Ô nhập liệu nằm dính ở đáy màn hình
+            if prompt := st.chat_input("Nhập câu hỏi về vắc xin của bạn vào đây..."):
+                # 1. In câu hỏi của user ra màn hình
+                st.session_state.vaccine_chat.append({"role": "user", "content": prompt})
+                with chat_container:
+                    with st.chat_message("user"): st.markdown(prompt)
+                    
+                    # 2. In bong bóng chờ của AI
+                    with st.chat_message("assistant"):
+                        placeholder = st.empty()
+                        placeholder.markdown("⏳ Đang phân tích dữ liệu y khoa...")
+                        
+                        k_list = db.get("settings", {}).get("api_keys", [])
+                        if not k_list:
+                            reply = "❌ Hệ thống chưa có API Key. Hãy nhờ Quản lý cài đặt API Key trên phần mềm máy tính."
+                        else:
+                            contents = []
+                            # Ép AI đóng vai chuyên gia
+                            system_instruction = "Bạn là một Bác sĩ chuyên gia tư vấn Vắc xin hàng đầu. Nhiệm vụ của bạn là tư vấn cho nhân viên y tế về các loại vắc xin, phác đồ tiêm, chỉ định, chống chỉ định và tác dụng phụ. Trình bày bằng tiếng Việt, có xuống dòng và gạch đầu dòng rõ ràng. Tuyệt đối không dùng emoji."
+                            contents.append({"role": "user", "parts": [{"text": system_instruction}]})
+                            contents.append({"role": "model", "parts": [{"text": "Vâng, tôi sẽ thực hiện đúng vai trò."}]})
+                            
+                            # Truyền lịch sử trò chuyện (8 tin gần nhất)
+                            for m in st.session_state.vaccine_chat[-8:]:
+                                if m["role"] == "user": 
+                                    contents.append({"role": "user", "parts": [{"text": m["content"]}]})
+                                elif m["role"] == "assistant" and "⏳" not in m["content"] and "❌" not in m["content"]:
+                                    contents.append({"role": "model", "parts": [{"text": m["content"]}]})
+                                    
+                            payload = {"contents": contents, "generationConfig": {"temperature": 0.3}}
+                            suc = False
+                            reply = "❌ Máy chủ AI đang bận hoặc hết hạn ngạch. Vui lòng thử lại sau."
+                            
+                            for k in k_list:
+                                if suc: break
+                                for m_name in ["gemma-4", "gemini-2.0-flash"]:
+                                    try:
+                                        r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{m_name}:generateContent?key={k}", json=payload, timeout=20)
+                                        if r.status_code == 200:
+                                            reply = "".join(c for c in r.json()['candidates'][0]['content']['parts'][0]['text'] if ord(c)<=0xFFFF)
+                                            suc = True; break
+                                    except: continue
+                                    
+                        # 3. Thay thế bong bóng chờ bằng câu trả lời chính thức
+                        placeholder.markdown(reply)
+                        st.session_state.vaccine_chat.append({"role": "assistant", "content": reply})
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🗑️ Làm Mới Cuộc Trò Chuyện", type="secondary", use_container_width=True):
+                st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ chuyên gia tư vấn Vắc xin. Bạn cần hỗ trợ thông tin gì về các loại vắc xin, phác đồ tiêm hay chống chỉ định không?"}]
+                st.rerun()
         # ==========================================
         # 5. TAB ADMIN (PHÂN QUYỀN VIEW VÀ EDIT ĐỘC LẬP)
         # ==========================================
