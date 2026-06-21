@@ -628,26 +628,31 @@ else:
                             contents.append({"role": "user", "parts": [{"text": system_instruction}]})
                             contents.append({"role": "model", "parts": [{"text": "Vâng, tôi sẽ thực hiện đúng vai trò."}]})
                             
-                            # Truyền lịch sử trò chuyện (8 tin gần nhất)
+                            # Truyền lịch sử trò chuyện (BỎ QUA CÂU CHÀO ĐỂ TRÁNH LỖI SO LE CỦA GOOGLE)
                             for m in st.session_state.vaccine_chat[-8:]:
                                 if m["role"] == "user": 
                                     contents.append({"role": "user", "parts": [{"text": m["content"]}]})
-                                elif m["role"] == "assistant" and "⏳" not in m["content"] and "❌" not in m["content"]:
+                                elif m["role"] == "assistant" and "Chào bạn! Tôi là" not in m["content"] and "⏳" not in m["content"] and "❌" not in m["content"]:
                                     contents.append({"role": "model", "parts": [{"text": m["content"]}]})
                                     
                             payload = {"contents": contents, "generationConfig": {"temperature": 0.3}}
                             suc = False
-                            reply = "❌ Máy chủ AI đang bận hoặc hết hạn ngạch. Vui lòng thử lại sau."
+                            reply = "❌ Máy chủ AI đang bận hoặc hết hạn ngạch."
                             
                             for k in k_list:
                                 if suc: break
-                                for m_name in ["gemma-4", "gemini-2.0-flash"]:
+                                for m_name in ["gemini-1.5-flash", "gemini-1.5-pro"]:
                                     try:
                                         r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{m_name}:generateContent?key={k}", json=payload, timeout=20)
                                         if r.status_code == 200:
                                             reply = "".join(c for c in r.json()['candidates'][0]['content']['parts'][0]['text'] if ord(c)<=0xFFFF)
                                             suc = True; break
-                                    except: continue
+                                        else:
+                                            # Bắt lỗi hiển thị thẳng ra màn hình nếu Google từ chối
+                                            reply = f"❌ BỊ GOOGLE CHẶN (Lỗi {r.status_code}): {r.json().get('error', {}).get('message', r.text)}"
+                                    except Exception as e: 
+                                        reply = f"❌ LỖI MẠNG: {str(e)}"
+                                        continue
                                     
                         # 3. Thay thế bong bóng chờ bằng câu trả lời chính thức
                         placeholder.markdown(reply)
