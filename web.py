@@ -24,73 +24,25 @@ base_css = """
     header { background-color: transparent !important; }
     [data-testid="stHeaderActionElements"], .stDeployButton, #manage-app-button, footer {display: none !important;}
     
-    /* 1. LÀM ĐẸP FORM ĐĂNG NHẬP (Làm mờ nền, bo góc sâu) */
-    [data-testid="stForm"] {
-        border-radius: 20px !important; 
-        border: 1px solid rgba(150, 150, 150, 0.2) !important;
-        padding: 40px !important; 
-        background: rgba(150, 150, 150, 0.03) !important;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    /* 2. LÀM RÕ CỰC ĐỘ Ô NHẬP TÀI KHOẢN/MẬT KHẨU */
-    [data-testid="stTextInput"] label p {
-        font-size: 14px !important;
-        font-weight: 800 !important;
-        color: #0ea5e9 !important; /* Chữ tiêu đề màu xanh cho dễ nhìn */
-        letter-spacing: 1px !important;
-        margin-bottom: 8px !important;
-    }
-    div[data-baseweb="input"] {
-        border-radius: 12px !important;
-        border: 2px solid rgba(150, 150, 150, 0.2) !important;
-        background-color: transparent !important;
-    }
-    div[data-baseweb="input"]:focus-within {
-        border-color: #0ea5e9 !important;
-        box-shadow: 0 0 10px rgba(14, 165, 233, 0.2) !important; /* Hiệu ứng phát sáng khi gõ */
-        background-color: rgba(14, 165, 233, 0.05) !important;
-    }
-    div[data-baseweb="input"] input {
-        padding: 16px 15px !important; /* Tăng độ cao ô nhập để dễ bấm trên điện thoại */
-        font-size: 16px !important;
-        font-weight: 600 !important;
-    }
+    [data-testid="stForm"] { border-radius: 20px !important; border: 1px solid rgba(150, 150, 150, 0.2) !important; padding: 40px !important; background: rgba(150, 150, 150, 0.03) !important; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important; }
+    [data-testid="stTextInput"] label p { font-size: 14px !important; font-weight: 800 !important; color: #0ea5e9 !important; letter-spacing: 1px !important; margin-bottom: 8px !important; }
+    div[data-baseweb="input"] { border-radius: 12px !important; border: 2px solid rgba(150, 150, 150, 0.2) !important; background-color: transparent !important; }
+    div[data-baseweb="input"]:focus-within { border-color: #0ea5e9 !important; box-shadow: 0 0 10px rgba(14, 165, 233, 0.2) !important; background-color: rgba(14, 165, 233, 0.05) !important; }
+    div[data-baseweb="input"] input { padding: 16px 15px !important; font-size: 16px !important; font-weight: 600 !important; }
 
-    /* 3. LÀM ĐẸP NÚT BẤM */
-    .stButton>button {
-        border-radius: 12px !important; 
-        font-weight: 700 !important;
-        height: 48px !important; /* Tăng chiều cao nút */
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    .stButton>button:hover { 
-        transform: translateY(-2px) !important; 
-        box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3) !important; 
-    }
+    .stButton>button { border-radius: 12px !important; font-weight: 700 !important; height: 48px !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+    .stButton>button:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3) !important; }
     
     [data-testid="stMetric"] { border-radius: 18px !important; padding: 20px !important; border: 1px solid rgba(14, 165, 233, 0.15) !important; }
     [data-testid="stMetric"]:hover { transform: translateY(-4px) !important; border-color: #0ea5e9 !important; box-shadow: 0 12px 24px rgba(14, 165, 233, 0.15) !important; }
     [data-testid="stMetricValue"] { font-size: 2.2rem !important; font-weight: 800 !important; }
     [data-testid="stExpander"] { border-radius: 14px !important; overflow: hidden !important; border: 1px solid rgba(150, 150, 150, 0.12) !important; }
 
-    [data-testid="stSidebar"] div[role="radiogroup"] > label {
-        background-color: transparent !important; border-radius: 12px !important; padding: 14px 18px !important;
-        margin-bottom: 10px !important; cursor: pointer; transition: all 0.2s !important;
-    }
+    [data-testid="stSidebar"] div[role="radiogroup"] > label { background-color: transparent !important; border-radius: 12px !important; padding: 14px 18px !important; margin-bottom: 10px !important; cursor: pointer; transition: all 0.2s !important; }
     [data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.08) !important; }
-    [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] {
-        background-color: rgba(14, 165, 233, 0.15) !important; border-left: 5px solid #0ea5e9 !important;
-    }
+    [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.15) !important; border-left: 5px solid #0ea5e9 !important; }
     [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
     [data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 16px !important; font-weight: 600 !important; }
-
-    div[data-testid="StyledFullScreenFrame"] button {
-        top: 60px !important; right: 20px !important; width: 55px !important; height: 55px !important;
-        background-color: rgba(239, 68, 68, 0.95) !important; border-radius: 50% !important;
-        opacity: 1 !important; z-index: 9999999 !important; border: 2px solid white !important;
-    }
-    div[data-testid="StyledFullScreenFrame"] button svg { color: white !important; fill: white !important; width: 28px !important; height: 28px !important; }
 </style>
 """
 st.markdown(base_css, unsafe_allow_html=True)
@@ -129,6 +81,7 @@ else:
     theme_css = """<style>[data-testid="stAppViewContainer"] {background-color: #090d16 !important;} [data-testid="stSidebar"] {background-color: #111827 !important;} .stApp {background-color: #090d16 !important; color: #f8fafc !important;} .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #f1f5f9 !important;} [data-testid="stMetricValue"] {color: #38bdf8 !important;} [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #1f2937 !important;} button[kind="secondary"] { background-color: #1f2937 !important; color: #38bdf8 !important; border: 1px solid #374151 !important; } button[kind="secondary"]:hover { background-color: #111827 !important; border-color: #38bdf8 !important; }</style>"""
 st.markdown(theme_css, unsafe_allow_html=True)
 
+# Tự động duy trì phiên đăng nhập bằng query_params
 if st.session_state.user is None:
     if "u" in st.query_params and "t" in st.query_params:
         u_url = st.query_params["u"]
@@ -142,41 +95,23 @@ if st.session_state.user is None:
 # MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
 # ==========================================
 if st.session_state.user is None:
-    # Mở rộng cột giữa (từ 1.5 lên 1.8) để các ô nhập liệu được dài ra, thoáng mắt hơn
     _, col_center, _ = st.columns([1, 1.8, 1])
     with col_center:
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Biểu tượng Khiên Bảo Mật (Shield Lock) tròn, nét mỏng tinh tế
-        # Đọc file ảnh logo từ Github và hiển thị
         import os, base64
         logo_html = ""
-        
-        # Hệ thống sẽ ưu tiên tìm Logo.png, nếu không có thì tìm Logo.ico
         img_path = "Logo.png" if os.path.exists("Logo.png") else ("Logo.ico" if os.path.exists("Logo.ico") else "")
-        
         if img_path:
             with open(img_path, "rb") as f:
                 b64 = base64.b64encode(f.read()).decode()
-                # Hiển thị ảnh bo góc mượt, viền sáng xanh tone-sur-tone với logo
                 logo_html = f"<img src='data:image/png;base64,{b64}' style='width: 100px; height: 100px; border-radius: 24px; box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4); margin-bottom: 15px; border: 1px solid rgba(14,165,233,0.3);'>"
         else:
-            # Nếu ông chưa up ảnh lên Github hoặc đặt sai tên, nó sẽ hiện tạm cái khiên bảo mật
             logo_html = """
             <div style='display: inline-flex; align-items: center; justify-content: center; width: 85px; height: 85px; border-radius: 50%; background: rgba(14, 165, 233, 0.05); border: 2px solid rgba(14, 165, 233, 0.4); box-shadow: 0 0 25px rgba(14, 165, 233, 0.15); margin-bottom: 15px;'>
-                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    <rect x="9" y="10" width="6" height="6" rx="1" ry="1"></rect>
-                    <path d="M12 10v-2a2 2 0 1 1 4 0v2"></path>
-                </svg>
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><rect x="9" y="10" width="6" height="6" rx="1" ry="1"></rect><path d="M12 10v-2a2 2 0 1 1 4 0v2"></path></svg>
             </div>"""
 
-        st.markdown(f"""
-        <div style='text-align: center; margin-bottom: 25px;'>
-            {logo_html}
-            <h1 style='color: #0ea5e9; font-size: 2.5rem; font-weight:900; margin: 0; letter-spacing: 1.5px;'>HTCV by DatTT</h1>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: center; margin-bottom: 25px;'>{logo_html}<h1 style='color: #0ea5e9; font-size: 2.5rem; font-weight:900; margin: 0; letter-spacing: 1.5px;'>HTCV by DatTT</h1></div>", unsafe_allow_html=True)
         
         if st.session_state.page == "login":
             with st.form("login_form"):
@@ -235,8 +170,8 @@ else:
     edit_perms = u_info.get("edit_permissions", []) 
     
     tab_dict = {"🎯 BẢNG KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP", "🤖 AI TƯ VẤN": "AI TƯ VẤN"}
+    allowed_tabs = []
     
-    # Đọc danh sách bị ẩn từ Đám mây
     hidden = db.get("settings", {}).get("hidden_features", [])
 
     if st.session_state.is_admin: 
@@ -268,7 +203,7 @@ else:
                 
             if st.button("🚪 Đăng xuất", use_container_width=True): logout()
 
-        # LOGIC TỰ ĐỘNG THU GỌN SIDEBAR
+        # Logic tự thu gọn thanh Menu
         if "last_tab" not in st.session_state: st.session_state.last_tab = selected_tab
         need_close = False
         if st.session_state.last_tab != selected_tab:
@@ -298,28 +233,19 @@ else:
                     else: cc3.error("Sai pass cũ!")
                 st.markdown("</div>", unsafe_allow_html=True)
 
-
         # ==========================================
         # 1. TAB BẢNG KPI
         # ==========================================
         if selected_tab == "🎯 BẢNG KPI":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🎯 Tiến Độ Hoàn Thành KPI Tháng Này</h3>", unsafe_allow_html=True)
-            
             kpi_imgs = db.get("kpi_images", [])
             if not isinstance(kpi_imgs, list): kpi_imgs = []
-            old_kpi_single = db.get("kpi_image", "")
-            if old_kpi_single and not kpi_imgs: kpi_imgs = [old_kpi_single]
             
-            # Kiểm tra quyền: Là Admin HOẶC được cấp quyền Sửa Tích Lũy
             if st.session_state.is_admin or "SỬA SỐ KPI" in edit_perms:
-                with st.expander("📸 QUẢN LÝ ẢNH DANH MỤC KPI (Quyền thao tác)"):
-                    st.markdown("💡 *Khi tải lên bộ ảnh mới, ảnh cũ sẽ TỰ ĐỘNG BỊ XÓA SẠCH.*")
+                with st.expander("📸 QUẢN LÝ ẢNH DANH MỤC KPI"):
                     uploaded_files = st.file_uploader("Chọn nhiều ảnh Bảng tính KPI", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="kpi_up")
-                    
                     if 'rot_angles_kpi' not in st.session_state: st.session_state.rot_angles_kpi = {}
-                        
                     if uploaded_files:
-                        st.markdown("<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 10px;'>👀 BẢN XEM TRƯỚC TỪNG ẢNH:</p>", unsafe_allow_html=True)
                         for i, up_file in enumerate(uploaded_files):
                             fname = up_file.name
                             if fname not in st.session_state.rot_angles_kpi: st.session_state.rot_angles_kpi[fname] = 0
@@ -327,16 +253,12 @@ else:
                             preview_img = ImageOps.exif_transpose(preview_img)
                             angle = st.session_state.rot_angles_kpi[fname]
                             if angle != 0: preview_img = preview_img.rotate(angle, expand=True)
-                                
-                            st.caption(f"Ảnh {i+1}: {fname}")
                             st.image(preview_img, use_container_width=True)
-                            
-                            if st.button(f"🔄 Xoay riêng ảnh {i+1} này 90 độ", key=f"rot_kpi_{i}_{fname}", use_container_width=True):
+                            if st.button(f"🔄 Xoay riêng ảnh {i+1} 90 độ", key=f"rot_kpi_{i}_{fname}", use_container_width=True):
                                 st.session_state.rot_angles_kpi[fname] = (st.session_state.rot_angles_kpi[fname] - 90) % 360
                                 st.rerun()
-                            st.markdown("<hr style='border-color: rgba(150,150,150,0.2);'>", unsafe_allow_html=True)
                             
-                        if st.button("💾 LƯU BỘ ẢNH NÀY (GHI ĐÈ ẢNH CŨ)", type="primary", use_container_width=True, key="kpi_save"):
+                        if st.button("💾 LƯU BỘ ẢNH NÀY", type="primary", use_container_width=True, key="kpi_save"):
                             new_img_list = []
                             for up_file in uploaded_files:
                                 fname = up_file.name
@@ -347,90 +269,62 @@ else:
                                 img.thumbnail((1600, 1600)) 
                                 buffered = io.BytesIO()
                                 img.convert("RGB").save(buffered, format="JPEG", quality=85)
-                                img_str = base64.b64encode(buffered.getvalue()).decode()
-                                new_img_list.append(img_str)
-                            
+                                new_img_list.append(base64.b64encode(buffered.getvalue()).decode())
                             update_firebase("kpi_images", new_img_list)
-                            if old_kpi_single: delete_firebase("kpi_image")
                             st.session_state.rot_angles_kpi = {} 
-                            st.success(f"✅ Đã tải lên {len(new_img_list)} ảnh đúng chiều! Dữ liệu cũ đã bị xóa.")
-                            time.sleep(1); st.rerun()
+                            st.success(f"Đã lưu ảnh!"); time.sleep(1); st.rerun()
                             
                     if kpi_imgs:
-                        if st.button("🗑️ Xóa vĩnh viễn TOÀN BỘ ảnh KPI hiện tại", type="primary", key="kpi_del"):
-                            delete_firebase("kpi_images"); delete_firebase("kpi_image"); st.rerun()
+                        if st.button("🗑️ Xóa TOÀN BỘ ảnh", type="primary", key="kpi_del"):
+                            delete_firebase("kpi_images"); st.rerun()
 
             if kpi_imgs:
-                with st.expander(f"📄 MỞ XEM BẢNG DANH MỤC HÀNG HÓA TÍNH KPI ({len(kpi_imgs)} trang)", expanded=False):
+                with st.expander(f"📄 MỞ XEM BẢNG DANH MỤC KPI ({len(kpi_imgs)} trang)", expanded=False):
                     for idx, img_b64 in enumerate(kpi_imgs):
-                        try:
-                            st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 15px; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
-                            img_bytes = base64.b64decode(img_b64)
-                            st.image(img_bytes, use_container_width=True)
-                        except: st.error(f"Lỗi hiển thị ảnh trang {idx + 1}.")
-                        
+                        try: st.image(base64.b64decode(img_b64), use_container_width=True)
+                        except: st.error(f"Lỗi ảnh {idx + 1}")
+            
             st.markdown("<hr style='border-color: rgba(150,150,150,0.1); margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-            
-            # --- BẢNG SỐ LIỆU KPI ---
-            kpi_node = db.get("kpi")
-            if not isinstance(kpi_node, dict): kpi_node = {}
-            kpi_data = kpi_node.get("emp")
+            kpi_node = db.get("kpi", {})
+            kpi_data = kpi_node.get("emp", {})
             if isinstance(kpi_data, list): kpi_data = {str(i): v for i, v in enumerate(kpi_data) if v is not None}
-            elif not isinstance(kpi_data, dict): kpi_data = {}
             
-            if not kpi_data: st.info("Chưa có dữ liệu mục tiêu KPI tháng này.")
+            if not kpi_data: st.info("Chưa có dữ liệu KPI.")
             else:
                 tot_t = int(kpi_node.get("tot", 0))
                 tot_s = sum(int(d.get("sold", 0)) for d in kpi_data.values() if isinstance(d, dict))
                 pct = (tot_s / tot_t * 100) if tot_t > 0 else 0
-                
                 c1, c2, c3 = st.columns(3)
-                c1.metric("MỤC TIÊU CỬA HÀNG", f"{tot_t:,}".replace(",", "."))
-                c2.metric("TỔNG SỐ ĐÃ BÁN", f"{tot_s:,}".replace(",", "."))
-                c3.metric("TIẾN ĐỘ HOÀN THÀNH", f"{pct:.1f}%")
-                st.markdown("<br>", unsafe_allow_html=True)
+                c1.metric("MỤC TIÊU", f"{tot_t:,}".replace(",", "."))
+                c2.metric("ĐÃ BÁN", f"{tot_s:,}".replace(",", "."))
+                c3.metric("TIẾN ĐỘ", f"{pct:.1f}%")
 
                 kpi_list = []
                 for emp, info in kpi_data.items():
-                    tgt = info.get("tgt", 0)
-                    sold = info.get("sold", 0)
-                    rem = tgt - sold if tgt - sold > 0 else 0
+                    tgt = info.get("tgt", 0); sold = info.get("sold", 0); rem = max(0, tgt - sold)
                     kpi_list.append({"Nhân Viên": emp, "Đã Bán (Số lượng)": sold, "Target Giao": tgt, "Còn Thiếu KPI": rem})
                 df_kpi = pd.DataFrame(kpi_list)
 
-                # Quyền Sửa Số KPI
                 if st.session_state.is_admin or "SỬA SỐ KPI" in edit_perms:
-                    st.caption("💡 Chạm 2 lần vào ô 'Đã Bán (Số lượng)' để sửa nhanh.")
                     edited_df = st.data_editor(df_kpi, hide_index=True, disabled=["Nhân Viên", "Target Giao", "Còn Thiếu KPI"], use_container_width=True)
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("💾 LƯU SỐ LIỆU SỬA ĐỔI", type="primary", use_container_width=True):
-                        for idx, row in edited_df.iterrows():
-                            update_firebase(f"kpi/emp/{row['Nhân Viên']}", {"sold": int(row["Đã Bán (Số lượng)"])})
-                        st.success("Đã đồng bộ cập nhật lên hệ thống!"); time.sleep(0.5); st.rerun()
-                else:
-                    st.dataframe(df_kpi, hide_index=True, use_container_width=True)
+                    if st.button("💾 LƯU SỐ LIỆU", type="primary", use_container_width=True):
+                        for idx, row in edited_df.iterrows(): update_firebase(f"kpi/emp/{row['Nhân Viên']}", {"sold": int(row["Đã Bán (Số lượng)"])})
+                        st.success("Đã đồng bộ!"); time.sleep(0.5); st.rerun()
+                else: st.dataframe(df_kpi, hide_index=True, use_container_width=True)
 
         # ==========================================
         # 2. TAB LỊCH TRỰC
         # ==========================================
         elif selected_tab == "🗓️ LỊCH TRỰC":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🗓️ Bảng Phân Phối Lịch Trực Tuần</h3>", unsafe_allow_html=True)
-            
             sched_imgs = db.get("schedule_images", [])
             if not isinstance(sched_imgs, list): sched_imgs = []
-            old_single = db.get("schedule_image", "")
-            if old_single and old_single not in sched_imgs: sched_imgs.insert(0, old_single)
             
-            # Kiểm tra quyền Sửa Lịch
             if st.session_state.is_admin or "UP ẢNH LỊCH TRỰC" in edit_perms:
-                with st.expander("📸 QUẢN LÝ ẢNH BẢNG LỊCH TRỰC (Quyền thao tác)"):
-                    st.markdown("💡 *Khi tải lên bộ ảnh mới, toàn bộ lịch cũ sẽ TỰ ĐỘNG BỊ XÓA SẠCH.*")
-                    uploaded_files = st.file_uploader("Chọn bộ ảnh Lịch trực để thay thế", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="sched_up")
-                    
+                with st.expander("📸 QUẢN LÝ ẢNH BẢNG LỊCH TRỰC"):
+                    uploaded_files = st.file_uploader("Chọn ảnh Lịch trực", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key="sched_up")
                     if 'rot_angles_sched' not in st.session_state: st.session_state.rot_angles_sched = {}
-                        
                     if uploaded_files:
-                        st.markdown("<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 10px;'>👀 BẢN XEM TRƯỚC TỪNG ẢNH:</p>", unsafe_allow_html=True)
                         for i, up_file in enumerate(uploaded_files):
                             fname = up_file.name
                             if fname not in st.session_state.rot_angles_sched: st.session_state.rot_angles_sched[fname] = 0
@@ -438,16 +332,12 @@ else:
                             preview_img = ImageOps.exif_transpose(preview_img)
                             angle = st.session_state.rot_angles_sched[fname]
                             if angle != 0: preview_img = preview_img.rotate(angle, expand=True)
-                                
-                            st.caption(f"Ảnh {i+1}: {fname}")
                             st.image(preview_img, use_container_width=True)
-                            
-                            if st.button(f"🔄 Xoay riêng ảnh {i+1} này 90 độ", key=f"rot_sched_{i}_{fname}", use_container_width=True):
+                            if st.button(f"🔄 Xoay riêng ảnh {i+1}", key=f"rot_sched_{i}_{fname}", use_container_width=True):
                                 st.session_state.rot_angles_sched[fname] = (st.session_state.rot_angles_sched[fname] - 90) % 360
                                 st.rerun()
-                            st.markdown("<hr style='border-color: rgba(150,150,150,0.2);'>", unsafe_allow_html=True)
-                            
-                        if st.button("💾 LƯU BỘ LỊCH NÀY (GHI ĐÈ LỊCH CŨ)", type="primary", use_container_width=True, key="sched_save"):
+                                
+                        if st.button("💾 LƯU LỊCH NÀY", type="primary", use_container_width=True, key="sched_save"):
                             new_img_list = []
                             for up_file in uploaded_files:
                                 fname = up_file.name
@@ -458,32 +348,24 @@ else:
                                 img.thumbnail((1600, 1600)) 
                                 buffered = io.BytesIO()
                                 img.convert("RGB").save(buffered, format="JPEG", quality=85)
-                                img_str = base64.b64encode(buffered.getvalue()).decode()
-                                new_img_list.append(img_str)
-                            
+                                new_img_list.append(base64.b64encode(buffered.getvalue()).decode())
                             update_firebase("schedule_images", new_img_list)
-                            if old_single: delete_firebase("schedule_image")
                             st.session_state.rot_angles_sched = {}
-                            st.success(f"✅ Đã tải lên {len(new_img_list)} ảnh mới! Lịch cũ đã bị xóa sạch.")
-                            time.sleep(1); st.rerun()
+                            st.success(f"Đã tải ảnh lên!"); time.sleep(1); st.rerun()
                             
                     if sched_imgs:
-                        if st.button("🗑️ Xóa vĩnh viễn TOÀN BỘ lịch hiện tại", type="primary", key="sched_del"):
-                            delete_firebase("schedule_images"); delete_firebase("schedule_image"); st.rerun()
+                        if st.button("🗑️ Xóa TOÀN BỘ lịch", type="primary", key="sched_del"):
+                            delete_firebase("schedule_images"); st.rerun()
 
             if sched_imgs:
                 with st.expander(f"📄 MỞ XEM BỘ ẢNH LỊCH TRỰC ({len(sched_imgs)} trang)", expanded=False):
                     for idx, img_b64 in enumerate(sched_imgs):
-                        try:
-                            img_bytes = base64.b64decode(img_b64)
-                            st.markdown(f"<p style='text-align: center; color: #0ea5e9; font-weight: bold; margin-top: 15px; margin-bottom: 5px;'>Trang {idx + 1}</p>", unsafe_allow_html=True)
-                            st.image(img_bytes, use_container_width=True)
-                        except: st.error(f"Lỗi hiển thị ảnh trang {idx + 1}.")
+                        try: st.image(base64.b64decode(img_b64), use_container_width=True)
+                        except: st.error(f"Lỗi ảnh {idx + 1}")
             
             st.markdown("<hr style='border-color: rgba(150,150,150,0.1); margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-            
             history = db.get("detailed_history", {})
-            if not history: st.info("Chưa có thông tin phân lịch tự động.")
+            if not history: st.info("Chưa có thông tin lịch chia tự động.")
             else:
                 hidden = db.get("settings", {}).get("hidden_features", [])
                 lich_list = []
@@ -493,142 +375,110 @@ else:
                         "Ca Sáng": ", ".join(shifts.get("Sáng", [])) if shifts.get("Sáng") else "-",
                         "Ca Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "-"
                     }
-                    if "CA 10H30" not in hidden:
-                        row_data["Ca Đêm (10h30)"] = ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
-                        
+                    if "CA 10H30" not in hidden: row_data["Ca Đêm (10h30)"] = ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
-        # 3. TAB LỊCH ECOM & THỊ TRƯỜNG (Chỉ xem)
+        # 3. TAB LỊCH ECOM
         # ==========================================
         elif selected_tab == "🛒 LỊCH ECOM":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🛒 Bảng Phân Phối Ca Trực Khối ECOM</h3>", unsafe_allow_html=True)
             ecom_data = db.get("ecom_history", {})
+            
+            if st.session_state.is_admin or "SỬA LỊCH ECOM" in edit_perms:
+                if st.button("🔄 ĐẢO NHÂN VIÊN TỪ SÁNG QUA CHIỀU", type="primary", use_container_width=True):
+                    new_ecom = {}
+                    for d in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]:
+                        val = ecom_data.get(d, {})
+                        if isinstance(val, dict): new_ecom[d] = {"Sáng": val.get("Chiều", ""), "Chiều": val.get("Sáng", "")}
+                        elif isinstance(val, str): new_ecom[d] = {"Sáng": "", "Chiều": val}
+                    update_firebase("ecom_history", new_ecom)
+                    st.success("Đã đảo ca Ecom thành công!"); time.sleep(1); st.rerun()
+                    
             if not ecom_data: st.info("Lịch Ecom hiện tại trống.")
             else:
                 days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
                 ecom_list = []
                 for d in days:
                     val = ecom_data.get(d, {})
-                    if isinstance(val, str) and val.strip(): ecom_list.append({"Thứ / Ngày": d, "Nhân Sự Trực Sáng": val.strip(), "Nhân Sự Trực Chiều": "-"})
+                    if isinstance(val, str) and val.strip(): ecom_list.append({"Thứ / Ngày": d, "Trực Sáng": val.strip(), "Trực Chiều": "-"})
                     elif isinstance(val, dict):
-                        s = val.get("Sáng", "").strip()
-                        c = val.get("Chiều", "").strip()
-                        if s or c: ecom_list.append({"Thứ / Ngày": d, "Nhân Sự Trực Sáng": s if s else "-", "Nhân Sự Trực Chiều": c if c else "-"})
-                if ecom_list: st.dataframe(pd.DataFrame(ecom_list), hide_index=True, use_container_width=True)
-                else: st.info("Lịch Ecom hiện đang trống.")
+                        s = val.get("Sáng", "").strip(); c = val.get("Chiều", "").strip()
+                        if s or c: ecom_list.append({"Thứ / Ngày": d, "Trực Sáng": s if s else "-", "Trực Chiều": c if c else "-"})
+                st.dataframe(pd.DataFrame(ecom_list), hide_index=True, use_container_width=True)
 
+        # ==========================================
+        # 4. TAB THI TRƯỜNG & QUỸ SHOP
+        # ==========================================
         elif selected_tab == "📍 THI TRƯỜNG":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📍 Bản Đồ Phân Công Công Tác Thị Trường</h3>", unsafe_allow_html=True)
             market_data = db.get("market_history", {})
-            if not market_data: st.info("Chưa có lịch phân phối thị trường.")
+            if not market_data: st.info("Chưa có lịch phân phối.")
             else:
-                days_order = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
-                market_list = []
-                for d in days_order:
-                    if d in market_data:
-                        inf = market_data[d]
-                        market_list.append({"Kế hoạch Ngày": d, "📍 Địa Điểm Khảo Sát": inf.get("dia_diem", ""), "👥 Nhân Sự Tuyến Thị Trường": ", ".join(inf.get("nhan_vien", []))})
-                if market_list: st.dataframe(pd.DataFrame(market_list), hide_index=True, use_container_width=True)
-                else: st.info("Lịch điều phối thị trường đang trống.")
+                market_list = [{"Kế hoạch Ngày": d, "📍 Địa Điểm": inf.get("dia_diem", ""), "👥 Tuyến": ", ".join(inf.get("nhan_vien", []))} for d, inf in market_data.items()]
+                st.dataframe(pd.DataFrame(market_list), hide_index=True, use_container_width=True)
 
-        # ==========================================
-        # 4. TAB QUỸ SHOP
-        # ==========================================
         elif selected_tab == "💰 SỔ QUỸ SHOP":
-            st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>💰 Sổ Theo Dõi Thu Chi Quỹ Cửa Hàng</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>💰 Sổ Theo Dõi Thu Chi</h3>", unsafe_allow_html=True)
             qs = db.get("quy_shop", {})
             tong_thu = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Thu")
             tong_chi = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Chi")
-            ton_quy = tong_thu - tong_chi
-            
-            st.metric("🏦 TỒN QUỸ TIỀN MẶT HIỆN TẠI", format_vnd(ton_quy))
+            st.metric("🏦 TỒN QUỸ", format_vnd(tong_thu - tong_chi))
             c1, c2 = st.columns(2)
-            c1.metric("🟢 TỔNG DÒNG THU", format_vnd(tong_thu))
-            c2.metric("🔴 TỔNG DÒNG CHI", format_vnd(tong_chi))
-            st.markdown("<br>", unsafe_allow_html=True)
+            c1.metric("🟢 TỔNG THU", format_vnd(tong_thu)); c2.metric("🔴 TỔNG CHI", format_vnd(tong_chi))
             
-            # Quyền Sửa Sổ Quỹ
             if st.session_state.is_admin or "QUẢN LÝ QUỸ SHOP" in edit_perms:
-                with st.expander("➕ HÀNH ĐỘNG GHI CHỨNG TỪ THU / CHI MỚI (Quyền thao tác)", expanded=False):
+                with st.expander("➕ HÀNH ĐỘNG GHI CHỨNG TỪ", expanded=False):
                     with st.form("fund_form", clear_on_submit=True):
-                        f_type = st.selectbox("Phân loại dòng tiền", ["Thu", "Chi"])
-                        f_amt = st.number_input("Giá trị dòng tiền (VNĐ)", min_value=0, step=50000)
-                        f_desc = st.text_input("Nội dung diễn giải chi tiết lý do")
-                        if st.form_submit_button("LƯU PHIẾU VÀO SỔ GỐC", type="primary", use_container_width=True):
+                        f_type = st.selectbox("Phân loại", ["Thu", "Chi"])
+                        f_amt = st.number_input("Giá trị (VNĐ)", min_value=0, step=50000)
+                        f_desc = st.text_input("Nội dung diễn giải")
+                        if st.form_submit_button("LƯU PHIẾU", type="primary", use_container_width=True):
                             if f_amt > 0 and f_desc:
-                                tx_id = str(int(time.time() * 1000))
-                                now_str = (datetime.utcnow() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M")
-                                update_firebase("quy_shop", {tx_id: {"date": now_str, "type": f_type, "amount": f_amt, "desc": f_desc, "user": st.session_state.user}})
-                                st.success("✅ Đã kế toán sổ quỹ thành công!"); time.sleep(0.5); st.rerun()
-                            else: st.error("❌ Không được bỏ trống số tiền và lý do!")
+                                update_firebase("quy_shop", {str(int(time.time() * 1000)): {"date": (datetime.utcnow() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M"), "type": f_type, "amount": f_amt, "desc": f_desc, "user": st.session_state.user}})
+                                st.success("Thành công!"); time.sleep(0.5); st.rerun()
+                            else: st.error("❌ Không được bỏ trống!")
             
-            st.markdown("#### 📜 Nhật Ký Lịch Sử Phát Sinh Giao Dịch")
-            if not qs: st.caption("Chưa có biến động dòng tiền nào được ghi nhận.")
-            else:
-                quy_list = []
-                for tx_id, tx in sorted(qs.items(), key=lambda x: x[0], reverse=True):
-                    quy_list.append({
-                        "Mã CT": f"...{tx_id[-4:]}",
-                        "Thời Gian": tx.get("date", ""),
-                        "Phân Loại": "➕ Thu Tiền" if tx.get("type") == "Thu" else "➖ Chi Tiền",
-                        "Giá Trị": f"{float(tx.get('amount', 0)):,.0f} ₫".replace(",", "."),
-                        "Lý Do Phát Sinh": tx.get("desc", ""),
-                        "Người Lập Phiếu": tx.get("user", "")
-                    })
+            if qs:
+                quy_list = [{"Mã CT": f"...{tid[-4:]}", "Thời Gian": tx.get("date", ""), "Phân Loại": "➕ Thu" if tx.get("type") == "Thu" else "➖ Chi", "Giá Trị": f"{float(tx.get('amount', 0)):,.0f} ₫".replace(",", "."), "Lý Do": tx.get("desc", ""), "Người Lập": tx.get("user", "")} for tid, tx in sorted(qs.items(), key=lambda x: x[0], reverse=True)]
                 st.dataframe(pd.DataFrame(quy_list), hide_index=True, use_container_width=True)
-                
-                # Quyền Xóa Chứng Từ
                 if st.session_state.is_admin or "QUẢN LÝ QUỸ SHOP" in edit_perms:
-                    st.caption("Hủy chứng từ sai sót (Chỉ dành cho Admin/Quản lý Quỹ):")
                     c_sel, c_del = st.columns([3, 1])
-                    xoa_id = c_sel.selectbox("Chọn mã chứng từ hủy:", [tx["Mã CT"] for tx in quy_list], label_visibility="collapsed")
-                    if c_del.button("❌ HỦY CHỨNG TỪ", type="primary", use_container_width=True):
-                        full_id = [tid for tid in qs.keys() if tid[-4:] == xoa_id[-4:]][0]
-                        delete_firebase(f"quy_shop/{full_id}")
-                        st.success("Đã xóa bỏ chứng từ khỏi sổ gốc!"); time.sleep(0.5); st.rerun()
+                    xoa_id = c_sel.selectbox("Chọn mã hủy:", [tx["Mã CT"] for tx in quy_list], label_visibility="collapsed")
+                    if c_del.button("❌ HỦY", type="primary", use_container_width=True):
+                        delete_firebase(f"quy_shop/{[tid for tid in qs.keys() if tid[-4:] == xoa_id[-4:]][0]}")
+                        st.success("Đã xóa!"); time.sleep(0.5); st.rerun()
 
         # ==========================================
-        # 6. TAB AI TƯ VẤN VẮC XIN (TRÊN WEB)
+        # 5. TAB AI TƯ VẤN (CẬP NHẬT MỚI NHẤT)
         # ==========================================
         elif selected_tab == "🤖 AI TƯ VẤN":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🤖 Trợ Lý AI Tư Vấn Y Khoa</h3>", unsafe_allow_html=True)
             
-            # Khởi tạo bộ nhớ tạm để lưu lịch sử chat không tốn dung lượng Đám mây
             if "vaccine_chat" not in st.session_state:
                 st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ chuyên gia tư vấn Vắc xin. Bạn cần hỗ trợ thông tin gì về các loại vắc xin, phác đồ tiêm hay chống chỉ định không?"}]
 
-            # Khu vực hiển thị tin nhắn (Giao diện bong bóng chat)
             chat_container = st.container()
             with chat_container:
                 for msg in st.session_state.vaccine_chat:
-                    with st.chat_message(msg["role"]):
-                        st.markdown(msg["content"])
+                    with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-            # Ô nhập liệu nằm dính ở đáy màn hình
-            if prompt := st.chat_input("Nhập câu hỏi về vắc xin của bạn vào đây..."):
-                # 1. In câu hỏi của user ra màn hình
+            if prompt := st.chat_input("Nhập câu hỏi về vắc xin..."):
                 st.session_state.vaccine_chat.append({"role": "user", "content": prompt})
                 with chat_container:
                     with st.chat_message("user"): st.markdown(prompt)
-                    
-                    # 2. In bong bóng chờ của AI
                     with st.chat_message("assistant"):
                         placeholder = st.empty()
                         placeholder.markdown("⏳ Đang phân tích dữ liệu y khoa...")
                         
                         k_list = db.get("settings", {}).get("api_keys", [])
-                        if not k_list:
-                            reply = "❌ Hệ thống chưa có API Key. Hãy nhờ Quản lý cài đặt API Key trên phần mềm máy tính."
+                        if not k_list: reply = "❌ Hệ thống chưa có API Key."
                         else:
                             contents = []
-                            # Ép AI đóng vai chuyên gia
-                            system_instruction = "Bạn là một Bác sĩ chuyên gia tư vấn Vắc xin hàng đầu. Nhiệm vụ của bạn là tư vấn cho nhân viên y tế về các loại vắc xin, phác đồ tiêm, chỉ định, chống chỉ định và tác dụng phụ. Trình bày bằng tiếng Việt, có xuống dòng và gạch đầu dòng rõ ràng. Tuyệt đối không dùng emoji."
-                            contents.append({"role": "user", "parts": [{"text": system_instruction}]})
+                            contents.append({"role": "user", "parts": [{"text": "Bạn là Bác sĩ chuyên gia tư vấn Vắc xin hàng đầu. Nhiệm vụ của bạn là tư vấn cho nhân viên y tế về các loại vắc xin, phác đồ tiêm, chỉ định, chống chỉ định và tác dụng phụ. Trình bày bằng tiếng Việt, có xuống dòng và gạch đầu dòng rõ ràng. Tuyệt đối không dùng emoji."}]})
                             contents.append({"role": "model", "parts": [{"text": "Vâng, tôi sẽ thực hiện đúng vai trò."}]})
                             
-                            # Truyền lịch sử trò chuyện (BỎ QUA CÂU CHÀO ĐỂ TRÁNH LỖI SO LE CỦA GOOGLE)
                             for m in st.session_state.vaccine_chat[-8:]:
                                 if m["role"] == "user": 
                                     contents.append({"role": "user", "parts": [{"text": m["content"]}]})
@@ -637,24 +487,22 @@ else:
                                     
                             payload = {"contents": contents, "generationConfig": {"temperature": 0.3}}
                             suc = False
-                            reply = "❌ Máy chủ AI đang bận hoặc hết hạn ngạch."
+                            reply = "❌ Máy chủ AI đang bận."
                             
                             for k in k_list:
                                 if suc: break
-                                for m_name in ["gemini-1.5-flash", "gemini-1.5-pro"]:
+                                for m_name in ["gemini-1.5-flash", "gemini-2.0-flash"]:
                                     try:
                                         r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{m_name}:generateContent?key={k}", json=payload, timeout=20)
                                         if r.status_code == 200:
                                             reply = "".join(c for c in r.json()['candidates'][0]['content']['parts'][0]['text'] if ord(c)<=0xFFFF)
                                             suc = True; break
                                         else:
-                                            # Bắt lỗi hiển thị thẳng ra màn hình nếu Google từ chối
-                                            reply = f"❌ BỊ GOOGLE CHẶN (Lỗi {r.status_code}): {r.json().get('error', {}).get('message', r.text)}"
+                                            reply = f"❌ LỖI API ({r.status_code}): {r.json().get('error', {}).get('message', r.text)}"
                                     except Exception as e: 
                                         reply = f"❌ LỖI MẠNG: {str(e)}"
                                         continue
-                                    
-                        # 3. Thay thế bong bóng chờ bằng câu trả lời chính thức
+                                        
                         placeholder.markdown(reply)
                         st.session_state.vaccine_chat.append({"role": "assistant", "content": reply})
 
@@ -662,22 +510,19 @@ else:
             if st.button("🗑️ Làm Mới Cuộc Trò Chuyện", type="secondary", use_container_width=True):
                 st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ chuyên gia tư vấn Vắc xin. Bạn cần hỗ trợ thông tin gì về các loại vắc xin, phác đồ tiêm hay chống chỉ định không?"}]
                 st.rerun()
+
         # ==========================================
-        # 5. TAB ADMIN (PHÂN QUYỀN VIEW VÀ EDIT ĐỘC LẬP)
+        # 6. TAB QUẢN TRỊ ADMIN
         # ==========================================
         elif selected_tab == "👥 QUẢN TRỊ ADMIN":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>⚙️ Trung Tâm Điều Hành Quản Trị Hệ Thống</h3>", unsafe_allow_html=True)
-            
-            st.markdown("#### ⏳ Yêu Cầu Cấp Tài Khoản Mới Chờ Duyệt")
             pending = db.get("pending_users", {})
-            if not pending: st.info("Hiện không có nhân sự nào đang chờ duyệt đăng ký.")
-            else:
+            if pending:
                 for pu, pinfo in pending.items():
                     with st.container():
                         c1, c2, c3 = st.columns([4, 2, 2])
                         c1.markdown(f"**👤 Tài khoản: {pu}**")
                         if c2.button("✅ Phê duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
-                            # Khắc phục lỗi tương thích Pass khi đăng ký đa nền tảng
                             pwd = pinfo.get("pass", "123456") if isinstance(pinfo, dict) else pinfo
                             update_firebase(f"users/{pu}", {"pass": pwd, "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY"], "edit_permissions": []})
                             delete_firebase(f"pending_users/{pu}"); st.rerun()
@@ -685,7 +530,6 @@ else:
                             delete_firebase(f"pending_users/{pu}"); st.rerun()
             
             st.divider()
-            st.markdown("#### 🔑 Phân Quyền Hạn Tùy Chỉnh (Xem & Sửa) Cho Từng Nhân Sự")
             users = db.get("users", {})
             for u, uinfo in users.items():
                 if uinfo.get("role") != "admin":
@@ -693,22 +537,12 @@ else:
                         current_perms = uinfo.get("permissions", [])
                         current_edits = uinfo.get("edit_permissions", [])
                         
-                        st.markdown("**1. Cấp quyền XEM (Chỉ được mở đọc dữ liệu):**")
                         view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "TARGET KPI", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM", "AI TƯ VẤN"]
-                        new_perms = st.multiselect("Bật/tắt các Tab hiển thị trên điện thoại:", 
-                            view_options, 
-                            default=[p for p in current_perms if p in view_options],
-                            key=f"perm_{u}"
-                        )
+                        new_perms = st.multiselect("Bật/tắt các Tab hiển thị trên điện thoại:", view_options, default=[p for p in current_perms if p in view_options], key=f"perm_{u}")
                         
-                        st.markdown("**2. Cấp quyền CHỈNH SỬA (Được phép Up Ảnh, Sửa Số, Ghi Sổ...):**")
                         edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA"]
-                        new_edits = st.multiselect("Bật/tắt quyền thao tác trực tiếp:", 
-                            edit_options, 
-                            default=[p for p in current_edits if p in edit_options],
-                            key=f"edit_{u}"
-                        )
+                        new_edits = st.multiselect("Bật/tắt quyền thao tác trực tiếp:", edit_options, default=[p for p in current_edits if p in edit_options], key=f"edit_{u}")
                         
-                        if st.button("💾 LƯU BẢNG PHÂN QUYỀN NÀY", key=f"save_{u}", type="primary", use_container_width=True):
+                        if st.button("💾 LƯU PHÂN QUYỀN", key=f"save_{u}", type="primary", use_container_width=True):
                             update_firebase(f"users/{u}", {"permissions": new_perms, "edit_permissions": new_edits})
-                            st.success(f"Đã cập nhật bảng phân quyền cho tài khoản {u}!"); time.sleep(0.5); st.rerun()
+                            st.success(f"Đã cập nhật!"); time.sleep(0.5); st.rerun()
