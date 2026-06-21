@@ -622,7 +622,7 @@ else:
                         current_edits = uinfo.get("edit_permissions", [])
                         
                         st.markdown("**1. Cấp quyền XEM (Chỉ được mở đọc dữ liệu):**")
-                        view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "TARGET KPI", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM"]
+                        view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "TARGET KPI", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM", "AI TƯ VẤN"]
                         new_perms = st.multiselect("Bật/tắt các Tab hiển thị trên điện thoại:", 
                             view_options, 
                             default=[p for p in current_perms if p in view_options],
