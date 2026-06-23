@@ -457,14 +457,14 @@ else:
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🤖 Trợ Lý AI Tư Vấn Y Khoa</h3>", unsafe_allow_html=True)
             
             if "vaccine_chat" not in st.session_state:
-                st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ chuyên gia tư vấn Vắc xin. Bạn cần hỗ trợ thông tin gì về các loại vắc xin, phác đồ tiêm hay chống chỉ định không?"}]
+                st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ và Dược sĩ lâm sàng cấp cao. Bạn cần hỗ trợ phân tích ca bệnh khó, thông tin chi tiết về thuốc hay phác đồ vắc xin?"}]
 
             chat_container = st.container()
             with chat_container:
                 for msg in st.session_state.vaccine_chat:
                     with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-            if prompt := st.chat_input("Nhập câu hỏi về vắc xin..."):
+            if prompt := st.chat_input("Nhập câu hỏi về thuốc, vắc xin hoặc ca lâm sàng..."):
                 st.session_state.vaccine_chat.append({"role": "user", "content": prompt})
                 with chat_container:
                     with st.chat_message("user"): st.markdown(prompt)
@@ -475,7 +475,7 @@ else:
                         k_list = db.get("settings", {}).get("api_keys", [])
                         if not k_list: reply = "❌ Hệ thống chưa có API Key."
                         else:
-                            messages = [{"role": "system", "content": "Bạn là Bác sĩ chuyên gia tư vấn Vắc xin hàng đầu. Nhiệm vụ của bạn là tư vấn cho nhân viên y tế về các loại vắc xin, phác đồ tiêm, chỉ định, chống chỉ định và tác dụng phụ. Trình bày bằng tiếng Việt, có xuống dòng và gạch đầu dòng rõ ràng. Tuyệt đối không dùng emoji."}]
+                            messages = [{"role": "system", "content": "Bạn là Bác sĩ và Dược sĩ lâm sàng cấp cao tại Việt Nam, chuyên gia hàng đầu về Thuốc và Vắc xin. Nhiệm vụ của bạn là giải đáp chuyên sâu các câu hỏi y khoa, bao gồm cả những ca lâm sàng khó, tương tác thuốc phức tạp. Yêu cầu: Văn phong chuyên nghiệp, đanh thép, bám sát y học thực chứng. Phân tích rõ ràng về cơ chế, dược động học, tương tác thuốc, chống chỉ định, và phác đồ. TUYỆT ĐỐI KHÔNG dùng văn phong dịch máy. Bắt buộc dùng đúng thuật ngữ y khoa/dược khoa chuẩn Việt Nam. Trình bày logic, chia mục thật rõ ràng. TUYỆT ĐỐI KHÔNG dùng emoji."}]
                             for m in st.session_state.vaccine_chat[-8:]:
                                 if m["role"] == "user": 
                                     messages.append({"role": "user", "content": m["content"]})
