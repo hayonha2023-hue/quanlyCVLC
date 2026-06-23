@@ -475,33 +475,30 @@ else:
                         k_list = db.get("settings", {}).get("api_keys", [])
                         if not k_list: reply = "❌ Hệ thống chưa có API Key."
                         else:
-                            contents = []
-                            contents.append({"role": "user", "parts": [{"text": "Bạn là Bác sĩ chuyên gia tư vấn Vắc xin hàng đầu. Nhiệm vụ của bạn là tư vấn cho nhân viên y tế về các loại vắc xin, phác đồ tiêm, chỉ định, chống chỉ định và tác dụng phụ. Trình bày bằng tiếng Việt, có xuống dòng và gạch đầu dòng rõ ràng. Tuyệt đối không dùng emoji."}]})
-                            contents.append({"role": "model", "parts": [{"text": "Vâng, tôi sẽ thực hiện đúng vai trò."}]})
-                            
+                            messages = [{"role": "system", "content": "Bạn là Bác sĩ chuyên gia tư vấn Vắc xin hàng đầu. Nhiệm vụ của bạn là tư vấn cho nhân viên y tế về các loại vắc xin, phác đồ tiêm, chỉ định, chống chỉ định và tác dụng phụ. Trình bày bằng tiếng Việt, có xuống dòng và gạch đầu dòng rõ ràng. Tuyệt đối không dùng emoji."}]
                             for m in st.session_state.vaccine_chat[-8:]:
                                 if m["role"] == "user": 
-                                    contents.append({"role": "user", "parts": [{"text": m["content"]}]})
+                                    messages.append({"role": "user", "content": m["content"]})
                                 elif m["role"] == "assistant" and "Chào bạn! Tôi là" not in m["content"] and "⏳" not in m["content"] and "❌" not in m["content"]:
-                                    contents.append({"role": "model", "parts": [{"text": m["content"]}]})
+                                    messages.append({"role": "assistant", "content": m["content"]})
                                     
-                            payload = {"contents": contents, "generationConfig": {"temperature": 0.3}}
+                            payload = {"model": "llama-3.3-70b-versatile", "messages": messages, "temperature": 0.3}
                             suc = False
                             reply = "❌ Máy chủ AI đang bận."
                             
                             for k in k_list:
                                 if suc: break
-                                for m_name in ["gemini-1.5-flash", "gemini-2.0-flash"]:
-                                    try:
-                                        r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{m_name}:generateContent?key={k}", json=payload, timeout=20)
-                                        if r.status_code == 200:
-                                            reply = "".join(c for c in r.json()['candidates'][0]['content']['parts'][0]['text'] if ord(c)<=0xFFFF)
-                                            suc = True; break
-                                        else:
-                                            reply = f"❌ LỖI API ({r.status_code}): {r.json().get('error', {}).get('message', r.text)}"
-                                    except Exception as e: 
-                                        reply = f"❌ LỖI MẠNG: {str(e)}"
-                                        continue
+                                try:
+                                    headers = {"Authorization": f"Bearer {k}", "Content-Type": "application/json"}
+                                    r = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=20)
+                                    if r.status_code == 200:
+                                        reply = "".join(c for c in r.json()['choices'][0]['message']['content'] if ord(c)<=0xFFFF)
+                                        suc = True; break
+                                    else:
+                                        reply = f"❌ LỖI API ({r.status_code}): {r.text}"
+                                except Exception as e: 
+                                    reply = f"❌ LỖI MẠNG: {str(e)}"
+                                    continue
                                         
                         placeholder.markdown(reply)
                         st.session_state.vaccine_chat.append({"role": "assistant", "content": reply})
