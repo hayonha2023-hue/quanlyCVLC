@@ -384,23 +384,78 @@ else:
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
             
+            # --- SIÊU CẢM BIẾN JAVASCRIPT: TỰ CHẤM TIỀN KHI GÕ ---
+            components.html("""
+            <script>
+            const doc = window.parent.document;
+            if (!doc.getElementById("live-format-money")) {
+                let s = doc.createElement("script");
+                s.id = "live-format-money";
+                s.innerHTML = `
+                    document.addEventListener('input', function(e) {
+                        // Bắt sóng trực tiếp thao tác gõ phím của người dùng
+                        if (e.isTrusted && e.target && e.target.tagName === 'INPUT') {
+                            let p = e.target.placeholder || "";
+                            // Chỉ kích hoạt tự chấm tại các ô nhập Tiền
+                            if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Ngày cần")) {
+                                let oldVal = e.target.value;
+                                let oldCursor = e.target.selectionStart;
+                                
+                                // Ép bỏ mọi chữ cái, chỉ lấy số gốc
+                                let raw = oldVal.replace(/[^0-9]/g, '');
+                                if (raw) {
+                                    // Bọc mặt nạ dấu chấm chuẩn VN
+                                    let formatted = Number(raw).toLocaleString('vi-VN').replace(/,/g, '.');
+                                    
+                                    if (formatted !== oldVal) {
+                                        // Xuyên thủng lớp bảo vệ React của Web để ép nhận giá trị
+                                        let nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                        nativeSetter.call(e.target, formatted);
+                                        e.target.dispatchEvent(new Event('input', { bubbles: true }));
+                                        
+                                        // Giữ nguyên vị trí con trỏ, không bị giật nhảy về cuối câu
+                                        let diff = formatted.length - oldVal.length;
+                                        e.target.setSelectionRange(oldCursor + diff, oldCursor + diff);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                `;
+                doc.body.appendChild(s);
+            }
+            </script>
+            """, height=0, width=0)
+            # ------------------------------------------------
+
             # Lấy dữ liệu từ Đám mây về
             dt_data = db.get("daily_targets", {})
             dt_cfg = dt_data.get("config", {})
             dt_mts = dt_data.get("metrics", {})
             
+            # 🛡️ Cảm biến 1: Chuyển mọi bề mặt chữ có dấu chấm/phẩy thành số thực để tính toán
             def s_float(val):
                 if val is None or str(val).strip() == "": return 0.0
                 try: return float(str(val).replace('.', '').replace(',', ''))
                 except: return 0.0
+                
+            # 🛡️ Cảm biến 2: Tự động đeo mặt nạ dấu chấm cho số tiền hiển thị
+            def fmt_dot(val):
+                v = s_float(val)
+                if v == 0: return "" # Để trống cho đẹp nếu bằng 0
+                if v.is_integer(): return f"{int(v):,}".replace(",", ".")
+                return f"{v:,.1f}".replace(",", ".")
 
             if st.session_state.is_admin or "TARGET KPI" in perms:
                 with st.expander("⚙️ NHẬP LIỆU & CẤU HÌNH", expanded=True):
                     with st.form("target_form"):
                         st.markdown("**1. CẤU HÌNH CHUNG**")
                         c1, c2 = st.columns(2)
+                        
                         nv = c1.number_input("👥 Tổng Số NV", value=int(s_float(dt_cfg.get("nv", 1))), min_value=1)
-                        vac = c2.number_input("💉 Đã bán Vắc Xin (VNĐ)", value=int(s_float(dt_cfg.get("vac", 0))), step=100000)
+                        # Dùng text_input để hiển thị được dấu chấm ngăn cách 1.000
+                        vac_str = c2.text_input("💉 Đã bán Vắc Xin (VNĐ)", value=fmt_dot(dt_cfg.get("vac", 0)), placeholder="Ví dụ: 1.500.000")
+                        vac = s_float(vac_str)
                         
                         st.markdown("**2. CẤU HÌNH CA TRỰC**")
                         c3, c4, c5, c6 = st.columns(4)
@@ -420,10 +475,11 @@ else:
                             m_data = dt_mts.get(m, {})
                             colA, colB, colC = st.columns(3)
                             
-                            g = colA.number_input(f"Gốc ({m})", value=s_float(m_data.get("g", 0)), key=f"g_{m}", label_visibility="collapsed")
-                            p = colB.number_input(f"% Đạt ({m})", value=s_float(m_data.get("p", 100)), key=f"p_{m}", label_visibility="collapsed")
-                            n = colC.number_input(f"Ngày cần ({m})", value=s_float(m_data.get("n", 0)), key=f"n_{m}", label_visibility="collapsed")
-                            new_mts[m] = {"g": g, "p": p, "n": n}
+                            g_str = colA.text_input(f"Gốc ({m})", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", label_visibility="collapsed", placeholder="Mục tiêu gốc")
+                            p_str = colB.text_input(f"% Đạt ({m})", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", label_visibility="collapsed", placeholder="% Đạt")
+                            n_str = colC.text_input(f"Ngày cần ({m})", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", label_visibility="collapsed", placeholder="Ngày cần bán")
+                            
+                            new_mts[m] = {"g": s_float(g_str), "p": s_float(p_str), "n": s_float(n_str)}
                         
                         st.markdown("<br>", unsafe_allow_html=True)
                         if st.form_submit_button("⚡ TÍNH TOÁN & LƯU LÊN ĐÁM MÂY", type="primary", use_container_width=True):
@@ -440,14 +496,15 @@ else:
                                     p_val = new_mts[m]["p"]
                                     n_val = new_mts[m]["n"]
                                     
-                                    # Công thức trừ Vắc xin
                                     t_val = (g_val * p_val) / 100
+                                    # Thuật toán tự trừ doanh số Vắc xin
                                     if m == "Doanh Số (VNĐ)":
                                         t_val = t_val - vac
                                         if t_val < 0: t_val = 0
                                         
                                     save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "t": fmt(t_val), "n": fmt(n_val)}
                                 
+                                # Lưu lên đám mây với định dạng số gốc (để App máy tính tự đọc chuẩn)
                                 update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
                                 st.success("✅ Đã tính toán và đồng bộ về máy tính ở Shop!")
                                 time.sleep(1)
@@ -479,11 +536,11 @@ else:
                     ca1_1 = round(ca1_t / ng1_cur) if ng1_cur > 0 else 0
                     ca2_1 = round(ca2_t / ng2_cur) if ng2_cur > 0 else 0
                     
-                    fm = lambda num, is_ds: f"{int(num):,}".replace(",", ".") + (" đ" if is_ds else "")
+                    fm_res = lambda num, is_ds: f"{int(num):,}".replace(",", ".") + (" đ" if is_ds else "")
                     is_ds = (m == "Doanh Số (VNĐ)")
                     
-                    res1_data.append({"Chỉ Số": m, "THÁNG / 1 NV": fm(thang_1, is_ds), "NGÀY / 1 NV": fm(ngay_1, is_ds)})
-                    res2_data.append({"Chỉ Số": m, "Tổng Ngày": fm(val_n, is_ds), f"CA 1 (Tổng)": fm(round(ca1_t), is_ds), f"1 Người CA 1": fm(ca1_1, is_ds), f"CA 2 (Tổng)": fm(round(ca2_t), is_ds), f"1 Người CA 2": fm(ca2_1, is_ds)})
+                    res1_data.append({"Chỉ Số": m, "THÁNG / 1 NV": fm_res(thang_1, is_ds), "NGÀY / 1 NV": fm_res(ngay_1, is_ds)})
+                    res2_data.append({"Chỉ Số": m, "Tổng Ngày": fm_res(val_n, is_ds), f"CA 1 (Tổng)": fm_res(round(ca1_t), is_ds), f"1 Người CA 1": fm_res(ca1_1, is_ds), f"CA 2 (Tổng)": fm_res(round(ca2_t), is_ds), f"1 Người CA 2": fm_res(ca2_1, is_ds)})
                     
                 with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
                 with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
