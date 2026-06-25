@@ -169,7 +169,7 @@ else:
     perms = u_info.get("permissions", [])
     edit_perms = u_info.get("edit_permissions", []) 
     
-    tab_dict = {"🎯 BẢNG KPI": "TÍCH LŨY", "🗓️ LỊCH TRỰC": "XEM LỊCH", "📊 CHIA TARGET": "TARGET KPI", "🛒 LỊCH ECOM": "LỊCH ECOM", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP", "🤖 AI TƯ VẤN": "AI TƯ VẤN"}
+    tab_dict = {"🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "🎯 BẢNG KPI": "TÍCH LŨY", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP", "📊 CHIA TARGET": "TARGET KPI", "🤖 AI TƯ VẤN": "AI TƯ VẤN"}
     allowed_tabs = []
     
     hidden = db.get("settings", {}).get("hidden_features", [])
