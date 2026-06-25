@@ -393,27 +393,18 @@ else:
                 s.id = "live-format-money";
                 s.innerHTML = `
                     document.addEventListener('input', function(e) {
-                        // Bắt sóng trực tiếp thao tác gõ phím của người dùng
                         if (e.isTrusted && e.target && e.target.tagName === 'INPUT') {
                             let p = e.target.placeholder || "";
-                            // Chỉ kích hoạt tự chấm tại các ô nhập Tiền
                             if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Ngày cần")) {
                                 let oldVal = e.target.value;
                                 let oldCursor = e.target.selectionStart;
-                                
-                                // Ép bỏ mọi chữ cái, chỉ lấy số gốc
                                 let raw = oldVal.replace(/[^0-9]/g, '');
                                 if (raw) {
-                                    // Bọc mặt nạ dấu chấm chuẩn VN
                                     let formatted = Number(raw).toLocaleString('vi-VN').replace(/,/g, '.');
-                                    
                                     if (formatted !== oldVal) {
-                                        // Xuyên thủng lớp bảo vệ React của Web để ép nhận giá trị
                                         let nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
                                         nativeSetter.call(e.target, formatted);
                                         e.target.dispatchEvent(new Event('input', { bubbles: true }));
-                                        
-                                        // Giữ nguyên vị trí con trỏ, không bị giật nhảy về cuối câu
                                         let diff = formatted.length - oldVal.length;
                                         e.target.setSelectionRange(oldCursor + diff, oldCursor + diff);
                                     }
@@ -433,16 +424,14 @@ else:
             dt_cfg = dt_data.get("config", {})
             dt_mts = dt_data.get("metrics", {})
             
-            # 🛡️ Cảm biến 1: Chuyển mọi bề mặt chữ có dấu chấm/phẩy thành số thực để tính toán
             def s_float(val):
                 if val is None or str(val).strip() == "": return 0.0
                 try: return float(str(val).replace('.', '').replace(',', ''))
                 except: return 0.0
                 
-            # 🛡️ Cảm biến 2: Tự động đeo mặt nạ dấu chấm cho số tiền hiển thị
             def fmt_dot(val):
                 v = s_float(val)
-                if v == 0: return "" # Để trống cho đẹp nếu bằng 0
+                if v == 0: return ""
                 if v.is_integer(): return f"{int(v):,}".replace(",", ".")
                 return f"{v:,.1f}".replace(",", ".")
 
@@ -452,17 +441,27 @@ else:
                         st.markdown("**1. CẤU HÌNH CHUNG**")
                         c1, c2 = st.columns(2)
                         
-                        nv = c1.number_input("👥 Tổng Số NV", value=int(s_float(dt_cfg.get("nv", 1))), min_value=1)
-                        # Dùng text_input để hiển thị được dấu chấm ngăn cách 1.000
+                        # ĐÃ GỌT SẠCH Ô NUMBER_INPUT ĐỂ XÓA GIAO DIỆN .00 VÀ DẤU +/-
+                        nv_str = c1.text_input("👥 Tổng Số NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
+                        nv = s_float(nv_str)
+                        
                         vac_str = c2.text_input("💉 Đã bán Vắc Xin (VNĐ)", value=fmt_dot(dt_cfg.get("vac", 0)), placeholder="Ví dụ: 1.500.000")
                         vac = s_float(vac_str)
                         
                         st.markdown("**2. CẤU HÌNH CA TRỰC**")
                         c3, c4, c5, c6 = st.columns(4)
-                        pc1 = c3.number_input("☀️ CA 1: Tỷ lệ (%)", value=float(s_float(dt_cfg.get("pc1", 50.0))))
-                        ng1 = c4.number_input("☀️ CA 1: Số người", value=int(s_float(dt_cfg.get("ng1", 1))), min_value=1)
-                        pc2 = c5.number_input("🌙 CA 2: Tỷ lệ (%)", value=float(s_float(dt_cfg.get("pc2", 50.0))))
-                        ng2 = c6.number_input("🌙 CA 2: Số người", value=int(s_float(dt_cfg.get("ng2", 1))), min_value=1)
+                        
+                        pc1_str = c3.text_input("☀️ CA 1: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
+                        pc1 = s_float(pc1_str)
+                        
+                        ng1_str = c4.text_input("☀️ CA 1: Số người", value=str(s_float(dt_cfg.get("ng1", 1))).replace('.0', ''))
+                        ng1 = s_float(ng1_str)
+                        
+                        pc2_str = c5.text_input("🌙 CA 2: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc2", 50))).replace('.0', ''))
+                        pc2 = s_float(pc2_str)
+                        
+                        ng2_str = c6.text_input("🌙 CA 2: Số người", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
+                        ng2 = s_float(ng2_str)
                         
                         st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
                         st.markdown("**3. THIẾT LẬP CHỈ SỐ**")
@@ -497,14 +496,12 @@ else:
                                     n_val = new_mts[m]["n"]
                                     
                                     t_val = (g_val * p_val) / 100
-                                    # Thuật toán tự trừ doanh số Vắc xin
                                     if m == "Doanh Số (VNĐ)":
                                         t_val = t_val - vac
                                         if t_val < 0: t_val = 0
                                         
                                     save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "t": fmt(t_val), "n": fmt(n_val)}
                                 
-                                # Lưu lên đám mây với định dạng số gốc (để App máy tính tự đọc chuẩn)
                                 update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
                                 st.success("✅ Đã tính toán và đồng bộ về máy tính ở Shop!")
                                 time.sleep(1)
