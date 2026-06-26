@@ -379,7 +379,7 @@ else:
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
         # ==========================================
-        # 2.5 TAB CHIA TARGET (TỰ ĐỘNG CHIA NGÀY CẦN BÁN)
+        # 2.5 TAB CHIA TARGET (TICKBOX TRỪ VẮC XIN & TÍNH THEO NGÀY TÙY CHỈNH)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -394,7 +394,7 @@ else:
                     document.addEventListener('input', function(e) {
                         if (e.isTrusted && e.target && e.target.tagName === 'INPUT') {
                             let p = e.target.placeholder || "";
-                            if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Ngày cần")) {
+                            if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Ngày") || p.includes("Đã bán") || p.includes("Còn lại") || p.includes("Mỗi ngày") || p.includes("VD: 30")) {
                                 let oldVal = e.target.value;
                                 let oldCursor = e.target.selectionStart;
                                 let raw = oldVal.replace(/[^0-9]/g, '');
@@ -436,31 +436,36 @@ else:
                 with st.expander("⚙️ NHẬP LIỆU & CẤU HÌNH", expanded=True):
                     with st.form("target_form"):
                         st.markdown("**1. CẤU HÌNH CHUNG**")
-                        c1, c2 = st.columns(2)
+                        c1, c2, c3 = st.columns([1.2, 1.5, 1.2])
                         
                         nv_str = c1.text_input("👥 Tổng Số NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
                         nv = s_float(nv_str)
                         
-                        vac_str = c2.text_input("💉 Đã bán Vắc Xin (VNĐ)", value=fmt_dot(dt_cfg.get("vac", 0)), placeholder="Ví dụ: 1.500.000")
+                        vac_str = c2.text_input("💉 Đã bán Vắc Xin (VNĐ)", value=fmt_dot(dt_cfg.get("vac", 0)), placeholder="VD: 1.500.000")
                         vac = s_float(vac_str)
+                        # --- THÊM TICKBOX CÔNG TẮC TRỪ VẮC XIN ---
+                        vac_chk = c2.checkbox("☑️ Trừ Vắc Xin vào Doanh Số", value=dt_cfg.get("vac_chk", True), help="Bỏ tích nếu không muốn trừ tiền Vắc Xin khỏi chỉ tiêu")
+                        
+                        nc_str = c3.text_input("⏳ Số ngày còn lại", value=str(s_float(dt_cfg.get("nc", 30))).replace('.0', ''), placeholder="VD: 30")
+                        nc = s_float(nc_str)
                         
                         st.markdown("**2. CẤU HÌNH CA TRỰC**")
-                        c3, c4, c5, c6 = st.columns(4)
+                        c4, c5, c6, c7 = st.columns(4)
                         
-                        pc1_str = c3.text_input("☀️ CA 1: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
+                        pc1_str = c4.text_input("☀️ CA 1: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
                         pc1 = s_float(pc1_str)
                         
-                        ng1_str = c4.text_input("☀️ CA 1: Số người", value=str(s_float(dt_cfg.get("ng1", 1))).replace('.0', ''))
+                        ng1_str = c5.text_input("☀️ CA 1: Số người", value=str(s_float(dt_cfg.get("ng1", 1))).replace('.0', ''))
                         ng1 = s_float(ng1_str)
                         
-                        pc2_str = c5.text_input("🌙 CA 2: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc2", 50))).replace('.0', ''))
+                        pc2_str = c6.text_input("🌙 CA 2: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc2", 50))).replace('.0', ''))
                         pc2 = s_float(pc2_str)
                         
-                        ng2_str = c6.text_input("🌙 CA 2: Số người", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
+                        ng2_str = c7.text_input("🌙 CA 2: Số người", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
                         ng2 = s_float(ng2_str)
                         
                         st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
-                        st.markdown("**3. THIẾT LẬP CHỈ SỐ**")
+                        st.markdown("**3. THIẾT LẬP CHỈ SỐ CẦN ĐẠT**")
                         
                         metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
                         new_mts = {}
@@ -468,25 +473,37 @@ else:
                         for m in metrics:
                             st.markdown(f"<span style='color:#0ea5e9; font-weight:bold;'>{m}</span>", unsafe_allow_html=True)
                             m_data = dt_mts.get(m, {})
-                            colA, colB, colC = st.columns(3)
+                            colA, colB, colC, colD, colE = st.columns([1.3, 0.7, 1.2, 1.2, 1.2])
                             
                             g_str = colA.text_input(f"Gốc ({m})", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", label_visibility="collapsed", placeholder="Mục tiêu gốc")
                             p_str = colB.text_input(f"% Đạt ({m})", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", label_visibility="collapsed", placeholder="% Đạt")
-                            n_str = colC.text_input(f"Ngày cần ({m})", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", label_visibility="collapsed", placeholder="Ngày cần bán")
+                            db_str = colC.text_input(f"Đã Bán ({m})", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", label_visibility="collapsed", placeholder="Đã bán")
+                            cl_str = colD.text_input(f"Còn Lại ({m})", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m}", label_visibility="collapsed", placeholder="Còn lại")
+                            n_str = colE.text_input(f"Ngày Cần ({m})", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", label_visibility="collapsed", placeholder="Mỗi ngày cần")
                             
-                            # Lưu lại để nhận diện xem ông có sửa tay số Ngày không
                             new_mts[m] = {
-                                "g_str": g_str, "p_str": p_str, "n_str": n_str,
-                                "old_t": s_float(m_data.get("t", 0)),
+                                "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
+                                "old_cl": s_float(m_data.get("cl", 0)),
                                 "old_n": s_float(m_data.get("n", 0))
                             }
                         
                         st.markdown("<br>", unsafe_allow_html=True)
-                        if st.form_submit_button("⚡ LƯU & TÍNH KẾT QUẢ", type="primary", use_container_width=True):
+                        btn_c1, btn_c2 = st.columns([1, 1])
+                        
+                        del_btn = btn_c1.form_submit_button("🗑️ XÓA DỮ LIỆU ĐỂ LÀM MỚI", use_container_width=True)
+                        sub_btn = btn_c2.form_submit_button("⚡ LƯU & TÍNH KẾT QUẢ", type="primary", use_container_width=True)
+                        
+                        if del_btn:
+                            update_firebase("daily_targets", {"config": {}, "metrics": {}})
+                            st.success("✅ Đã dọn sạch bảng chia Target!")
+                            time.sleep(1)
+                            st.rerun()
+
+                        if sub_btn:
                             if pc1 + pc2 != 100:
                                 st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
                             else:
-                                new_config = {"nv": str(nv), "vac": str(vac), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
+                                new_config = {"nv": str(nv), "vac": str(vac), "vac_chk": vac_chk, "nc": str(nc), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
                                 save_mts = {}
                                 
                                 fmt = lambda x: f"{int(x)}" if float(x).is_integer() else f"{float(x)}"
@@ -494,28 +511,30 @@ else:
                                 for m in metrics:
                                     g_val = s_float(new_mts[m]["g_str"])
                                     p_val = s_float(new_mts[m]["p_str"])
-                                    n_val = s_float(new_mts[m]["n_str"])
+                                    db_val = s_float(new_mts[m]["db_str"])
                                     n_str = new_mts[m]["n_str"]
-                                    old_t = new_mts[m]["old_t"]
                                     old_n = new_mts[m]["old_n"]
                                     
                                     t_val = (g_val * p_val) / 100
-                                    if m == "Doanh Số (VNĐ)":
+                                    
+                                    # --- ÁP DỤNG CÔNG TẮC VẮC XIN ---
+                                    if m == "Doanh Số (VNĐ)" and vac_chk:
                                         t_val = t_val - vac
-                                        if t_val < 0: t_val = 0
                                         
-                                    # --- THUẬT TOÁN THÔNG MINH NHẬN DIỆN Ý ÔNG ---
-                                    # Nếu ô Ngày đang trống -> Máy tự chia 30 ngày.
-                                    # Nếu ông đổi Gốc nhưng kệ cái số ở ô Ngày -> Máy cũng tự cập nhật chia 30 ngày cho khớp.
+                                    cl_val = t_val - db_val
+                                    if cl_val < 0: cl_val = 0
+                                        
                                     if n_str.strip() == "":
-                                        n_val = t_val / 30
-                                    elif n_val == old_n and t_val != old_t:
-                                        n_val = t_val / 30
+                                        n_val = cl_val / nc if nc > 0 else 0
+                                    elif s_float(n_str) == old_n: 
+                                        n_val = cl_val / nc if nc > 0 else 0
+                                    else:
+                                        n_val = s_float(n_str)
                                         
-                                    save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "t": fmt(t_val), "n": fmt(n_val)}
+                                    save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "db": fmt(db_val), "cl": fmt(cl_val), "n": fmt(n_val)}
                                 
                                 update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
-                                st.success("✅ Đã tính toán thông minh và đồng bộ!")
+                                st.success("✅ Đã tính toán chuẩn xác và đồng bộ!")
                                 time.sleep(1)
                                 st.rerun()
 
@@ -533,10 +552,10 @@ else:
                 
                 for m in metrics:
                     m_data = dt_mts.get(m, {})
-                    val_t = s_float(m_data.get("t", 0))
+                    val_cl = s_float(m_data.get("cl", 0)) 
                     val_n = s_float(m_data.get("n", 0))
                     
-                    thang_1 = round(val_t / nv_cur) if nv_cur > 0 else 0
+                    thang_1 = round(val_cl / nv_cur) if nv_cur > 0 else 0
                     
                     ca1_t = val_n * (pc1_cur / 100)
                     ca2_t = val_n * (pc2_cur / 100)
@@ -547,8 +566,8 @@ else:
                     fm_res = lambda num, is_ds: f"{int(num):,}".replace(",", ".") + (" đ" if is_ds else "")
                     is_ds = (m == "Doanh Số (VNĐ)")
                     
-                    res1_data.append({"Chỉ Số": m, "MỤC TIÊU THÁNG": fm_res(thang_1, is_ds)})
-                    res2_data.append({"Chỉ Số": m, "Tổng Ngày": fm_res(val_n, is_ds), f"CA 1 ({pc1_cur:g}%)": fm_res(round(ca1_t), is_ds), f"1 Người C1": fm_res(ca1_1, is_ds), f"CA 2 ({pc2_cur:g}%)": fm_res(round(ca2_t), is_ds), f"1 Người C2": fm_res(ca2_1, is_ds)})
+                    res1_data.append({"Chỉ Số": m, "CÒN PHẢI BÁN / 1 NV": fm_res(thang_1, is_ds)})
+                    res2_data.append({"Chỉ Số": m, "Mỗi Ngày Cần": fm_res(val_n, is_ds), f"CA 1 ({pc1_cur:g}%)": fm_res(round(ca1_t), is_ds), f"1 Người C1": fm_res(ca1_1, is_ds), f"CA 2 ({pc2_cur:g}%)": fm_res(round(ca2_t), is_ds), f"1 Người C2": fm_res(ca2_1, is_ds)})
                     
                 with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
                 with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
