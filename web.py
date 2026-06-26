@@ -485,10 +485,11 @@ else:
                             if pc1 + pc2 != 100:
                                 st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
                             else:
-                                new_config = {"nv": str(nv), "vac": str(vac), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
-                                save_mts = {}
-                                
+                                # Tuyệt chiêu gọt sạch đuôi thập phân .0
                                 fmt = lambda x: f"{int(x)}" if float(x).is_integer() else f"{float(x)}"
+                                
+                                new_config = {"nv": fmt(nv), "vac": fmt(vac), "pc1": fmt(pc1), "ng1": fmt(ng1), "pc2": fmt(pc2), "ng2": fmt(ng2)}
+                                save_mts = {}
                                 
                                 for m in metrics:
                                     g_val = new_mts[m]["g"]
@@ -496,12 +497,14 @@ else:
                                     n_val = new_mts[m]["n"]
                                     
                                     t_val = (g_val * p_val) / 100
+                                    # Thuật toán tự trừ doanh số Vắc xin
                                     if m == "Doanh Số (VNĐ)":
                                         t_val = t_val - vac
                                         if t_val < 0: t_val = 0
                                         
                                     save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "t": fmt(t_val), "n": fmt(n_val)}
                                 
+                                # Lưu lên đám mây với định dạng số gốc (để App máy tính tự đọc chuẩn)
                                 update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
                                 st.success("✅ Đã tính toán và đồng bộ về máy tính ở Shop!")
                                 time.sleep(1)
