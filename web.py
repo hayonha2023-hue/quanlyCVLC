@@ -169,7 +169,7 @@ else:
     perms = u_info.get("permissions", [])
     edit_perms = u_info.get("edit_permissions", []) 
     
-    tab_dict = {"🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "🎯 BẢNG KPI": "TÍCH LŨY", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP", "📊 CHIA TARGET": "TARGET KPI", "🤖 AI TƯ VẤN": "AI TƯ VẤN"}
+    tab_dict = {"🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "🎯 BẢNG KPI": "TÍCH LŨY", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP", "📊 CHIA TARGET": "CHIA TARGET", "🤖 AI TƯ VẤN": "AI TƯ VẤN"}
     allowed_tabs = []
     
     hidden = db.get("settings", {}).get("hidden_features", [])
@@ -435,7 +435,7 @@ else:
                 if v.is_integer(): return f"{int(v):,}".replace(",", ".")
                 return f"{v:,.1f}".replace(",", ".")
 
-            if st.session_state.is_admin or "TARGET KPI" in perms:
+            if st.session_state.is_admin or "TÍNH TARGET" in edit_perms:
                 with st.expander("⚙️ NHẬP LIỆU & CẤU HÌNH", expanded=True):
                     with st.form("target_form"):
                         st.markdown("**1. CẤU HÌNH CHUNG**")
@@ -700,10 +700,10 @@ else:
                         current_perms = uinfo.get("permissions", [])
                         current_edits = uinfo.get("edit_permissions", [])
                         
-                        view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "TARGET KPI", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM", "AI TƯ VẤN"]
+                        view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "CHIA TARGET", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM", "AI TƯ VẤN"]
                         new_perms = st.multiselect("Bật/tắt các Tab hiển thị trên điện thoại:", view_options, default=[p for p in current_perms if p in view_options], key=f"perm_{u}")
                         
-                        edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA"]
+                        edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA", "TÍNH TARGET"]
                         new_edits = st.multiselect("Bật/tắt quyền thao tác trực tiếp:", edit_options, default=[p for p in current_edits if p in edit_options], key=f"edit_{u}")
                         
                         if st.button("💾 LƯU PHÂN QUYỀN", key=f"save_{u}", type="primary", use_container_width=True):
