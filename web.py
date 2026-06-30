@@ -379,7 +379,7 @@ else:
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
         # ==========================================
-        # 2.5 TAB CHIA TARGET (TỪNG CHỈ SỐ LÀ 1 THẺ XỔ XUỐNG RIÊNG)
+        # 2.5 TAB CHIA TARGET (BỌC KHUNG CONTAINER LÁCH LUẬT LỒNG THẺ)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -437,7 +437,7 @@ else:
                 
                 with st.form("target_form"):
                     
-                    # --- PHẦN 1: ĐÓNG GÓI VÀO THẺ (MẶC ĐỊNH ĐÓNG) ---
+                    # --- PHẦN 1: ĐÓNG GÓI VÀO THẺ ---
                     with st.expander("🟢 1. CẤU HÌNH CHUNG (Bấm để mở)", expanded=False):
                         c1, c2 = st.columns(2)
                         nv_str = c1.text_input("👥 Tổng NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
@@ -451,7 +451,7 @@ else:
                         st.markdown("""<style> .stCheckbox {padding-top: 30px;} </style>""", unsafe_allow_html=True)
                         vac_chk = c4.checkbox("☑️ Trừ Vắc Xin", value=dt_cfg.get("vac_chk", True))
                         
-                    # --- PHẦN 2: ĐÓNG GÓI VÀO THẺ (MẶC ĐỊNH ĐÓNG) ---
+                    # --- PHẦN 2: ĐÓNG GÓI VÀO THẺ ---
                     with st.expander("🟡 2. CẤU HÌNH CA TRỰC (Bấm để mở)", expanded=False):
                         c5, c6 = st.columns(2)
                         pc1_str = c5.text_input("☀️ CA 1 (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
@@ -465,41 +465,36 @@ else:
                         ng2_str = c8.text_input("🌙 CA 2 (Người)", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
                         ng2 = s_float(ng2_str)
                         
-                    # --- PHẦN 3: MỖI CHỈ SỐ LÀ 1 THẺ XỔ XUỐNG ---
-                    st.markdown("<h6 style='color:#0ea5e9; font-weight: bold; margin-top: 10px;'>🔵 3. BẢNG CHỈ SỐ CẦN ĐẠT</h6>", unsafe_allow_html=True)
-                    
-                    metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
-                    icon_map = {
-                        "Doanh Số (VNĐ)": "💰",
-                        "Tổng Số Bill": "🧾",
-                        "Cắt Liều": "💊",
-                        "Tỷ Lệ HOT": "🔥",
-                        "Tỷ Lệ FS": "⚡",
-                        "Tỷ Lệ 5 Sao": "⭐"
-                    }
-                    new_mts = {}
-                    
-                    for m in metrics:
-                        m_data = dt_mts.get(m, {})
-                        icon = icon_map.get(m, "🔹")
+                    # --- PHẦN 3: BỌC VÀO 1 KHUNG KÍN ĐỂ TẠO CẢM GIÁC LÀ 1 BOX DUY NHẤT ---
+                    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+                    with st.container(border=True):
+                        st.markdown("<h6 style='color:#0ea5e9; font-weight: bold; margin-bottom: 10px; text-align: center;'>🔵 3. BẢNG CHỈ SỐ CẦN ĐẠT (Bấm từng thẻ để nhập)</h6>", unsafe_allow_html=True)
                         
-                        # Tạo 1 Thẻ (Action) đậy kín cho từng chỉ số
-                        with st.expander(f"{icon} {m}", expanded=False):
-                            r1c1, r1c2 = st.columns([1.5, 1])
-                            g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
-                            p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", placeholder="%...")
+                        metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
+                        icon_map = {"Doanh Số (VNĐ)": "💰", "Tổng Số Bill": "🧾", "Cắt Liều": "💊", "Tỷ Lệ HOT": "🔥", "Tỷ Lệ FS": "⚡", "Tỷ Lệ 5 Sao": "⭐"}
+                        new_mts = {}
+                        
+                        for m in metrics:
+                            m_data = dt_mts.get(m, {})
+                            icon = icon_map.get(m, "🔹")
                             
-                            r2c1, r2c2 = st.columns(2)
-                            db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
-                            cl_str = r2c2.text_input("Còn phải bán", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m}", placeholder="Còn lại...")
-                            
-                            n_str = st.text_input("Mỗi ngày cần", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", placeholder="Ngày cần...")
-                            
-                            new_mts[m] = {
-                                "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
-                                "old_cl": s_float(m_data.get("cl", 0)),
-                                "old_n": s_float(m_data.get("n", 0))
-                            }
+                            # Mỗi chỉ số là 1 thẻ xổ xuống nằm ngay ngắn trong Khung
+                            with st.expander(f"{icon} {m}", expanded=False):
+                                r1c1, r1c2 = st.columns([1.5, 1])
+                                g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
+                                p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", placeholder="%...")
+                                
+                                r2c1, r2c2 = st.columns(2)
+                                db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
+                                cl_str = r2c2.text_input("Còn phải bán", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m}", placeholder="Còn lại...")
+                                
+                                n_str = st.text_input("Mỗi ngày cần", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", placeholder="Ngày cần...")
+                                
+                                new_mts[m] = {
+                                    "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
+                                    "old_cl": s_float(m_data.get("cl", 0)),
+                                    "old_n": s_float(m_data.get("n", 0))
+                                }
                         
                     st.markdown("<br>", unsafe_allow_html=True)
                     btn_c1, btn_c2 = st.columns([1, 1])
