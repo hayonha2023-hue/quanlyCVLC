@@ -379,7 +379,7 @@ else:
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
         # ==========================================
-        # 2.5 TAB CHIA TARGET (GIAO DIỆN BẢNG LƯỚI CHUYÊN NGHIỆP)
+        # 2.5 TAB CHIA TARGET (GIAO DIỆN "THẺ" TỐI ƯU 100% CHO MOBILE)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -436,69 +436,65 @@ else:
                 with st.expander("⚙️ BẢNG NHẬP LIỆU & CẤU HÌNH", expanded=True):
                     with st.form("target_form"):
                         
-                        # --- KHU VỰC CẤU HÌNH GỌN GÀNG LÊN 2 HÀNG ---
-                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>1. CẤU HÌNH CHUNG & CA TRỰC</h5>", unsafe_allow_html=True)
-                        
-                        c1, c2, c3, c4 = st.columns(4)
+                        # --- CẤU HÌNH ĐƯỢC CHIA LÀM 2 CỘT CHO ĐỠ CHẬT TRÊN ĐIỆN THOẠI ---
+                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>1. CẤU HÌNH CHUNG</h5>", unsafe_allow_html=True)
+                        c1, c2 = st.columns(2)
                         nv_str = c1.text_input("👥 Tổng NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
                         nv = s_float(nv_str)
-                        
                         nc_str = c2.text_input("⏳ Số ngày còn lại", value=str(s_float(dt_cfg.get("nc", 30))).replace('.0', ''), placeholder="VD: 30")
                         nc = s_float(nc_str)
                         
+                        c3, c4 = st.columns(2)
                         vac_str = c3.text_input("💉 Đã bán Vắc Xin (VNĐ)", value=fmt_dot(dt_cfg.get("vac", 0)), placeholder="VD: 1.500.000")
                         vac = s_float(vac_str)
+                        st.markdown("""<style> .stCheckbox {padding-top: 30px;} </style>""", unsafe_allow_html=True)
+                        vac_chk = c4.checkbox("☑️ Trừ Vắc Xin", value=dt_cfg.get("vac_chk", True))
                         
-                        st.markdown("""<style> .stCheckbox {padding-top: 35px;} </style>""", unsafe_allow_html=True)
-                        vac_chk = c4.checkbox("☑️ Trừ Vắc Xin", value=dt_cfg.get("vac_chk", True), help="Bỏ tích nếu không muốn trừ tiền Vắc Xin khỏi chỉ tiêu")
-                        
-                        c5, c6, c7, c8 = st.columns(4)
+                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold; margin-top: 10px;'>2. CẤU HÌNH CA TRỰC</h5>", unsafe_allow_html=True)
+                        c5, c6 = st.columns(2)
                         pc1_str = c5.text_input("☀️ CA 1: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
                         pc1 = s_float(pc1_str)
-                        
                         ng1_str = c6.text_input("☀️ CA 1: Số người", value=str(s_float(dt_cfg.get("ng1", 1))).replace('.0', ''))
                         ng1 = s_float(ng1_str)
                         
+                        c7, c8 = st.columns(2)
                         pc2_str = c7.text_input("🌙 CA 2: Tỷ lệ (%)", value=str(s_float(dt_cfg.get("pc2", 50))).replace('.0', ''))
                         pc2 = s_float(pc2_str)
-                        
                         ng2_str = c8.text_input("🌙 CA 2: Số người", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
                         ng2 = s_float(ng2_str)
                         
                         st.markdown("<hr style='margin: 15px 0; border-color: #334155;'>", unsafe_allow_html=True)
                         
-                        # --- KHU VỰC THIẾT LẬP CHỈ SỐ (DẠNG BẢNG LƯỚI) ---
-                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>2. BẢNG CHỈ SỐ CẦN ĐẠT</h5>", unsafe_allow_html=True)
-                        
-                        h_cols = st.columns([1.5, 1.2, 0.8, 1.2, 1.2, 1.2])
-                        h_cols[0].markdown("<span style='color:#94a3b8; font-size: 13px; font-weight:bold;'>CHỈ SỐ</span>", unsafe_allow_html=True)
-                        h_cols[1].markdown("<span style='color:#94a3b8; font-size: 13px; font-weight:bold;'>MỤC TIÊU GỐC</span>", unsafe_allow_html=True)
-                        h_cols[2].markdown("<span style='color:#94a3b8; font-size: 13px; font-weight:bold;'>% ĐẠT</span>", unsafe_allow_html=True)
-                        h_cols[3].markdown("<span style='color:#94a3b8; font-size: 13px; font-weight:bold;'>ĐÃ BÁN</span>", unsafe_allow_html=True)
-                        h_cols[4].markdown("<span style='color:#ffffff; font-size: 13px; font-weight:bold;'>CÒN PHẢI BÁN</span>", unsafe_allow_html=True)
-                        h_cols[5].markdown("<span style='color:#10b981; font-size: 13px; font-weight:bold;'>MỖI NGÀY CẦN</span>", unsafe_allow_html=True)
+                        # --- KHU VỰC CHỈ SỐ: THIẾT KẾ DẠNG THẺ (CARD) ---
+                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>3. BẢNG CHỈ SỐ CẦN ĐẠT</h5>", unsafe_allow_html=True)
                         
                         metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
                         new_mts = {}
                         
                         for m in metrics:
                             m_data = dt_mts.get(m, {})
-                            cols = st.columns([1.5, 1.2, 0.8, 1.2, 1.2, 1.2])
+                            m_color = "#0ea5e9" if m == "Doanh Số (VNĐ)" else "#ffffff"
                             
-                            m_color = "#0ea5e9" if m == "Doanh Số (VNĐ)" else "#e2e8f0"
-                            cols[0].markdown(f"<div style='padding-top:10px; font-weight:bold; color:{m_color};'>{m}</div>", unsafe_allow_html=True)
-                            
-                            g_str = cols[1].text_input(f"g_{m}", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", label_visibility="collapsed", placeholder="Mục tiêu...")
-                            p_str = cols[2].text_input(f"p_{m}", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", label_visibility="collapsed", placeholder="%...")
-                            db_str = cols[3].text_input(f"db_{m}", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", label_visibility="collapsed", placeholder="Đã bán...")
-                            cl_str = cols[4].text_input(f"cl_{m}", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m}", label_visibility="collapsed", placeholder="Còn lại...")
-                            n_str = cols[5].text_input(f"n_{m}", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", label_visibility="collapsed", placeholder="Ngày cần...")
-                            
-                            new_mts[m] = {
-                                "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
-                                "old_cl": s_float(m_data.get("cl", 0)),
-                                "old_n": s_float(m_data.get("n", 0))
-                            }
+                            # Bọc mỗi chỉ số vào 1 khung viền vuông vắn
+                            with st.container(border=True):
+                                st.markdown(f"<span style='color:{m_color}; font-size:16px; font-weight:bold;'>{m}</span>", unsafe_allow_html=True)
+                                
+                                # Hàng 1: Gốc, Đạt, Đã Bán
+                                r1c1, r1c2, r1c3 = st.columns(3)
+                                g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
+                                p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", placeholder="%...")
+                                db_str = r1c3.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
+                                
+                                # Hàng 2: Còn lại, Ngày cần
+                                r2c1, r2c2 = st.columns(2)
+                                cl_str = r2c1.text_input("Còn phải bán", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m}", placeholder="Còn lại...")
+                                n_str = r2c2.text_input("Mỗi ngày cần", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", placeholder="Ngày cần...")
+                                
+                                new_mts[m] = {
+                                    "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
+                                    "old_cl": s_float(m_data.get("cl", 0)),
+                                    "old_n": s_float(m_data.get("n", 0))
+                                }
                         
                         st.markdown("<br>", unsafe_allow_html=True)
                         btn_c1, btn_c2 = st.columns([1, 1])
@@ -583,7 +579,6 @@ else:
                     
                 with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
                 with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
-
         # ==========================================
         # 3. TAB LỊCH ECOM
         # ==========================================
