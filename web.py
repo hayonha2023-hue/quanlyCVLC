@@ -27,12 +27,11 @@ def delete_firebase(path): requests.delete(f"{FIREBASE_URL.replace('.json', '')}
 def format_vnd(amount): return f"{amount:,.0f} ₫".replace(",", ".")
 def get_hash(text): return hashlib.md5(text.encode('utf-8')).hexdigest()
 
-# THUẬT TOÁN XỬ LÝ SỐ: ĐÃ VÁ LỖI HIỂU NHẦM DẤU .0 THÀNH HÀNG NGHÌN
+# THUẬT TOÁN XỬ LÝ SỐ CHUẨN XÁC
 def s_float(val):
     if val is None or str(val).strip() == "": return 0.0
     if isinstance(val, (int, float)): return float(val)
     s = str(val).strip()
-    # Bắt lỗi số lưu từ DB có đuôi máy tính .0 (VD: "45.0")
     if s.endswith(".0") and s.count(".") == 1:
         try: return float(s)
         except: pass
@@ -63,7 +62,7 @@ if "user" not in st.session_state:
 db = get_data()
 
 # ==========================================
-# 2. XỬ LÝ CSS & THEME KÍNH MỜ (GLASSMORPHISM) CHO HÌNH NỀN
+# 2. XỬ LÝ CSS & THEME KÍNH MỜ (TỐI ƯU HIỂN THỊ CHỮ)
 # ==========================================
 base_css = """
 <style>
@@ -71,12 +70,12 @@ base_css = """
 
 html, body, [class*="css"]  { font-family: 'Inter', sans-serif !important; }
 
-/* Ẩn Menu rác, giữ lại Header để mở Menu trên điện thoại */
+/* Ẩn Menu rác */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 [data-testid="stHeaderActionElements"], .stDeployButton, #manage-app-button {display: none !important;}
 
-/* Nút Tabs nằm ngang sang trọng */
+/* Nút Tabs */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px; padding: 6px; border-radius: 12px; border-bottom: none;
 }
@@ -87,7 +86,7 @@ footer {visibility: hidden;}
 
 /* Khung nhập liệu bo góc */
 .stTextInput input {
-    border-radius: 8px; padding: 12px 15px; transition: all 0.3s ease;
+    border-radius: 8px; padding: 12px 15px; transition: all 0.3s ease; font-weight: 500;
 }
 .stTextInput input:focus {
     border-color: #0ea5e9 !important; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
@@ -95,14 +94,14 @@ footer {visibility: hidden;}
 
 /* Thẻ xổ xuống (Expander) */
 [data-testid="stExpander"] {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border-radius: 12px; margin-bottom: 12px; transition: all 0.3s ease;
 }
-[data-testid="stExpander"] summary p { font-weight: 600; font-size: 15px; }
+[data-testid="stExpander"] summary p { font-weight: 700; font-size: 15px; }
 
 /* Nút bấm Gradient */
 .stButton > button {
-    border-radius: 8px; font-weight: 600; padding: 10px 0; transition: all 0.3s ease;
+    border-radius: 8px; font-weight: 700; padding: 10px 0; transition: all 0.3s ease;
 }
 .stButton > button[kind="primary"] {
     background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; color: white;
@@ -113,60 +112,63 @@ footer {visibility: hidden;}
 
 /* Sidebar Menu */
 [data-testid="stSidebar"] div[role="radiogroup"] > label { background-color: transparent !important; border-radius: 12px !important; padding: 12px 16px !important; margin-bottom: 8px !important; cursor: pointer; transition: all 0.2s !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.08) !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.15) !important; }
 [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.25) !important; border-left: 4px solid #0ea5e9 !important; }
 [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 600 !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 700 !important; }
 </style>
 """
 st.markdown(base_css, unsafe_allow_html=True)
 
 if "theme" not in st.session_state: st.session_state.theme = "Dark" 
 
-# LẤY ẢNH NỀN RIÊNG CỦA TỪNG USER
 bg_b64 = ""
 if st.session_state.user:
     bg_b64 = db.get("users", {}).get(st.session_state.user, {}).get("bg_image", "")
 
 if st.session_state.theme == "Light":
-    bg_sb = "rgba(255, 255, 255, 0.85)" if bg_b64 else "#ffffff"
-    bg_el = "rgba(255, 255, 255, 0.85)" if bg_b64 else "#ffffff"
+    # SÁNG: Tăng opacity lên 0.92 và làm mờ 16px để chữ nổi bật hẳn lên
+    bg_sb = "rgba(255, 255, 255, 0.92)" if bg_b64 else "#ffffff"
+    bg_el = "rgba(255, 255, 255, 0.92)" if bg_b64 else "#ffffff"
     theme_css = f"""<style>
     [data-testid="stAppViewContainer"] {{ background-color: #f1f5f9 !important; }}
-    [data-testid="stSidebar"] {{ background-color: {bg_sb} !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-right: 1px solid rgba(0,0,0,0.1); }} 
+    [data-testid="stSidebar"] {{ background-color: {bg_sb} !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-right: 1px solid rgba(0,0,0,0.1); }} 
     .stApp {{ color: #0f172a !important; }} 
-    .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {{ color: #1e293b !important; }} 
+    .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {{ color: #0f172a !important; }} 
     [data-testid="stMetricValue"] {{ color: #0284c7 !important; }} 
-    [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {{ background-color: {bg_el} !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.1) !important; }} 
-    button[kind="secondary"] {{ background-color: {bg_el} !important; color: #0284c7 !important; border: 1px solid #e2e8f0 !important; }} 
+    [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {{ background-color: {bg_el} !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,0.15) !important; }} 
+    button[kind="secondary"] {{ background-color: {bg_el} !important; color: #0284c7 !important; border: 2px solid #e2e8f0 !important; font-weight: 700 !important; }} 
     button[kind="secondary"]:hover {{ background-color: #f0f9ff !important; border-color: #0ea5e9 !important; }} 
-    .stTabs [data-baseweb="tab-list"] {{ background-color: rgba(226, 232, 240, 0.85) !important; backdrop-filter: blur(10px); }} 
-    .stTabs [aria-selected="true"] {{ background-color: #ffffff !important; color: #0284c7 !important; }} 
-    .stTextInput input {{ background-color: rgba(255, 255, 255, 0.7) !important; color: #0f172a !important; border-color: #cbd5e1 !important; }} 
+    .stTabs [data-baseweb="tab-list"] {{ background-color: rgba(226, 232, 240, 0.95) !important; backdrop-filter: blur(16px); }} 
+    .stTabs [aria-selected="true"] {{ background-color: #ffffff !important; color: #0284c7 !important; font-weight: 800 !important; }} 
+    .stTextInput input {{ background-color: rgba(255, 255, 255, 0.9) !important; color: #0f172a !important; border: 1px solid #94a3b8 !important; }} 
     [data-testid="stSidebar"] div[role="radiogroup"] > label p {{ color: #0f172a !important; }}
     [data-testid="stExpander"] summary p {{ color: #0f172a !important; }}
     </style>"""
 else:
-    bg_sb = "rgba(17, 24, 39, 0.75)" if bg_b64 else "#111827"
-    bg_el = "rgba(31, 41, 55, 0.75)" if bg_b64 else "#1f2937"
+    # TỐI: Tăng opacity lên 0.92 và làm mờ 16px, viền sáng nhẹ
+    bg_sb = "rgba(15, 23, 42, 0.92)" if bg_b64 else "#0f172a"
+    bg_el = "rgba(30, 41, 59, 0.92)" if bg_b64 else "#1e293b"
     theme_css = f"""<style>
     [data-testid="stAppViewContainer"] {{ background-color: #090d16 !important; }}
-    [data-testid="stSidebar"] {{ background-color: {bg_sb} !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,0.1); }} 
+    [data-testid="stSidebar"] {{ background-color: {bg_sb} !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-right: 1px solid rgba(255,255,255,0.1); }} 
     .stApp {{ color: #f8fafc !important; }} 
-    .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {{ color: #f1f5f9 !important; }} 
+    .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {{ color: #f8fafc !important; }} 
     [data-testid="stMetricValue"] {{ color: #38bdf8 !important; }} 
-    [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {{ background-color: {bg_el} !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1) !important; }} 
-    button[kind="secondary"] {{ background-color: {bg_el} !important; color: #38bdf8 !important; border: 1px solid #374151 !important; }} 
+    [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {{ background-color: {bg_el} !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15) !important; }} 
+    button[kind="secondary"] {{ background-color: {bg_el} !important; color: #38bdf8 !important; border: 2px solid #334155 !important; font-weight: 700 !important; }} 
     button[kind="secondary"]:hover {{ background-color: #111827 !important; border-color: #38bdf8 !important; }}
-    .stTabs [data-baseweb="tab-list"] {{ background-color: rgba(30, 41, 59, 0.85) !important; backdrop-filter: blur(10px); }}
-    .stTextInput input {{ background-color: rgba(30, 41, 59, 0.7) !important; color: #f8fafc !important; border: 1px solid #334155 !important; }} 
+    .stTabs [data-baseweb="tab-list"] {{ background-color: rgba(15, 23, 42, 0.95) !important; backdrop-filter: blur(16px); }}
+    .stTextInput input {{ background-color: rgba(15, 23, 42, 0.9) !important; color: #f8fafc !important; border: 1px solid #475569 !important; }} 
     [data-testid="stSidebar"] div[role="radiogroup"] > label p {{ color: #f8fafc !important; }}
     </style>"""
 
 if bg_b64:
+    # LỚP PHỦ KÍNH RÂM (OVERLAY) ĐỂ LÀM DỊU ẢNH NỀN
+    overlay = "rgba(255, 255, 255, 0.35)" if st.session_state.theme == "Light" else "rgba(0, 0, 0, 0.55)"
     theme_css += f"""<style>
     [data-testid="stAppViewContainer"] {{
-        background: url('data:image/jpeg;base64,{bg_b64}') center center / cover no-repeat fixed !important;
+        background: linear-gradient({overlay}, {overlay}), url('data:image/jpeg;base64,{bg_b64}') center center / cover no-repeat fixed !important;
     }}
     .stApp > header {{ background-color: transparent !important; }}
     </style>"""
@@ -502,7 +504,7 @@ else:
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
-        # 2.5 TAB CHIA TARGET (ĐÃ FIX LỖI SỐ & BỎ FORM)
+        # 2.5 TAB CHIA TARGET
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
