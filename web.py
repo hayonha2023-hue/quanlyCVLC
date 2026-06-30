@@ -62,6 +62,19 @@ if "user" not in st.session_state:
 db = get_data()
 
 # ==========================================
+# VÁ LỖI: DI CHUYỂN AUTO-LOGIN LÊN ĐẦU TIÊN
+# Để hệ thống nhận diện đúng User trước khi Load Ảnh Nền
+# ==========================================
+if st.session_state.user is None:
+    if "u" in st.query_params and "t" in st.query_params:
+        u_url = st.query_params["u"]
+        t_url = st.query_params["t"]
+        users_db = db.get("users", {})
+        if u_url in users_db and get_hash(users_db[u_url]["pass"]) == t_url:
+            st.session_state.user = u_url
+            st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
+
+# ==========================================
 # 2. XỬ LÝ CSS & THEME KÍNH MỜ (TỐI ƯU HIỂN THỊ CHỮ)
 # ==========================================
 base_css = """
@@ -171,16 +184,6 @@ if bg_b64:
     </style>"""
 
 st.markdown(theme_css, unsafe_allow_html=True)
-
-# Tự động đăng nhập
-if st.session_state.user is None:
-    if "u" in st.query_params and "t" in st.query_params:
-        u_url = st.query_params["u"]
-        t_url = st.query_params["t"]
-        users_db = db.get("users", {})
-        if u_url in users_db and get_hash(users_db[u_url]["pass"]) == t_url:
-            st.session_state.user = u_url
-            st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
 
 # ==========================================
 # 3. MÀN HÌNH ĐĂNG NHẬP
@@ -313,7 +316,7 @@ else:
         if need_close:
             components.html('''<script>var doc = window.parent.document; var desktopBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button'); if (desktopBtn) { desktopBtn.click(); } var mobileBtns = doc.querySelectorAll('button[aria-label="Close"], button[aria-label="Collapse sidebar"], button[title="Collapse sidebar"]'); mobileBtns.forEach(function(btn) { btn.click(); });</script>''', height=0, width=0)
 
-        # XỬ LÝ ĐỔI HÌNH NỀN CÁ NHÂN (ĐÃ THÊM LỆNH TỰ ĐÓNG FORM SAU KHI LƯU)
+        # XỬ LÝ ĐỔI HÌNH NỀN CÁ NHÂN
         if st.session_state.get("show_bg_setting", False):
             with st.container():
                 st.markdown("<div style='padding: 22px; border-radius: 16px; background-color: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 25px;'>", unsafe_allow_html=True)
@@ -329,13 +332,13 @@ else:
                         buffered = io.BytesIO()
                         img.convert("RGB").save(buffered, format="JPEG", quality=85)
                         update_firebase(f"users/{st.session_state.user}", {"bg_image": base64.b64encode(buffered.getvalue()).decode()})
-                        st.session_state.show_bg_setting = False  # <--- Lệnh tự đóng form
+                        st.session_state.show_bg_setting = False
                         st.success("Thành công!"); time.sleep(1); st.rerun()
                 
                 if u_info.get("bg_image"):
                     if c_bg2.button("🗑️ XÓA ẢNH", use_container_width=True):
                         delete_firebase(f"users/{st.session_state.user}/bg_image")
-                        st.session_state.show_bg_setting = False  # <--- Lệnh tự đóng form
+                        st.session_state.show_bg_setting = False
                         st.success("Đã xóa!"); time.sleep(1); st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
 
