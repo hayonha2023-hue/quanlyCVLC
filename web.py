@@ -10,150 +10,110 @@ from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
 # ==========================================
-# CẤU HÌNH GIAO DIỆN & SIÊU HIỆU ỨNG CSS
+# CẤU HÌNH GIAO DIỆN & SIÊU HIỆU ỨNG CSS CHUẨN UX/UI
 # ==========================================
-st.set_page_config(page_title="HTCV by DatTT System", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
-# ==========================================
-# BỘ ÁO GIÁP CSS - XÓA BỎ GIAO DIỆN MẶC ĐỊNH CỦA AI
-# ==========================================
-st.markdown("""
+st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
+
+base_css = """
 <style>
-/* 1. Nhập Font chữ Inter chuẩn UI/UX quốc tế */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 html, body, [class*="css"]  {
     font-family: 'Inter', sans-serif !important;
 }
 
-/* 2. Xóa sạch dấu vết, logo, menu mặc định của Streamlit */
+/* Ẩn Menu rác, giữ lại Header để mở Menu trên điện thoại */
 #MainMenu {visibility: hidden;}
-header {visibility: hidden;}
 footer {visibility: hidden;}
+[data-testid="stHeaderActionElements"], .stDeployButton, #manage-app-button {display: none !important;}
 
-/* Thiết lập màu nền tổng thể mượt hơn (Dark theme) */
-.stApp {
-    background-color: #0f172a;
-}
+/* Giao diện Dark theme mặc định mượt mà */
+.stApp { background-color: #0f172a; }
 
-/* 3. Lột xác các thẻ Tabs (Chung, Ca trực, Chỉ số) thành dạng nút nổi */
+/* Nút Tabs nằm ngang sang trọng */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-    background-color: #1e293b;
-    padding: 6px;
-    border-radius: 12px;
-    border-bottom: none;
+    gap: 8px; background-color: #1e293b; padding: 6px; border-radius: 12px; border-bottom: none;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 8px !important;
-    padding: 10px 16px;
-    border: none !important;
-    background-color: transparent;
-    color: #94a3b8 !important;
-    transition: all 0.3s ease;
+    border-radius: 8px !important; padding: 10px 16px; border: none !important;
+    background-color: transparent; color: #94a3b8 !important; transition: all 0.3s ease;
 }
 .stTabs [aria-selected="true"] {
-    background-color: #334155 !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    color: #38bdf8 !important;
-    font-weight: 700 !important;
+    background-color: #334155 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: #38bdf8 !important; font-weight: 700 !important;
 }
 
-/* 4. Bo góc và đổ bóng cho Khung nhập liệu (Input) */
+/* Khung nhập liệu bo góc */
 .stTextInput input {
-    border-radius: 8px;
-    border: 1px solid #334155 !important;
-    background-color: #1e293b !important;
-    color: #f8fafc !important;
-    padding: 12px 15px;
-    transition: all 0.3s ease;
+    border-radius: 8px; border: 1px solid #334155 !important;
+    background-color: #1e293b !important; color: #f8fafc !important;
+    padding: 12px 15px; transition: all 0.3s ease;
 }
 .stTextInput input:focus {
-    border-color: #0ea5e9 !important;
-    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
+    border-color: #0ea5e9 !important; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
 }
 
-/* 5. Lột xác các thẻ Expander (Thẻ xổ xuống) */
+/* Thẻ xổ xuống (Expander) */
 [data-testid="stExpander"] {
-    border: 1px solid #334155;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    background-color: #1e293b;
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
+    border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    border-radius: 12px; background-color: #1e293b; margin-bottom: 12px; transition: all 0.3s ease;
 }
-[data-testid="stExpander"]:hover {
-    border-color: #475569;
-}
-[data-testid="stExpander"] summary p {
-    font-weight: 600;
-    font-size: 15px;
-    color: #e2e8f0;
-}
+[data-testid="stExpander"]:hover { border-color: #475569; }
+[data-testid="stExpander"] summary p { font-weight: 600; font-size: 15px; color: #e2e8f0; }
 
-/* 6. Nút bấm (Button) phong cách Gradient hiện đại */
+/* Nút bấm Gradient */
 .stButton > button {
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 10px 0;
-    border: 1px solid #334155;
-    transition: all 0.3s ease;
+    border-radius: 8px; font-weight: 600; padding: 10px 0; border: 1px solid #334155; transition: all 0.3s ease;
 }
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
-    border: none;
-    color: white;
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; color: white;
 }
 .stButton > button[kind="primary"]:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
 }
-</style>
-""", unsafe_allow_html=True)
-base_css = """
-<style>
-    @keyframes SAFadeInUp {
-        0% { opacity: 0; transform: translateY(12px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-    [data-testid="stMainBlockContainer"] { animation: SAFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    header { background-color: transparent !important; }
-    [data-testid="stHeaderActionElements"], .stDeployButton, #manage-app-button, footer {display: none !important;}
-    
-    [data-testid="stForm"] { border-radius: 20px !important; border: 1px solid rgba(150, 150, 150, 0.2) !important; padding: 40px !important; background: rgba(150, 150, 150, 0.03) !important; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important; }
-    [data-testid="stTextInput"] label p { font-size: 14px !important; font-weight: 800 !important; color: #0ea5e9 !important; letter-spacing: 1px !important; margin-bottom: 8px !important; }
-    div[data-baseweb="input"] { border-radius: 12px !important; border: 2px solid rgba(150, 150, 150, 0.2) !important; background-color: transparent !important; }
-    div[data-baseweb="input"]:focus-within { border-color: #0ea5e9 !important; box-shadow: 0 0 10px rgba(14, 165, 233, 0.2) !important; background-color: rgba(14, 165, 233, 0.05) !important; }
-    div[data-baseweb="input"] input { padding: 16px 15px !important; font-size: 16px !important; font-weight: 600 !important; }
 
-    .stButton>button { border-radius: 12px !important; font-weight: 700 !important; height: 48px !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important; }
-    .stButton>button:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3) !important; }
-    
-    [data-testid="stMetric"] { border-radius: 18px !important; padding: 20px !important; border: 1px solid rgba(14, 165, 233, 0.15) !important; }
-    [data-testid="stMetric"]:hover { transform: translateY(-4px) !important; border-color: #0ea5e9 !important; box-shadow: 0 12px 24px rgba(14, 165, 233, 0.15) !important; }
-    [data-testid="stMetricValue"] { font-size: 2.2rem !important; font-weight: 800 !important; }
-    [data-testid="stExpander"] { border-radius: 14px !important; overflow: hidden !important; border: 1px solid rgba(150, 150, 150, 0.12) !important; }
-
-    [data-testid="stSidebar"] div[role="radiogroup"] > label { background-color: transparent !important; border-radius: 12px !important; padding: 14px 18px !important; margin-bottom: 10px !important; cursor: pointer; transition: all 0.2s !important; }
-    [data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.08) !important; }
-    [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.15) !important; border-left: 5px solid #0ea5e9 !important; }
-    [data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
-    [data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 16px !important; font-weight: 600 !important; }
+/* Sidebar Menu */
+[data-testid="stSidebar"] div[role="radiogroup"] > label { background-color: transparent !important; border-radius: 12px !important; padding: 12px 16px !important; margin-bottom: 8px !important; cursor: pointer; transition: all 0.2s !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.08) !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.15) !important; border-left: 4px solid #0ea5e9 !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 600 !important; color: #f8fafc !important; }
 </style>
 """
 st.markdown(base_css, unsafe_allow_html=True)
+
+if "theme" not in st.session_state: st.session_state.theme = "Dark" 
+
+if st.session_state.theme == "Light":
+    theme_css = """<style>[data-testid="stAppViewContainer"] {background-color: #f1f5f9 !important;} [data-testid="stSidebar"] {background-color: #ffffff !important;} .stApp {background-color: #f1f5f9 !important; color: #0f172a !important;} .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #1e293b !important;} [data-testid="stMetricValue"] {color: #0284c7 !important;} [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #ffffff !important;} button[kind="secondary"] { background-color: #ffffff !important; color: #0284c7 !important; border: 1px solid #e2e8f0 !important; } button[kind="secondary"]:hover { background-color: #f0f9ff !important; border-color: #0ea5e9 !important; } .stTabs [data-baseweb="tab-list"] {background-color: #e2e8f0;} .stTabs [aria-selected="true"] {background-color: #ffffff !important; color: #0284c7 !important;} .stTextInput input {background-color: #ffffff !important; color: #0f172a !important; border-color: #cbd5e1 !important;} [data-testid="stSidebar"] div[role="radiogroup"] > label p { color: #0f172a !important; }</style>"""
+else:
+    theme_css = """<style>[data-testid="stAppViewContainer"] {background-color: #090d16 !important;} [data-testid="stSidebar"] {background-color: #111827 !important;} .stApp {background-color: #090d16 !important; color: #f8fafc !important;} .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #f1f5f9 !important;} [data-testid="stMetricValue"] {color: #38bdf8 !important;} [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #1f2937 !important;} button[kind="secondary"] { background-color: #1f2937 !important; color: #38bdf8 !important; border: 1px solid #374151 !important; } button[kind="secondary"]:hover { background-color: #111827 !important; border-color: #38bdf8 !important; }</style>"""
+st.markdown(theme_css, unsafe_allow_html=True)
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
 def get_data():
     try:
-        r = requests.get(FIREBASE_URL)
-        return r.json() if r.status_code == 200 else {}
+        r = requests.get(FIREBASE_URL, timeout=5)
+        return r.json() if r.status_code == 200 and r.json() else {}
     except: return {}
 
 def update_firebase(path, data): requests.patch(f"{FIREBASE_URL.replace('.json', '')}/{path}.json", json=data)
 def delete_firebase(path): requests.delete(f"{FIREBASE_URL.replace('.json', '')}/{path}.json")
 def format_vnd(amount): return f"{amount:,.0f} ₫".replace(",", ".")
 def get_hash(text): return hashlib.md5(text.encode('utf-8')).hexdigest()
+
+def s_float(val):
+    if val is None or str(val).strip() == "": return 0.0
+    if isinstance(val, (int, float)): return float(val)
+    try: return float(str(val).replace('.', '').replace(',', ''))
+    except: return 0.0
+    
+def fmt_dot(val):
+    v = s_float(val)
+    if v == 0: return ""
+    if v.is_integer(): return f"{int(v):,}".replace(",", ".")
+    return f"{v:,.1f}".replace(",", ".")
 
 def logout():
     st.session_state.user = None
@@ -165,18 +125,10 @@ if "user" not in st.session_state:
     st.session_state.user = None
     st.session_state.is_admin = False
     st.session_state.page = "login"
-if "theme" not in st.session_state:
-    st.session_state.theme = "Dark" 
 
 db = get_data()
 
-if st.session_state.theme == "Light":
-    theme_css = """<style>[data-testid="stAppViewContainer"] {background-color: #f1f5f9 !important;} [data-testid="stSidebar"] {background-color: #ffffff !important;} .stApp {background-color: #f1f5f9 !important; color: #0f172a !important;} .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #1e293b !important;} [data-testid="stMetricValue"] {color: #0284c7 !important;} [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #ffffff !important;} button[kind="secondary"] { background-color: #ffffff !important; color: #0284c7 !important; border: 1px solid #e2e8f0 !important; } button[kind="secondary"]:hover { background-color: #f0f9ff !important; border-color: #0ea5e9 !important; }</style>"""
-else:
-    theme_css = """<style>[data-testid="stAppViewContainer"] {background-color: #090d16 !important;} [data-testid="stSidebar"] {background-color: #111827 !important;} .stApp {background-color: #090d16 !important; color: #f8fafc !important;} .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #f1f5f9 !important;} [data-testid="stMetricValue"] {color: #38bdf8 !important;} [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #1f2937 !important;} button[kind="secondary"] { background-color: #1f2937 !important; color: #38bdf8 !important; border: 1px solid #374151 !important; } button[kind="secondary"]:hover { background-color: #111827 !important; border-color: #38bdf8 !important; }</style>"""
-st.markdown(theme_css, unsafe_allow_html=True)
-
-# Tự động duy trì phiên đăng nhập bằng query_params
+# Tự động đăng nhập
 if st.session_state.user is None:
     if "u" in st.query_params and "t" in st.query_params:
         u_url = st.query_params["u"]
@@ -187,13 +139,13 @@ if st.session_state.user is None:
             st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
 
 # ==========================================
-# MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
+# MÀN HÌNH ĐĂNG NHẬP
 # ==========================================
 if st.session_state.user is None:
     _, col_center, _ = st.columns([1, 1.8, 1])
     with col_center:
         st.markdown("<br>", unsafe_allow_html=True)
-        import os, base64
+        import os
         logo_html = ""
         img_path = "Logo.png" if os.path.exists("Logo.png") else ("Logo.ico" if os.path.exists("Logo.ico") else "")
         if img_path:
@@ -298,7 +250,7 @@ else:
                 
             if st.button("🚪 Đăng xuất", use_container_width=True): logout()
 
-        # Logic tự thu gọn thanh Menu
+        # Logic thu gọn thanh Menu
         if "last_tab" not in st.session_state: st.session_state.last_tab = selected_tab
         need_close = False
         if st.session_state.last_tab != selected_tab:
@@ -473,8 +425,9 @@ else:
                     if "CA 10H30" not in hidden: row_data["Ca Đêm (10h30)"] = ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
+
         # ==========================================
-        # 2.5 TAB CHIA TARGET (BẢN VÁ LỖI NHÂN 10 DO DẤU THẬP PHÂN)
+        # 2.5 TAB CHIA TARGET (TỐI ƯU GIAO DIỆN & TÍNH TOÁN REALTIME)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -515,19 +468,6 @@ else:
             dt_data = db.get("daily_targets", {})
             dt_cfg = dt_data.get("config", {})
             dt_mts = dt_data.get("metrics", {})
-            
-            # --- ĐÃ SỬA: KHÓA TAY HÀM ĐỊNH DẠNG SỐ ĐỂ TRÁNH NHÂN 10 ---
-            def s_float(val):
-                if val is None or str(val).strip() == "": return 0.0
-                if isinstance(val, (int, float)): return float(val) # <== CHÍNH LÀ DÒNG CỨU MẠNG NÀY!
-                try: return float(str(val).replace('.', '').replace(',', ''))
-                except: return 0.0
-                
-            def fmt_dot(val):
-                v = s_float(val)
-                if v == 0: return ""
-                if v.is_integer(): return f"{int(v):,}".replace(",", ".")
-                return f"{v:,.1f}".replace(",", ".")
 
             if st.session_state.is_admin or "TÍNH TARGET" in edit_perms:
                 st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>⚙️ BẢNG NHẬP LIỆU TÙY CHỈNH (Nảy số tự động)</h5>", unsafe_allow_html=True)
@@ -591,7 +531,6 @@ else:
                             
                             auto_n = cl_val / nc if nc > 0 else 0
                             
-                            # ĐÃ SỬA: Xóa sạch chữ "Tự động"
                             r2c2.markdown(f"<div style='font-size:14px; margin-bottom:5px; color:#fafafa;'>Còn phải bán</div><div style='background-color: transparent; border: 1px solid #334155; padding: 10px; border-radius: 6px; color:#10b981; font-weight:bold;'>{fmt_dot(cl_val)}</div>", unsafe_allow_html=True)
                             
                             n_str = st.text_input("Mỗi ngày cần (Để trống máy tự chia, nhập số để đè)", value=m_data.get("n_str_saved", ""), placeholder=f"Gợi ý chia đều: {fmt_dot(auto_n)}", key=f"n_{m}")
@@ -680,6 +619,7 @@ else:
                 
             with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
             with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
+
         # ==========================================
         # 3. TAB LỊCH ECOM
         # ==========================================
@@ -752,7 +692,7 @@ else:
                         st.success("Đã xóa!"); time.sleep(0.5); st.rerun()
 
         # ==========================================
-        # 5. TAB AI TƯ VẤN (CẬP NHẬT MỚI NHẤT)
+        # 5. TAB AI TƯ VẤN
         # ==========================================
         elif selected_tab == "🤖 AI TƯ VẤN":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🤖 Trợ Lý AI Tư Vấn Y Khoa</h3>", unsafe_allow_html=True)
