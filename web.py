@@ -13,7 +13,102 @@ from datetime import datetime, timedelta
 # CẤU HÌNH GIAO DIỆN & SIÊU HIỆU ỨNG CSS
 # ==========================================
 st.set_page_config(page_title="HTCV by DatTT System", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
+# ==========================================
+# BỘ ÁO GIÁP CSS - XÓA BỎ GIAO DIỆN MẶC ĐỊNH CỦA AI
+# ==========================================
+st.markdown("""
+<style>
+/* 1. Nhập Font chữ Inter chuẩn UI/UX quốc tế */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+html, body, [class*="css"]  {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* 2. Xóa sạch dấu vết, logo, menu mặc định của Streamlit */
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+footer {visibility: hidden;}
+
+/* Thiết lập màu nền tổng thể mượt hơn (Dark theme) */
+.stApp {
+    background-color: #0f172a;
+}
+
+/* 3. Lột xác các thẻ Tabs (Chung, Ca trực, Chỉ số) thành dạng nút nổi */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background-color: #1e293b;
+    padding: 6px;
+    border-radius: 12px;
+    border-bottom: none;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px !important;
+    padding: 10px 16px;
+    border: none !important;
+    background-color: transparent;
+    color: #94a3b8 !important;
+    transition: all 0.3s ease;
+}
+.stTabs [aria-selected="true"] {
+    background-color: #334155 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: #38bdf8 !important;
+    font-weight: 700 !important;
+}
+
+/* 4. Bo góc và đổ bóng cho Khung nhập liệu (Input) */
+.stTextInput input {
+    border-radius: 8px;
+    border: 1px solid #334155 !important;
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+.stTextInput input:focus {
+    border-color: #0ea5e9 !important;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
+}
+
+/* 5. Lột xác các thẻ Expander (Thẻ xổ xuống) */
+[data-testid="stExpander"] {
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    background-color: #1e293b;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+[data-testid="stExpander"]:hover {
+    border-color: #475569;
+}
+[data-testid="stExpander"] summary p {
+    font-weight: 600;
+    font-size: 15px;
+    color: #e2e8f0;
+}
+
+/* 6. Nút bấm (Button) phong cách Gradient hiện đại */
+.stButton > button {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 0;
+    border: 1px solid #334155;
+    transition: all 0.3s ease;
+}
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+    border: none;
+    color: white;
+}
+.stButton > button[kind="primary"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+}
+</style>
+""", unsafe_allow_html=True)
 base_css = """
 <style>
     @keyframes SAFadeInUp {
