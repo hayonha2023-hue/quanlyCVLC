@@ -27,11 +27,16 @@ def delete_firebase(path): requests.delete(f"{FIREBASE_URL.replace('.json', '')}
 def format_vnd(amount): return f"{amount:,.0f} ₫".replace(",", ".")
 def get_hash(text): return hashlib.md5(text.encode('utf-8')).hexdigest()
 
-# THUẬT TOÁN XỬ LÝ SỐ CHUẨN XÁC CHỐNG LỖI DƯ/THIẾU SỐ 0
+# THUẬT TOÁN XỬ LÝ SỐ: ĐÃ VÁ LỖI HIỂU NHẦM DẤU .0 THÀNH HÀNG NGHÌN
 def s_float(val):
     if val is None or str(val).strip() == "": return 0.0
     if isinstance(val, (int, float)): return float(val)
-    try: return float(str(val).replace('.', '').replace(',', ''))
+    s = str(val).strip()
+    # Bắt lỗi số lưu từ DB có đuôi máy tính .0 (VD: "45.0")
+    if s.endswith(".0") and s.count(".") == 1:
+        try: return float(s)
+        except: pass
+    try: return float(s.replace('.', '').replace(',', ''))
     except: return 0.0
     
 def fmt_dot(val):
@@ -118,7 +123,7 @@ st.markdown(base_css, unsafe_allow_html=True)
 
 if "theme" not in st.session_state: st.session_state.theme = "Dark" 
 
-# LẤY ẢNH NỀN RIÊNG CỦA TỪNG USER CHỨ KHÔNG DÙNG CHUNG NỮA
+# LẤY ẢNH NỀN RIÊNG CỦA TỪNG USER
 bg_b64 = ""
 if st.session_state.user:
     bg_b64 = db.get("users", {}).get(st.session_state.user, {}).get("bg_image", "")
@@ -497,7 +502,7 @@ else:
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
-        # 2.5 TAB CHIA TARGET
+        # 2.5 TAB CHIA TARGET (ĐÃ FIX LỖI SỐ & BỎ FORM)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -629,9 +634,9 @@ else:
                     if pc1 + pc2 != 100:
                         st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
                     else:
-                        new_config = {"nv": str(nv), "vac": str(vac), "vac_chk": vac_chk, "nc": str(nc), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
-                        save_mts = {}
                         fmt = lambda x: f"{int(x)}" if float(x).is_integer() else f"{float(x)}"
+                        new_config = {"nv": fmt(nv), "vac": fmt(vac), "vac_chk": vac_chk, "nc": fmt(nc), "pc1": fmt(pc1), "ng1": fmt(ng1), "pc2": fmt(pc2), "ng2": fmt(ng2)}
+                        save_mts = {}
                         
                         for m in metrics:
                             lm = live_mts[m]
