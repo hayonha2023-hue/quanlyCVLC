@@ -379,7 +379,7 @@ else:
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
         # ==========================================
-        # 2.5 TAB CHIA TARGET (GIAO DIỆN THẺ XỔ XUỐNG - TỐI ƯU TUYỆT ĐỐI CHO MOBILE)
+        # 2.5 TAB CHIA TARGET (TỪNG CHỈ SỐ LÀ 1 THẺ XỔ XUỐNG RIÊNG)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -465,43 +465,41 @@ else:
                         ng2_str = c8.text_input("🌙 CA 2 (Người)", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
                         ng2 = s_float(ng2_str)
                         
-                    # --- PHẦN 3: ĐÓNG GÓI VÀO THẺ (MẶC ĐỊNH ĐÓNG) ---
-                    with st.expander("🔵 3. BẢNG CHỈ SỐ CẦN ĐẠT (Bấm để mở)", expanded=False):
-                        t_ds, t_bl, t_tl = st.tabs(["💰 Doanh Số", "🧾 Bill & Liều", "⭐ Các Tỷ Lệ"])
+                    # --- PHẦN 3: MỖI CHỈ SỐ LÀ 1 THẺ XỔ XUỐNG ---
+                    st.markdown("<h6 style='color:#0ea5e9; font-weight: bold; margin-top: 10px;'>🔵 3. BẢNG CHỈ SỐ CẦN ĐẠT</h6>", unsafe_allow_html=True)
+                    
+                    metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
+                    icon_map = {
+                        "Doanh Số (VNĐ)": "💰",
+                        "Tổng Số Bill": "🧾",
+                        "Cắt Liều": "💊",
+                        "Tỷ Lệ HOT": "🔥",
+                        "Tỷ Lệ FS": "⚡",
+                        "Tỷ Lệ 5 Sao": "⭐"
+                    }
+                    new_mts = {}
+                    
+                    for m in metrics:
+                        m_data = dt_mts.get(m, {})
+                        icon = icon_map.get(m, "🔹")
                         
-                        metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
-                        new_mts = {}
-                        
-                        def draw_metric_card(m_name, parent_tab):
-                            with parent_tab:
-                                m_data = dt_mts.get(m_name, {})
-                                m_color = "#0ea5e9" if m_name == "Doanh Số (VNĐ)" else "#ffffff"
-                                
-                                with st.container(border=True):
-                                    st.markdown(f"<span style='color:{m_color}; font-size:16px; font-weight:bold;'>{m_name}</span>", unsafe_allow_html=True)
-                                    
-                                    r1c1, r1c2 = st.columns([1.5, 1])
-                                    g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m_name}", placeholder="Mục tiêu...")
-                                    p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m_name}", placeholder="%...")
-                                    
-                                    r2c1, r2c2 = st.columns(2)
-                                    db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m_name}", placeholder="Đã bán...")
-                                    cl_str = r2c2.text_input("Còn phải bán", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m_name}", placeholder="Còn lại...")
-                                    
-                                    n_str = st.text_input("Mỗi ngày cần", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m_name}", placeholder="Ngày cần...")
-                                    
-                                    new_mts[m_name] = {
-                                        "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
-                                        "old_cl": s_float(m_data.get("cl", 0)),
-                                        "old_n": s_float(m_data.get("n", 0))
-                                    }
-
-                        draw_metric_card("Doanh Số (VNĐ)", t_ds)
-                        draw_metric_card("Tổng Số Bill", t_bl)
-                        draw_metric_card("Cắt Liều", t_bl)
-                        draw_metric_card("Tỷ Lệ HOT", t_tl)
-                        draw_metric_card("Tỷ Lệ FS", t_tl)
-                        draw_metric_card("Tỷ Lệ 5 Sao", t_tl)
+                        # Tạo 1 Thẻ (Action) đậy kín cho từng chỉ số
+                        with st.expander(f"{icon} {m}", expanded=False):
+                            r1c1, r1c2 = st.columns([1.5, 1])
+                            g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
+                            p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", placeholder="%...")
+                            
+                            r2c1, r2c2 = st.columns(2)
+                            db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
+                            cl_str = r2c2.text_input("Còn phải bán", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m}", placeholder="Còn lại...")
+                            
+                            n_str = st.text_input("Mỗi ngày cần", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", placeholder="Ngày cần...")
+                            
+                            new_mts[m] = {
+                                "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
+                                "old_cl": s_float(m_data.get("cl", 0)),
+                                "old_n": s_float(m_data.get("n", 0))
+                            }
                         
                     st.markdown("<br>", unsafe_allow_html=True)
                     btn_c1, btn_c2 = st.columns([1, 1])
@@ -553,39 +551,39 @@ else:
                             time.sleep(1)
                             st.rerun()
 
-                # --- BẢNG HIỂN THỊ KẾT QUẢ ---
-                st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật)</b>", unsafe_allow_html=True)
-                t1, t2 = st.tabs(["👤 BẢNG CÁ NHÂN", "🏪 BẢNG CA TRỰC"])
-                
-                nv_cur = int(s_float(dt_cfg.get("nv", 1)) or 1)
-                pc1_cur = float(s_float(dt_cfg.get("pc1", 50)))
-                ng1_cur = int(s_float(dt_cfg.get("ng1", 1)) or 1)
-                pc2_cur = float(s_float(dt_cfg.get("pc2", 50)))
-                ng2_cur = int(s_float(dt_cfg.get("ng2", 1)) or 1)
+            # --- BẢNG HIỂN THỊ KẾT QUẢ ---
+            st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật)</b>", unsafe_allow_html=True)
+            t1, t2 = st.tabs(["👤 BẢNG CÁ NHÂN", "🏪 BẢNG CA TRỰC"])
+            
+            nv_cur = int(s_float(dt_cfg.get("nv", 1)) or 1)
+            pc1_cur = float(s_float(dt_cfg.get("pc1", 50)))
+            ng1_cur = int(s_float(dt_cfg.get("ng1", 1)) or 1)
+            pc2_cur = float(s_float(dt_cfg.get("pc2", 50)))
+            ng2_cur = int(s_float(dt_cfg.get("ng2", 1)) or 1)
 
-                res1_data, res2_data = [], []
+            res1_data, res2_data = [], []
+            
+            for m in metrics:
+                m_data = dt_mts.get(m, {})
+                val_cl = s_float(m_data.get("cl", 0)) 
+                val_n = s_float(m_data.get("n", 0))
                 
-                for m in metrics:
-                    m_data = dt_mts.get(m, {})
-                    val_cl = s_float(m_data.get("cl", 0)) 
-                    val_n = s_float(m_data.get("n", 0))
-                    
-                    thang_1 = round(val_cl / nv_cur) if nv_cur > 0 else 0
-                    
-                    ca1_t = val_n * (pc1_cur / 100)
-                    ca2_t = val_n * (pc2_cur / 100)
-                    
-                    ca1_1 = round(ca1_t / ng1_cur) if ng1_cur > 0 else 0
-                    ca2_1 = round(ca2_t / ng2_cur) if ng2_cur > 0 else 0
-                    
-                    fm_res = lambda num, is_ds: f"{int(num):,}".replace(",", ".") + (" đ" if is_ds else "")
-                    is_ds = (m == "Doanh Số (VNĐ)")
-                    
-                    res1_data.append({"Chỉ Số": m, "CÒN PHẢI BÁN / 1 NV": fm_res(thang_1, is_ds)})
-                    res2_data.append({"Chỉ Số": m, "Mỗi Ngày Cần": fm_res(val_n, is_ds), f"CA 1 ({pc1_cur:g}%)": fm_res(round(ca1_t), is_ds), f"1 Người C1": fm_res(ca1_1, is_ds), f"CA 2 ({pc2_cur:g}%)": fm_res(round(ca2_t), is_ds), f"1 Người C2": fm_res(ca2_1, is_ds)})
-                    
-                with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
-                with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
+                thang_1 = round(val_cl / nv_cur) if nv_cur > 0 else 0
+                
+                ca1_t = val_n * (pc1_cur / 100)
+                ca2_t = val_n * (pc2_cur / 100)
+                
+                ca1_1 = round(ca1_t / ng1_cur) if ng1_cur > 0 else 0
+                ca2_1 = round(ca2_t / ng2_cur) if ng2_cur > 0 else 0
+                
+                fm_res = lambda num, is_ds: f"{int(num):,}".replace(",", ".") + (" đ" if is_ds else "")
+                is_ds = (m == "Doanh Số (VNĐ)")
+                
+                res1_data.append({"Chỉ Số": m, "CÒN PHẢI BÁN / 1 NV": fm_res(thang_1, is_ds)})
+                res2_data.append({"Chỉ Số": m, "Mỗi Ngày Cần": fm_res(val_n, is_ds), f"CA 1 ({pc1_cur:g}%)": fm_res(round(ca1_t), is_ds), f"1 Người C1": fm_res(ca1_1, is_ds), f"CA 2 ({pc2_cur:g}%)": fm_res(round(ca2_t), is_ds), f"1 Người C2": fm_res(ca2_1, is_ds)})
+                
+            with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
+            with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
         # ==========================================
         # 3. TAB LỊCH ECOM
         # ==========================================
