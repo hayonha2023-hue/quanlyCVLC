@@ -379,7 +379,7 @@ else:
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
         # ==========================================
-        # 2.5 TAB CHIA TARGET (GIAO DIỆN TABS NGANG - PHẲNG VÀ MƯỢT 100%)
+        # 2.5 TAB CHIA TARGET (PHÁ BỎ FORM - TÍNH TOÁN REALTIME NHƯ APP WIN)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -394,7 +394,7 @@ else:
                     document.addEventListener('input', function(e) {
                         if (e.isTrusted && e.target && e.target.tagName === 'INPUT') {
                             let p = e.target.placeholder || "";
-                            if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Ngày") || p.includes("Đã bán") || p.includes("Còn lại") || p.includes("Mỗi ngày") || p.includes("VD: 30")) {
+                            if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Ngày") || p.includes("Đã bán") || p.includes("Còn lại") || p.includes("Mỗi ngày") || p.includes("VD: 30") || p.includes("để trống") || p.includes("Gợi ý")) {
                                 let oldVal = e.target.value;
                                 let oldCursor = e.target.selectionStart;
                                 let raw = oldVal.replace(/[^0-9]/g, '');
@@ -433,135 +433,148 @@ else:
                 return f"{v:,.1f}".replace(",", ".")
 
             if st.session_state.is_admin or "TÍNH TARGET" in edit_perms:
-                st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>⚙️ BẢNG NHẬP LIỆU TÙY CHỈNH</h5>", unsafe_allow_html=True)
+                st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>⚙️ BẢNG NHẬP LIỆU TÙY CHỈNH (Nảy số tự động)</h5>", unsafe_allow_html=True)
                 
-                with st.form("target_form"):
+                # TUYỆT CHIÊU: BỎ HẲN THẺ FORM ĐỂ KÍCH HOẠT TÍNH TOÁN REALTIME CỦA STREAMLIT
+                tab_chung, tab_ca, tab_chiso = st.tabs(["⚙️ 1. CHUNG", "👥 2. CA TRỰC", "🎯 3. CHỈ SỐ"])
+                
+                with tab_chung:
+                    c1, c2 = st.columns(2)
+                    nv_str = c1.text_input("👥 Tổng NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
+                    nv = s_float(nv_str)
+                    nc_str = c2.text_input("⏳ Số ngày còn lại", value=str(s_float(dt_cfg.get("nc", 30))).replace('.0', ''), placeholder="VD: 30")
+                    nc = s_float(nc_str)
                     
-                    # --- CHIA LÀM 3 TABS NGANG ĐỂ TRIỆT TIÊU HOÀN TOÀN LỖI THÔ KỆCH ---
-                    tab_chung, tab_ca, tab_chiso = st.tabs(["⚙️ 1. CHUNG", "👥 2. CA TRỰC", "🎯 3. CHỈ SỐ"])
+                    c3, c4 = st.columns(2)
+                    vac_str = c3.text_input("💉 Bán Vắc Xin (VNĐ)", value=fmt_dot(dt_cfg.get("vac", 0)), placeholder="VD: 1.500.000")
+                    vac = s_float(vac_str)
+                    st.markdown("""<style> .stCheckbox {padding-top: 30px;} </style>""", unsafe_allow_html=True)
+                    vac_chk = c4.checkbox("☑️ Trừ Vắc Xin", value=dt_cfg.get("vac_chk", True))
                     
-                    # --- PHẦN 1: NẰM TRONG TAB 1 ---
-                    with tab_chung:
-                        c1, c2 = st.columns(2)
-                        nv_str = c1.text_input("👥 Tổng NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
-                        nv = s_float(nv_str)
-                        nc_str = c2.text_input("⏳ Số ngày còn lại", value=str(s_float(dt_cfg.get("nc", 30))).replace('.0', ''), placeholder="VD: 30")
-                        nc = s_float(nc_str)
+                with tab_ca:
+                    c5, c6 = st.columns(2)
+                    pc1_str = c5.text_input("☀️ CA 1 (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
+                    pc1 = s_float(pc1_str)
+                    ng1_str = c6.text_input("☀️ CA 1 (Người)", value=str(s_float(dt_cfg.get("ng1", 1))).replace('.0', ''))
+                    ng1 = s_float(ng1_str)
+                    
+                    c7, c8 = st.columns(2)
+                    pc2_str = c7.text_input("🌙 CA 2 (%)", value=str(s_float(dt_cfg.get("pc2", 50))).replace('.0', ''))
+                    pc2 = s_float(pc2_str)
+                    ng2_str = c8.text_input("🌙 CA 2 (Người)", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
+                    ng2 = s_float(ng2_str)
+                    
+                # BẢNG TÍNH TOÁN REALTIME
+                live_mts = {}
+                with tab_chiso:
+                    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+                    metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
+                    icon_map = {"Doanh Số (VNĐ)": "💰", "Tổng Số Bill": "🧾", "Cắt Liều": "💊", "Tỷ Lệ HOT": "🔥", "Tỷ Lệ FS": "⚡", "Tỷ Lệ 5 Sao": "⭐"}
+                    
+                    for m in metrics:
+                        m_data = dt_mts.get(m, {})
+                        icon = icon_map.get(m, "🔹")
                         
-                        c3, c4 = st.columns(2)
-                        vac_str = c3.text_input("💉 Bán Vắc Xin (VNĐ)", value=fmt_dot(dt_cfg.get("vac", 0)), placeholder="VD: 1.500.000")
-                        vac = s_float(vac_str)
-                        st.markdown("""<style> .stCheckbox {padding-top: 30px;} </style>""", unsafe_allow_html=True)
-                        vac_chk = c4.checkbox("☑️ Trừ Vắc Xin", value=dt_cfg.get("vac_chk", True))
-                        
-                    # --- PHẦN 2: NẰM TRONG TAB 2 ---
-                    with tab_ca:
-                        c5, c6 = st.columns(2)
-                        pc1_str = c5.text_input("☀️ CA 1 (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
-                        pc1 = s_float(pc1_str)
-                        ng1_str = c6.text_input("☀️ CA 1 (Người)", value=str(s_float(dt_cfg.get("ng1", 1))).replace('.0', ''))
-                        ng1 = s_float(ng1_str)
-                        
-                        c7, c8 = st.columns(2)
-                        pc2_str = c7.text_input("🌙 CA 2 (%)", value=str(s_float(dt_cfg.get("pc2", 50))).replace('.0', ''))
-                        pc2 = s_float(pc2_str)
-                        ng2_str = c8.text_input("🌙 CA 2 (Người)", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
-                        ng2 = s_float(ng2_str)
-                        
-                    # --- PHẦN 3: NẰM TRONG TAB 3 (TRẢ LẠI THIẾT KẾ XỔ XUỐNG NGUYÊN BẢN TUYỆT ĐẸP) ---
-                    with tab_chiso:
-                        st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
-                        metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
-                        icon_map = {"Doanh Số (VNĐ)": "💰", "Tổng Số Bill": "🧾", "Cắt Liều": "💊", "Tỷ Lệ HOT": "🔥", "Tỷ Lệ FS": "⚡", "Tỷ Lệ 5 Sao": "⭐"}
-                        new_mts = {}
+                        with st.expander(f"{icon} {m}", expanded=False):
+                            r1c1, r1c2 = st.columns([1.5, 1])
+                            g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
+                            p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", placeholder="%...")
+                            
+                            r2c1, r2c2 = st.columns(2)
+                            db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
+                            
+                            # --- THUẬT TOÁN TÍNH TOÁN LIVE NGAY TỨC THÌ ---
+                            g_val = s_float(g_str)
+                            p_val = s_float(p_str)
+                            db_val = s_float(db_str)
+                            
+                            t_val = (g_val * p_val) / 100
+                            if m == "Doanh Số (VNĐ)" and vac_chk:
+                                t_val -= vac
+                                
+                            cl_val = t_val - db_val
+                            if cl_val < 0: cl_val = 0
+                            
+                            auto_n = cl_val / nc if nc > 0 else 0
+                            
+                            # Cột "Còn lại" dùng khung LED tự nảy số
+                            r2c2.markdown(f"<div style='font-size:14px; margin-bottom:5px; color:#fafafa;'>Còn phải bán (Tự động)</div><div style='background-color: transparent; border: 1px solid #334155; padding: 10px; border-radius: 6px; color:#10b981; font-weight:bold;'>{fmt_dot(cl_val)}</div>", unsafe_allow_html=True)
+                            
+                            n_str = st.text_input("Mỗi ngày cần (Để trống máy tự chia, nhập số để đè)", value=m_data.get("n_str_saved", ""), placeholder=f"Gợi ý chia đều: {fmt_dot(auto_n)}", key=f"n_{m}")
+                            
+                            # Ưu tiên số người dùng nhập, nếu ko thì lấy số máy tự chia
+                            final_n = s_float(n_str) if n_str.strip() else auto_n
+                            
+                            # Chuyển ngay kết quả vào Bảng Dưới Cùng
+                            live_mts[m] = {
+                                "g": g_val, "p": p_val, "db": db_val,
+                                "cl": cl_val, "n": final_n,
+                                "g_str": g_str, "p_str": p_str, "db_str": db_str, "n_str": n_str
+                            }
+                    
+                st.markdown("<br>", unsafe_allow_html=True)
+                btn_c1, btn_c2 = st.columns([1, 1])
+                
+                # Biến nút Submit form thành Nút Button bình thường
+                del_btn = btn_c1.button("🗑️ XÓA SỐ TẠM", use_container_width=True)
+                sub_btn = btn_c2.button("☁️ LƯU LÊN WEB", type="primary", use_container_width=True)
+                
+                if del_btn:
+                    update_firebase("daily_targets", {"config": {}, "metrics": {}})
+                    st.success("✅ Đã dọn sạch bảng chia Target!")
+                    time.sleep(1)
+                    st.rerun()
+
+                if sub_btn:
+                    if pc1 + pc2 != 100:
+                        st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
+                    else:
+                        new_config = {"nv": str(nv), "vac": str(vac), "vac_chk": vac_chk, "nc": str(nc), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
+                        save_mts = {}
+                        fmt = lambda x: f"{int(x)}" if float(x).is_integer() else f"{float(x)}"
                         
                         for m in metrics:
-                            m_data = dt_mts.get(m, {})
-                            icon = icon_map.get(m, "🔹")
-                            
-                            with st.expander(f"{icon} {m}", expanded=False):
-                                r1c1, r1c2 = st.columns([1.5, 1])
-                                g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
-                                p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", placeholder="%...")
-                                
-                                r2c1, r2c2 = st.columns(2)
-                                db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
-                                cl_str = r2c2.text_input("Còn phải bán", value=fmt_dot(m_data.get("cl", 0)), key=f"cl_{m}", placeholder="Còn lại...")
-                                
-                                n_str = st.text_input("Mỗi ngày cần", value=fmt_dot(m_data.get("n", 0)), key=f"n_{m}", placeholder="Ngày cần...")
-                                
-                                new_mts[m] = {
-                                    "g_str": g_str, "p_str": p_str, "db_str": db_str, "cl_str": cl_str, "n_str": n_str,
-                                    "old_cl": s_float(m_data.get("cl", 0)),
-                                    "old_n": s_float(m_data.get("n", 0))
-                                }
+                            lm = live_mts[m]
+                            save_mts[m] = {"g": fmt(lm["g"]), "p": fmt(lm["p"]), "db": fmt(lm["db"]), "cl": fmt(lm["cl"]), "n": fmt(lm["n"])}
+                            # Lưu lại cái string user gõ để lần sau load lại form y hệt
+                            save_mts[m]["n_str_saved"] = lm["n_str"]
                         
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    btn_c1, btn_c2 = st.columns([1, 1])
-                    
-                    del_btn = btn_c1.form_submit_button("🗑️ XÓA SỐ", use_container_width=True)
-                    sub_btn = btn_c2.form_submit_button("⚡ LƯU & TÍNH KẾT QUẢ", type="primary", use_container_width=True)
-                    
-                    if del_btn:
-                        update_firebase("daily_targets", {"config": {}, "metrics": {}})
-                        st.success("✅ Đã dọn sạch bảng chia Target!")
+                        update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
+                        st.success("✅ Đã lưu kết quả lên hệ thống để nhân viên cùng xem!")
                         time.sleep(1)
                         st.rerun()
 
-                    if sub_btn:
-                        if pc1 + pc2 != 100:
-                            st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
-                        else:
-                            new_config = {"nv": str(nv), "vac": str(vac), "vac_chk": vac_chk, "nc": str(nc), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
-                            save_mts = {}
-                            
-                            fmt = lambda x: f"{int(x)}" if float(x).is_integer() else f"{float(x)}"
-                            
-                            for m in metrics:
-                                g_val = s_float(new_mts[m]["g_str"])
-                                p_val = s_float(new_mts[m]["p_str"])
-                                db_val = s_float(new_mts[m]["db_str"])
-                                n_str = new_mts[m]["n_str"]
-                                old_n = new_mts[m]["old_n"]
-                                
-                                t_val = (g_val * p_val) / 100
-                                
-                                if m == "Doanh Số (VNĐ)" and vac_chk:
-                                    t_val = t_val - vac
-                                    
-                                cl_val = t_val - db_val
-                                if cl_val < 0: cl_val = 0
-                                    
-                                if n_str.strip() == "":
-                                    n_val = cl_val / nc if nc > 0 else 0
-                                elif s_float(n_str) == old_n: 
-                                    n_val = cl_val / nc if nc > 0 else 0
-                                else:
-                                    n_val = s_float(n_str)
-                                    
-                                save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "db": fmt(db_val), "cl": fmt(cl_val), "n": fmt(n_val)}
-                            
-                            update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
-                            st.success("✅ Đã tính toán chuẩn xác và đồng bộ!")
-                            time.sleep(1)
-                            st.rerun()
+            else:
+                # Nếu chỉ là nhân viên vào xem, lấy thẳng từ DB
+                live_mts = {}
+                nv = s_float(dt_cfg.get("nv", 1))
+                pc1 = s_float(dt_cfg.get("pc1", 50))
+                ng1 = s_float(dt_cfg.get("ng1", 1))
+                pc2 = s_float(dt_cfg.get("pc2", 50))
+                ng2 = s_float(dt_cfg.get("ng2", 1))
+                
+                for m in ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]:
+                    m_data = dt_mts.get(m, {})
+                    live_mts[m] = {
+                        "cl": s_float(m_data.get("cl", 0)),
+                        "n": s_float(m_data.get("n", 0))
+                    }
 
-            # --- BẢNG HIỂN THỊ KẾT QUẢ ---
-            st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật)</b>", unsafe_allow_html=True)
+            # --- BẢNG HIỂN THỊ KẾT QUẢ TỰ ĐỘNG LẤY TỪ LIVE_MTS PHÍA TRÊN ---
+            st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật nhảy số)</b>", unsafe_allow_html=True)
             t1, t2 = st.tabs(["👤 BẢNG CÁ NHÂN", "🏪 BẢNG CA TRỰC"])
             
-            nv_cur = int(s_float(dt_cfg.get("nv", 1)) or 1)
-            pc1_cur = float(s_float(dt_cfg.get("pc1", 50)))
-            ng1_cur = int(s_float(dt_cfg.get("ng1", 1)) or 1)
-            pc2_cur = float(s_float(dt_cfg.get("pc2", 50)))
-            ng2_cur = int(s_float(dt_cfg.get("ng2", 1)) or 1)
+            nv_cur = int(nv or 1)
+            pc1_cur = pc1
+            ng1_cur = int(ng1 or 1)
+            pc2_cur = pc2
+            ng2_cur = int(ng2 or 1)
 
             res1_data, res2_data = [], []
             
-            for m in metrics:
-                m_data = dt_mts.get(m, {})
-                val_cl = s_float(m_data.get("cl", 0)) 
-                val_n = s_float(m_data.get("n", 0))
+            for m in ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]:
+                val_cl = live_mts[m]["cl"] 
+                val_n = live_mts[m]["n"]
                 
                 thang_1 = round(val_cl / nv_cur) if nv_cur > 0 else 0
                 
