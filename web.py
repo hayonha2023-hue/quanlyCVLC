@@ -10,85 +10,9 @@ from PIL import Image, ImageOps
 from datetime import datetime, timedelta
 
 # ==========================================
-# CẤU HÌNH GIAO DIỆN & SIÊU HIỆU ỨNG CSS CHUẨN UX/UI
+# 1. CẤU HÌNH GIAO DIỆN & SIÊU HIỆU ỨNG CSS CHUẨN UX/UI
 # ==========================================
 st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
-
-base_css = """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-html, body, [class*="css"]  {
-    font-family: 'Inter', sans-serif !important;
-}
-
-/* Ẩn Menu rác, giữ lại Header để mở Menu trên điện thoại */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-[data-testid="stHeaderActionElements"], .stDeployButton, #manage-app-button {display: none !important;}
-
-/* Giao diện Dark theme mặc định mượt mà */
-.stApp { background-color: #0f172a; }
-
-/* Nút Tabs nằm ngang sang trọng */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 8px; background-color: #1e293b; padding: 6px; border-radius: 12px; border-bottom: none;
-}
-.stTabs [data-baseweb="tab"] {
-    border-radius: 8px !important; padding: 10px 16px; border: none !important;
-    background-color: transparent; color: #94a3b8 !important; transition: all 0.3s ease;
-}
-.stTabs [aria-selected="true"] {
-    background-color: #334155 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    color: #38bdf8 !important; font-weight: 700 !important;
-}
-
-/* Khung nhập liệu bo góc */
-.stTextInput input {
-    border-radius: 8px; border: 1px solid #334155 !important;
-    background-color: #1e293b !important; color: #f8fafc !important;
-    padding: 12px 15px; transition: all 0.3s ease;
-}
-.stTextInput input:focus {
-    border-color: #0ea5e9 !important; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
-}
-
-/* Thẻ xổ xuống (Expander) */
-[data-testid="stExpander"] {
-    border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    border-radius: 12px; background-color: #1e293b; margin-bottom: 12px; transition: all 0.3s ease;
-}
-[data-testid="stExpander"]:hover { border-color: #475569; }
-[data-testid="stExpander"] summary p { font-weight: 600; font-size: 15px; color: #e2e8f0; }
-
-/* Nút bấm Gradient */
-.stButton > button {
-    border-radius: 8px; font-weight: 600; padding: 10px 0; border: 1px solid #334155; transition: all 0.3s ease;
-}
-.stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; color: white;
-}
-.stButton > button[kind="primary"]:hover {
-    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
-}
-
-/* Sidebar Menu */
-[data-testid="stSidebar"] div[role="radiogroup"] > label { background-color: transparent !important; border-radius: 12px !important; padding: 12px 16px !important; margin-bottom: 8px !important; cursor: pointer; transition: all 0.2s !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.08) !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.15) !important; border-left: 4px solid #0ea5e9 !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 600 !important; color: #f8fafc !important; }
-</style>
-"""
-st.markdown(base_css, unsafe_allow_html=True)
-
-if "theme" not in st.session_state: st.session_state.theme = "Dark" 
-
-if st.session_state.theme == "Light":
-    theme_css = """<style>[data-testid="stAppViewContainer"] {background-color: #f1f5f9 !important;} [data-testid="stSidebar"] {background-color: #ffffff !important;} .stApp {background-color: #f1f5f9 !important; color: #0f172a !important;} .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #1e293b !important;} [data-testid="stMetricValue"] {color: #0284c7 !important;} [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #ffffff !important;} button[kind="secondary"] { background-color: #ffffff !important; color: #0284c7 !important; border: 1px solid #e2e8f0 !important; } button[kind="secondary"]:hover { background-color: #f0f9ff !important; border-color: #0ea5e9 !important; } .stTabs [data-baseweb="tab-list"] {background-color: #e2e8f0;} .stTabs [aria-selected="true"] {background-color: #ffffff !important; color: #0284c7 !important;} .stTextInput input {background-color: #ffffff !important; color: #0f172a !important; border-color: #cbd5e1 !important;} [data-testid="stSidebar"] div[role="radiogroup"] > label p { color: #0f172a !important; }</style>"""
-else:
-    theme_css = """<style>[data-testid="stAppViewContainer"] {background-color: #090d16 !important;} [data-testid="stSidebar"] {background-color: #111827 !important;} .stApp {background-color: #090d16 !important; color: #f8fafc !important;} .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {color: #f1f5f9 !important;} [data-testid="stMetricValue"] {color: #38bdf8 !important;} [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {background-color: #1f2937 !important;} button[kind="secondary"] { background-color: #1f2937 !important; color: #38bdf8 !important; border: 1px solid #374151 !important; } button[kind="secondary"]:hover { background-color: #111827 !important; border-color: #38bdf8 !important; }</style>"""
-st.markdown(theme_css, unsafe_allow_html=True)
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
@@ -103,6 +27,7 @@ def delete_firebase(path): requests.delete(f"{FIREBASE_URL.replace('.json', '')}
 def format_vnd(amount): return f"{amount:,.0f} ₫".replace(",", ".")
 def get_hash(text): return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+# THUẬT TOÁN XỬ LÝ SỐ CHUẨN XÁC CHỐNG LỖI DƯ/THIẾU SỐ 0
 def s_float(val):
     if val is None or str(val).strip() == "": return 0.0
     if isinstance(val, (int, float)): return float(val)
@@ -114,6 +39,10 @@ def fmt_dot(val):
     if v == 0: return ""
     if v.is_integer(): return f"{int(v):,}".replace(",", ".")
     return f"{v:,.1f}".replace(",", ".")
+
+def fmt_num(val):
+    v = s_float(val)
+    return f"{int(v)}" if v.is_integer() else f"{v}"
 
 def logout():
     st.session_state.user = None
@@ -128,6 +57,117 @@ if "user" not in st.session_state:
 
 db = get_data()
 
+# ==========================================
+# 2. XỬ LÝ CSS & THEME KÍNH MỜ (GLASSMORPHISM) CHO HÌNH NỀN
+# ==========================================
+base_css = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html, body, [class*="css"]  { font-family: 'Inter', sans-serif !important; }
+
+/* Ẩn Menu rác, giữ lại Header để mở Menu trên điện thoại */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+[data-testid="stHeaderActionElements"], .stDeployButton, #manage-app-button {display: none !important;}
+
+/* Nút Tabs nằm ngang sang trọng */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px; padding: 6px; border-radius: 12px; border-bottom: none;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px !important; padding: 10px 16px; border: none !important;
+    background-color: transparent; color: #94a3b8 !important; transition: all 0.3s ease;
+}
+
+/* Khung nhập liệu bo góc */
+.stTextInput input {
+    border-radius: 8px; padding: 12px 15px; transition: all 0.3s ease;
+}
+.stTextInput input:focus {
+    border-color: #0ea5e9 !important; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
+}
+
+/* Thẻ xổ xuống (Expander) */
+[data-testid="stExpander"] {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    border-radius: 12px; margin-bottom: 12px; transition: all 0.3s ease;
+}
+[data-testid="stExpander"] summary p { font-weight: 600; font-size: 15px; }
+
+/* Nút bấm Gradient */
+.stButton > button {
+    border-radius: 8px; font-weight: 600; padding: 10px 0; transition: all 0.3s ease;
+}
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; color: white;
+}
+.stButton > button[kind="primary"]:hover {
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+}
+
+/* Sidebar Menu */
+[data-testid="stSidebar"] div[role="radiogroup"] > label { background-color: transparent !important; border-radius: 12px !important; padding: 12px 16px !important; margin-bottom: 8px !important; cursor: pointer; transition: all 0.2s !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.08) !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.25) !important; border-left: 4px solid #0ea5e9 !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 600 !important; }
+</style>
+"""
+st.markdown(base_css, unsafe_allow_html=True)
+
+if "theme" not in st.session_state: st.session_state.theme = "Dark" 
+
+# LẤY ẢNH NỀN RIÊNG CỦA TỪNG USER CHỨ KHÔNG DÙNG CHUNG NỮA
+bg_b64 = ""
+if st.session_state.user:
+    bg_b64 = db.get("users", {}).get(st.session_state.user, {}).get("bg_image", "")
+
+if st.session_state.theme == "Light":
+    bg_sb = "rgba(255, 255, 255, 0.85)" if bg_b64 else "#ffffff"
+    bg_el = "rgba(255, 255, 255, 0.85)" if bg_b64 else "#ffffff"
+    theme_css = f"""<style>
+    [data-testid="stAppViewContainer"] {{ background-color: #f1f5f9 !important; }}
+    [data-testid="stSidebar"] {{ background-color: {bg_sb} !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-right: 1px solid rgba(0,0,0,0.1); }} 
+    .stApp {{ color: #0f172a !important; }} 
+    .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {{ color: #1e293b !important; }} 
+    [data-testid="stMetricValue"] {{ color: #0284c7 !important; }} 
+    [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {{ background-color: {bg_el} !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.1) !important; }} 
+    button[kind="secondary"] {{ background-color: {bg_el} !important; color: #0284c7 !important; border: 1px solid #e2e8f0 !important; }} 
+    button[kind="secondary"]:hover {{ background-color: #f0f9ff !important; border-color: #0ea5e9 !important; }} 
+    .stTabs [data-baseweb="tab-list"] {{ background-color: rgba(226, 232, 240, 0.85) !important; backdrop-filter: blur(10px); }} 
+    .stTabs [aria-selected="true"] {{ background-color: #ffffff !important; color: #0284c7 !important; }} 
+    .stTextInput input {{ background-color: rgba(255, 255, 255, 0.7) !important; color: #0f172a !important; border-color: #cbd5e1 !important; }} 
+    [data-testid="stSidebar"] div[role="radiogroup"] > label p {{ color: #0f172a !important; }}
+    [data-testid="stExpander"] summary p {{ color: #0f172a !important; }}
+    </style>"""
+else:
+    bg_sb = "rgba(17, 24, 39, 0.75)" if bg_b64 else "#111827"
+    bg_el = "rgba(31, 41, 55, 0.75)" if bg_b64 else "#1f2937"
+    theme_css = f"""<style>
+    [data-testid="stAppViewContainer"] {{ background-color: #090d16 !important; }}
+    [data-testid="stSidebar"] {{ background-color: {bg_sb} !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,0.1); }} 
+    .stApp {{ color: #f8fafc !important; }} 
+    .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, label, span, th, td {{ color: #f1f5f9 !important; }} 
+    [data-testid="stMetricValue"] {{ color: #38bdf8 !important; }} 
+    [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {{ background-color: {bg_el} !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1) !important; }} 
+    button[kind="secondary"] {{ background-color: {bg_el} !important; color: #38bdf8 !important; border: 1px solid #374151 !important; }} 
+    button[kind="secondary"]:hover {{ background-color: #111827 !important; border-color: #38bdf8 !important; }}
+    .stTabs [data-baseweb="tab-list"] {{ background-color: rgba(30, 41, 59, 0.85) !important; backdrop-filter: blur(10px); }}
+    .stTextInput input {{ background-color: rgba(30, 41, 59, 0.7) !important; color: #f8fafc !important; border: 1px solid #334155 !important; }} 
+    [data-testid="stSidebar"] div[role="radiogroup"] > label p {{ color: #f8fafc !important; }}
+    </style>"""
+
+if bg_b64:
+    theme_css += f"""<style>
+    [data-testid="stAppViewContainer"] {{
+        background: url('data:image/jpeg;base64,{bg_b64}') center center / cover no-repeat fixed !important;
+    }}
+    .stApp > header {{ background-color: transparent !important; }}
+    </style>"""
+
+st.markdown(theme_css, unsafe_allow_html=True)
+
 # Tự động đăng nhập
 if st.session_state.user is None:
     if "u" in st.query_params and "t" in st.query_params:
@@ -139,7 +179,7 @@ if st.session_state.user is None:
             st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
 
 # ==========================================
-# MÀN HÌNH ĐĂNG NHẬP
+# 3. MÀN HÌNH ĐĂNG NHẬP
 # ==========================================
 if st.session_state.user is None:
     _, col_center, _ = st.columns([1, 1.8, 1])
@@ -209,7 +249,7 @@ if st.session_state.user is None:
             if st.button("⬅ Quay lại", use_container_width=True): st.session_state.page = "login"; st.rerun()
 
 # ==========================================
-# MÀN HÌNH CHÍNH & SIDEBAR
+# 4. MÀN HÌNH CHÍNH & SIDEBAR
 # ==========================================
 else:
     u_info = db.get("users", {}).get(st.session_state.user, {})
@@ -239,8 +279,14 @@ else:
             selected_tab = st.radio("MENU CHỨC NĂNG", allowed_tabs, label_visibility="collapsed")
             st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1);'><br>", unsafe_allow_html=True)
             
+            if st.button("🖼️ Đổi hình nền cá nhân", use_container_width=True):
+                st.session_state.show_bg_setting = not st.session_state.get("show_bg_setting", False)
+                st.session_state.show_pass = False
+                st.session_state.force_close_sidebar = True
+
             if st.button("🔑 Cài đặt mật khẩu", use_container_width=True):
                 st.session_state.show_pass = not st.session_state.get("show_pass", False)
+                st.session_state.show_bg_setting = False
                 st.session_state.force_close_sidebar = True
                 
             theme_txt = "☀️ Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Giao diện Tối"
@@ -262,6 +308,30 @@ else:
             
         if need_close:
             components.html('''<script>var doc = window.parent.document; var desktopBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button'); if (desktopBtn) { desktopBtn.click(); } var mobileBtns = doc.querySelectorAll('button[aria-label="Close"], button[aria-label="Collapse sidebar"], button[title="Collapse sidebar"]'); mobileBtns.forEach(function(btn) { btn.click(); });</script>''', height=0, width=0)
+
+        # XỬ LÝ ĐỔI HÌNH NỀN CÁ NHÂN
+        if st.session_state.get("show_bg_setting", False):
+            with st.container():
+                st.markdown("<div style='padding: 22px; border-radius: 16px; background-color: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 25px;'>", unsafe_allow_html=True)
+                st.markdown("<h5 style='color:#0ea5e9; font-weight: bold; margin-top: 0;'>🖼️ TÙY CHỈNH HÌNH NỀN CÁ NHÂN</h5>", unsafe_allow_html=True)
+                bg_up = st.file_uploader("Chọn ảnh từ máy (Nên chọn ảnh có độ phân giải cao)", type=["png", "jpg", "jpeg"])
+                c_bg1, c_bg2 = st.columns(2)
+                
+                if bg_up:
+                    if c_bg1.button("💾 ÁP DỤNG", type="primary", use_container_width=True):
+                        img = Image.open(bg_up)
+                        img = ImageOps.exif_transpose(img)
+                        img.thumbnail((1920, 1080))
+                        buffered = io.BytesIO()
+                        img.convert("RGB").save(buffered, format="JPEG", quality=85)
+                        update_firebase(f"users/{st.session_state.user}", {"bg_image": base64.b64encode(buffered.getvalue()).decode()})
+                        st.success("Thành công!"); time.sleep(1); st.rerun()
+                
+                if u_info.get("bg_image"):
+                    if c_bg2.button("🗑️ XÓA ẢNH", use_container_width=True):
+                        delete_firebase(f"users/{st.session_state.user}/bg_image")
+                        st.success("Đã xóa!"); time.sleep(1); st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
 
         # XỬ LÝ ĐỔI PASS
         if st.session_state.get("show_pass", False):
@@ -427,7 +497,7 @@ else:
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
         # ==========================================
-        # 2.5 TAB CHIA TARGET (TỐI ƯU GIAO DIỆN & TÍNH TOÁN REALTIME)
+        # 2.5 TAB CHIA TARGET
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -476,9 +546,9 @@ else:
                 
                 with tab_chung:
                     c1, c2 = st.columns(2)
-                    nv_str = c1.text_input("👥 Tổng NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
+                    nv_str = c1.text_input("👥 Tổng NV", value=fmt_num(dt_cfg.get("nv", 1)))
                     nv = s_float(nv_str)
-                    nc_str = c2.text_input("⏳ Số ngày còn lại", value=str(s_float(dt_cfg.get("nc", 30))).replace('.0', ''), placeholder="VD: 30")
+                    nc_str = c2.text_input("⏳ Số ngày còn lại", value=fmt_num(dt_cfg.get("nc", 30)), placeholder="VD: 30")
                     nc = s_float(nc_str)
                     
                     c3, c4 = st.columns(2)
@@ -489,15 +559,15 @@ else:
                     
                 with tab_ca:
                     c5, c6 = st.columns(2)
-                    pc1_str = c5.text_input("☀️ CA 1 (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
+                    pc1_str = c5.text_input("☀️ CA 1 (%)", value=fmt_num(dt_cfg.get("pc1", 50)))
                     pc1 = s_float(pc1_str)
-                    ng1_str = c6.text_input("☀️ CA 1 (Người)", value=str(s_float(dt_cfg.get("ng1", 1))).replace('.0', ''))
+                    ng1_str = c6.text_input("☀️ CA 1 (Người)", value=fmt_num(dt_cfg.get("ng1", 1)))
                     ng1 = s_float(ng1_str)
                     
                     c7, c8 = st.columns(2)
-                    pc2_str = c7.text_input("🌙 CA 2 (%)", value=str(s_float(dt_cfg.get("pc2", 50))).replace('.0', ''))
+                    pc2_str = c7.text_input("🌙 CA 2 (%)", value=fmt_num(dt_cfg.get("pc2", 50)))
                     pc2 = s_float(pc2_str)
-                    ng2_str = c8.text_input("🌙 CA 2 (Người)", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
+                    ng2_str = c8.text_input("🌙 CA 2 (Người)", value=fmt_num(dt_cfg.get("ng2", 1)))
                     ng2 = s_float(ng2_str)
                     
                 live_mts = {}
@@ -513,7 +583,7 @@ else:
                         with st.expander(f"{icon} {m}", expanded=False):
                             r1c1, r1c2 = st.columns([1.5, 1])
                             g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
-                            p_str = r1c2.text_input("% Đạt", value=str(s_float(m_data.get("p", 100))).replace('.0', ''), key=f"p_{m}", placeholder="%...")
+                            p_str = r1c2.text_input("% Đạt", value=fmt_num(m_data.get("p", 100)), key=f"p_{m}", placeholder="%...")
                             
                             r2c1, r2c2 = st.columns(2)
                             db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
@@ -531,7 +601,7 @@ else:
                             
                             auto_n = cl_val / nc if nc > 0 else 0
                             
-                            r2c2.markdown(f"<div style='font-size:14px; margin-bottom:5px; color:#fafafa;'>Còn phải bán</div><div style='background-color: transparent; border: 1px solid #334155; padding: 10px; border-radius: 6px; color:#10b981; font-weight:bold;'>{fmt_dot(cl_val)}</div>", unsafe_allow_html=True)
+                            r2c2.markdown(f"<div style='font-size:14px; margin-bottom:5px; color:#94a3b8;'>Còn phải bán</div><div style='background-color: transparent; border: 1px solid #334155; padding: 10px; border-radius: 6px; color:#10b981; font-weight:bold;'>{fmt_dot(cl_val)}</div>", unsafe_allow_html=True)
                             
                             n_str = st.text_input("Mỗi ngày cần (Để trống máy tự chia, nhập số để đè)", value=m_data.get("n_str_saved", ""), placeholder=f"Gợi ý chia đều: {fmt_dot(auto_n)}", key=f"n_{m}")
                             
@@ -754,6 +824,7 @@ else:
         # ==========================================
         elif selected_tab == "👥 QUẢN TRỊ ADMIN":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>⚙️ Trung Tâm Điều Hành Quản Trị Hệ Thống</h3>", unsafe_allow_html=True)
+            
             pending = db.get("pending_users", {})
             if pending:
                 for pu, pinfo in pending.items():
