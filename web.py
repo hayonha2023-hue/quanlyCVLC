@@ -379,7 +379,7 @@ else:
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
         # ==========================================
-        # 2.5 TAB CHIA TARGET (GIAO DIỆN TABS SIÊU GỌN TỐI ƯU MOBILE)
+        # 2.5 TAB CHIA TARGET (GIAO DIỆN THẺ XỔ XUỐNG - TỐI ƯU TUYỆT ĐỐI CHO MOBILE)
         # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
@@ -433,10 +433,12 @@ else:
                 return f"{v:,.1f}".replace(",", ".")
 
             if st.session_state.is_admin or "TÍNH TARGET" in edit_perms:
-                with st.expander("⚙️ BẢNG NHẬP LIỆU & CẤU HÌNH", expanded=True):
-                    with st.form("target_form"):
-                        
-                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>1. CẤU HÌNH CHUNG</h5>", unsafe_allow_html=True)
+                st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>⚙️ BẢNG NHẬP LIỆU TÙY CHỈNH</h5>", unsafe_allow_html=True)
+                
+                with st.form("target_form"):
+                    
+                    # --- PHẦN 1: ĐÓNG GÓI VÀO THẺ (MẶC ĐỊNH ĐÓNG) ---
+                    with st.expander("🟢 1. CẤU HÌNH CHUNG (Bấm để mở)", expanded=False):
                         c1, c2 = st.columns(2)
                         nv_str = c1.text_input("👥 Tổng NV", value=str(s_float(dt_cfg.get("nv", 1))).replace('.0', ''))
                         nv = s_float(nv_str)
@@ -449,7 +451,8 @@ else:
                         st.markdown("""<style> .stCheckbox {padding-top: 30px;} </style>""", unsafe_allow_html=True)
                         vac_chk = c4.checkbox("☑️ Trừ Vắc Xin", value=dt_cfg.get("vac_chk", True))
                         
-                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold; margin-top: 10px;'>2. CẤU HÌNH CA TRỰC</h5>", unsafe_allow_html=True)
+                    # --- PHẦN 2: ĐÓNG GÓI VÀO THẺ (MẶC ĐỊNH ĐÓNG) ---
+                    with st.expander("🟡 2. CẤU HÌNH CA TRỰC (Bấm để mở)", expanded=False):
                         c5, c6 = st.columns(2)
                         pc1_str = c5.text_input("☀️ CA 1 (%)", value=str(s_float(dt_cfg.get("pc1", 50))).replace('.0', ''))
                         pc1 = s_float(pc1_str)
@@ -462,10 +465,8 @@ else:
                         ng2_str = c8.text_input("🌙 CA 2 (Người)", value=str(s_float(dt_cfg.get("ng2", 1))).replace('.0', ''))
                         ng2 = s_float(ng2_str)
                         
-                        st.markdown("<hr style='margin: 15px 0; border-color: #334155;'>", unsafe_allow_html=True)
-                        st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>3. BẢNG CHỈ SỐ CẦN ĐẠT</h5>", unsafe_allow_html=True)
-                        
-                        # --- GÓI GỌN GIAO DIỆN BẰNG TABS ---
+                    # --- PHẦN 3: ĐÓNG GÓI VÀO THẺ (MẶC ĐỊNH ĐÓNG) ---
+                    with st.expander("🔵 3. BẢNG CHỈ SỐ CẦN ĐẠT (Bấm để mở)", expanded=False):
                         t_ds, t_bl, t_tl = st.tabs(["💰 Doanh Số", "🧾 Bill & Liều", "⭐ Các Tỷ Lệ"])
                         
                         metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
@@ -495,7 +496,6 @@ else:
                                         "old_n": s_float(m_data.get("n", 0))
                                     }
 
-                        # Đổ các chỉ số vào đúng Tab của nó
                         draw_metric_card("Doanh Số (VNĐ)", t_ds)
                         draw_metric_card("Tổng Số Bill", t_bl)
                         draw_metric_card("Cắt Liều", t_bl)
@@ -503,55 +503,55 @@ else:
                         draw_metric_card("Tỷ Lệ FS", t_tl)
                         draw_metric_card("Tỷ Lệ 5 Sao", t_tl)
                         
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        btn_c1, btn_c2 = st.columns([1, 1])
-                        
-                        del_btn = btn_c1.form_submit_button("🗑️ XÓA SỐ", use_container_width=True)
-                        sub_btn = btn_c2.form_submit_button("⚡ LƯU & TÍNH", type="primary", use_container_width=True)
-                        
-                        if del_btn:
-                            update_firebase("daily_targets", {"config": {}, "metrics": {}})
-                            st.success("✅ Đã dọn sạch bảng chia Target!")
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    btn_c1, btn_c2 = st.columns([1, 1])
+                    
+                    del_btn = btn_c1.form_submit_button("🗑️ XÓA SỐ", use_container_width=True)
+                    sub_btn = btn_c2.form_submit_button("⚡ LƯU & TÍNH KẾT QUẢ", type="primary", use_container_width=True)
+                    
+                    if del_btn:
+                        update_firebase("daily_targets", {"config": {}, "metrics": {}})
+                        st.success("✅ Đã dọn sạch bảng chia Target!")
+                        time.sleep(1)
+                        st.rerun()
+
+                    if sub_btn:
+                        if pc1 + pc2 != 100:
+                            st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
+                        else:
+                            new_config = {"nv": str(nv), "vac": str(vac), "vac_chk": vac_chk, "nc": str(nc), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
+                            save_mts = {}
+                            
+                            fmt = lambda x: f"{int(x)}" if float(x).is_integer() else f"{float(x)}"
+                            
+                            for m in metrics:
+                                g_val = s_float(new_mts[m]["g_str"])
+                                p_val = s_float(new_mts[m]["p_str"])
+                                db_val = s_float(new_mts[m]["db_str"])
+                                n_str = new_mts[m]["n_str"]
+                                old_n = new_mts[m]["old_n"]
+                                
+                                t_val = (g_val * p_val) / 100
+                                
+                                if m == "Doanh Số (VNĐ)" and vac_chk:
+                                    t_val = t_val - vac
+                                    
+                                cl_val = t_val - db_val
+                                if cl_val < 0: cl_val = 0
+                                    
+                                if n_str.strip() == "":
+                                    n_val = cl_val / nc if nc > 0 else 0
+                                elif s_float(n_str) == old_n: 
+                                    n_val = cl_val / nc if nc > 0 else 0
+                                else:
+                                    n_val = s_float(n_str)
+                                    
+                                save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "db": fmt(db_val), "cl": fmt(cl_val), "n": fmt(n_val)}
+                            
+                            update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
+                            st.success("✅ Đã tính toán chuẩn xác và đồng bộ!")
                             time.sleep(1)
                             st.rerun()
-
-                        if sub_btn:
-                            if pc1 + pc2 != 100:
-                                st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
-                            else:
-                                new_config = {"nv": str(nv), "vac": str(vac), "vac_chk": vac_chk, "nc": str(nc), "pc1": str(pc1), "ng1": str(ng1), "pc2": str(pc2), "ng2": str(ng2)}
-                                save_mts = {}
-                                
-                                fmt = lambda x: f"{int(x)}" if float(x).is_integer() else f"{float(x)}"
-                                
-                                for m in metrics:
-                                    g_val = s_float(new_mts[m]["g_str"])
-                                    p_val = s_float(new_mts[m]["p_str"])
-                                    db_val = s_float(new_mts[m]["db_str"])
-                                    n_str = new_mts[m]["n_str"]
-                                    old_n = new_mts[m]["old_n"]
-                                    
-                                    t_val = (g_val * p_val) / 100
-                                    
-                                    if m == "Doanh Số (VNĐ)" and vac_chk:
-                                        t_val = t_val - vac
-                                        
-                                    cl_val = t_val - db_val
-                                    if cl_val < 0: cl_val = 0
-                                        
-                                    if n_str.strip() == "":
-                                        n_val = cl_val / nc if nc > 0 else 0
-                                    elif s_float(n_str) == old_n: 
-                                        n_val = cl_val / nc if nc > 0 else 0
-                                    else:
-                                        n_val = s_float(n_str)
-                                        
-                                    save_mts[m] = {"g": fmt(g_val), "p": fmt(p_val), "db": fmt(db_val), "cl": fmt(cl_val), "n": fmt(n_val)}
-                                
-                                update_firebase("daily_targets", {"config": new_config, "metrics": save_mts})
-                                st.success("✅ Đã tính toán chuẩn xác và đồng bộ!")
-                                time.sleep(1)
-                                st.rerun()
 
                 # --- BẢNG HIỂN THỊ KẾT QUẢ ---
                 st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật)</b>", unsafe_allow_html=True)
