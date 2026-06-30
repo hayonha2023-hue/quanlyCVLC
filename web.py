@@ -127,7 +127,6 @@ if st.session_state.user:
     bg_b64 = db.get("users", {}).get(st.session_state.user, {}).get("bg_image", "")
 
 if st.session_state.theme == "Light":
-    # SÁNG: Tăng opacity lên 0.92 và làm mờ 16px để chữ nổi bật hẳn lên
     bg_sb = "rgba(255, 255, 255, 0.92)" if bg_b64 else "#ffffff"
     bg_el = "rgba(255, 255, 255, 0.92)" if bg_b64 else "#ffffff"
     theme_css = f"""<style>
@@ -146,7 +145,6 @@ if st.session_state.theme == "Light":
     [data-testid="stExpander"] summary p {{ color: #0f172a !important; }}
     </style>"""
 else:
-    # TỐI: Tăng opacity lên 0.92 và làm mờ 16px, viền sáng nhẹ
     bg_sb = "rgba(15, 23, 42, 0.92)" if bg_b64 else "#0f172a"
     bg_el = "rgba(30, 41, 59, 0.92)" if bg_b64 else "#1e293b"
     theme_css = f"""<style>
@@ -164,7 +162,6 @@ else:
     </style>"""
 
 if bg_b64:
-    # LỚP PHỦ KÍNH RÂM (OVERLAY) ĐỂ LÀM DỊU ẢNH NỀN
     overlay = "rgba(255, 255, 255, 0.35)" if st.session_state.theme == "Light" else "rgba(0, 0, 0, 0.55)"
     theme_css += f"""<style>
     [data-testid="stAppViewContainer"] {{
@@ -316,7 +313,7 @@ else:
         if need_close:
             components.html('''<script>var doc = window.parent.document; var desktopBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button'); if (desktopBtn) { desktopBtn.click(); } var mobileBtns = doc.querySelectorAll('button[aria-label="Close"], button[aria-label="Collapse sidebar"], button[title="Collapse sidebar"]'); mobileBtns.forEach(function(btn) { btn.click(); });</script>''', height=0, width=0)
 
-        # XỬ LÝ ĐỔI HÌNH NỀN CÁ NHÂN
+        # XỬ LÝ ĐỔI HÌNH NỀN CÁ NHÂN (ĐÃ THÊM LỆNH TỰ ĐÓNG FORM SAU KHI LƯU)
         if st.session_state.get("show_bg_setting", False):
             with st.container():
                 st.markdown("<div style='padding: 22px; border-radius: 16px; background-color: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 25px;'>", unsafe_allow_html=True)
@@ -332,11 +329,13 @@ else:
                         buffered = io.BytesIO()
                         img.convert("RGB").save(buffered, format="JPEG", quality=85)
                         update_firebase(f"users/{st.session_state.user}", {"bg_image": base64.b64encode(buffered.getvalue()).decode()})
+                        st.session_state.show_bg_setting = False  # <--- Lệnh tự đóng form
                         st.success("Thành công!"); time.sleep(1); st.rerun()
                 
                 if u_info.get("bg_image"):
                     if c_bg2.button("🗑️ XÓA ẢNH", use_container_width=True):
                         delete_firebase(f"users/{st.session_state.user}/bg_image")
+                        st.session_state.show_bg_setting = False  # <--- Lệnh tự đóng form
                         st.success("Đã xóa!"); time.sleep(1); st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
 
