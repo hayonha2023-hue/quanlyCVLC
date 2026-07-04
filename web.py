@@ -122,7 +122,7 @@ footer {visibility: hidden;}
 .stButton > button[kind="primary"] { background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; color: white; }
 .stButton > button[kind="primary"]:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4); }
 
-/* VÁ LỖI NÚT BẤM MENU TRÊN ĐIỆN THOẠI */
+/* VÁ LỖI CẢM ỨNG MENU CHUẨN XÁC 100% */
 [data-testid="stSidebar"] div[role="radiogroup"] > label { 
     background-color: transparent !important; 
     border-radius: 12px !important; 
@@ -132,21 +132,15 @@ footer {visibility: hidden;}
     transition: all 0.2s !important; 
     display: flex !important;
     align-items: center !important;
-    width: 100% !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.15) !important; }
 [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.25) !important; border-left: 4px solid #0ea5e9 !important; }
 
-/* Thay vì ẩn đi, ta thu nhỏ bằng 0 để nó vẫn nhận được cảm ứng của ngón tay */
-[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { 
-    width: 0px !important; 
-    height: 0px !important; 
-    opacity: 0 !important; 
-    overflow: hidden !important; 
-    margin: 0 !important; 
-    padding: 0 !important;
-}
-[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 700 !important; width: 100% !important; }
+/* CHỈ ẩn cái chấm tròn hiển thị, TUYỆT ĐỐI không ẩn cái thẻ Input gốc để giữ cảm ứng */
+[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child > div { display: none !important; }
+[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { margin-right: 0px !important; }
+
+[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 700 !important; margin: 0 !important; width: 100% !important; }
 </style>
 """
 st.markdown(base_css, unsafe_allow_html=True)
@@ -322,7 +316,6 @@ else:
             role_name = "ADMIN TỔNG HỆ THỐNG" if st.session_state.is_super_admin else ("QUẢN TRỊ SHOP" if st.session_state.is_admin else "NHÂN VIÊN CƠ SỞ")
             st.markdown(f"<p style='text-align: center; color: #64748b; font-size: 13px;'>{role_name}</p>", unsafe_allow_html=True)
             
-            # --- ACTION CHỌN MÃ SHOP DÀNH RIÊNG CHO ADMIN TỔNG ---
             if st.session_state.is_super_admin:
                 all_shops = ["Shop Chính (Mặc định)"] + list(full_db.get("shops", {}).keys())
                 if st.session_state.current_shop not in all_shops: all_shops.append(st.session_state.current_shop)
@@ -365,7 +358,7 @@ else:
                 
             if st.button("🚪 Đăng xuất", use_container_width=True): logout()
 
-        # Logic thu gọn thanh Menu
+        # Logic thu gọn thanh Menu tự động sau khi chọn
         if "last_tab" not in st.session_state: st.session_state.last_tab = selected_tab
         need_close = False
         if st.session_state.last_tab != selected_tab:
