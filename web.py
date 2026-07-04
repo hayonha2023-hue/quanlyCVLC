@@ -299,7 +299,11 @@ else:
     allowed_tabs = []
     hidden = full_db.get("settings", {}).get("hidden_features", [])
 
-    if st.session_state.is_admin: 
+    if st.session_state.is_super_admin:
+        # ĐẶC QUYỀN CHÚA TỂ: Nhìn thấy toàn bộ Tab trên Web
+        allowed_tabs = list(tab_dict.keys()) + ["👥 QUẢN TRỊ ADMIN"]
+    elif st.session_state.is_admin: 
+        # ADMIN THƯỜNG: Bị ẩn các Tab theo lệnh Chúa Tể
         allowed_tabs = [k for k, v in tab_dict.items() if v not in hidden] + ["👥 QUẢN TRỊ ADMIN"]
     else: 
         allowed_tabs = [k for k, v in tab_dict.items() if (v in perms) and (v not in hidden)]
