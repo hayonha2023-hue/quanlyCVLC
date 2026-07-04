@@ -121,11 +121,32 @@ footer {visibility: hidden;}
 .stButton > button { border-radius: 8px; font-weight: 700; padding: 10px 0; transition: all 0.3s ease; }
 .stButton > button[kind="primary"] { background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; color: white; }
 .stButton > button[kind="primary"]:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4); }
-[data-testid="stSidebar"] div[role="radiogroup"] > label { background-color: transparent !important; border-radius: 12px !important; padding: 12px 16px !important; margin-bottom: 8px !important; cursor: pointer; transition: all 0.2s !important; }
+
+/* VÁ LỖI NÚT BẤM MENU TRÊN ĐIỆN THOẠI */
+[data-testid="stSidebar"] div[role="radiogroup"] > label { 
+    background-color: transparent !important; 
+    border-radius: 12px !important; 
+    padding: 12px 16px !important; 
+    margin-bottom: 8px !important; 
+    cursor: pointer; 
+    transition: all 0.2s !important; 
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+}
 [data-testid="stSidebar"] div[role="radiogroup"] > label:hover { background-color: rgba(14, 165, 233, 0.15) !important; }
 [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] { background-color: rgba(14, 165, 233, 0.25) !important; border-left: 4px solid #0ea5e9 !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { display: none !important; }
-[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 700 !important; }
+
+/* Thay vì ẩn đi, ta thu nhỏ bằng 0 để nó vẫn nhận được cảm ứng của ngón tay */
+[data-testid="stSidebar"] div[role="radiogroup"] > label > div:first-child { 
+    width: 0px !important; 
+    height: 0px !important; 
+    opacity: 0 !important; 
+    overflow: hidden !important; 
+    margin: 0 !important; 
+    padding: 0 !important;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] > label p { font-size: 15px !important; font-weight: 700 !important; width: 100% !important; }
 </style>
 """
 st.markdown(base_css, unsafe_allow_html=True)
@@ -196,7 +217,6 @@ if st.session_state.user is None:
             with st.form("login_form"):
                 st.markdown("<h4 style='text-align: center; margin-bottom: 10px; font-weight:800; color: #64748b;'>ĐĂNG NHẬP HỆ THỐNG</h4>", unsafe_allow_html=True)
                 
-                # --- CHỖ NÀY THEO ĐÚNG Ý ÔNG ---
                 is_super = st.checkbox("👑 Đăng nhập quyền Admin tổng", value=False)
                 
                 u = st.text_input("👤 TÀI KHOẢN").strip().lower()
@@ -207,7 +227,6 @@ if st.session_state.user is None:
                     if u and p:
                         global_users = full_db.get("users", {})
                         if u in global_users and global_users[u]["pass"] == p:
-                            # Đăng nhập Admin Tổng
                             if is_super:
                                 if global_users[u].get("role") == "admin":
                                     st.session_state.is_super_admin = True
@@ -220,7 +239,6 @@ if st.session_state.user is None:
                                     st.success("👑 Đăng nhập quyền Admin Tổng thành công!")
                                     time.sleep(1); st.rerun()
                                 else: st.error("❌ Tài khoản này không có thẩm quyền Admin Tổng!")
-                            # Đăng nhập bình thường
                             else:
                                 st.session_state.is_super_admin = False
                                 st.session_state.is_admin = (global_users[u].get("role") == "admin")
@@ -537,7 +555,7 @@ else:
             history = db.get("detailed_history", {})
             if not history: st.info("Chưa có thông tin lịch chia tự động.")
             else:
-                hidden = full_db.get("settings", {}).get("hidden_features", [])
+                hidden_ft = full_db.get("settings", {}).get("hidden_features", [])
                 lich_list = []
                 for date_str, shifts in history.items():
                     row_data = {
@@ -545,7 +563,7 @@ else:
                         "Ca Sáng": ", ".join(shifts.get("Sáng", [])) if shifts.get("Sáng") else "-",
                         "Ca Chiều": ", ".join(shifts.get("Chiều", [])) if shifts.get("Chiều") else "-"
                     }
-                    if "CA 10H30" not in hidden: row_data["Ca Đêm (10h30)"] = ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
+                    if "CA 10H30" not in hidden_ft: row_data["Ca Đêm (10h30)"] = ", ".join(shifts.get("10h30", [])) if shifts.get("10h30") else "-"
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
@@ -883,7 +901,6 @@ else:
             if pending:
                 for pu, pinfo in pending.items():
                     req_shop = pinfo.get("shop_id", "Shop Chính (Mặc định)")
-                    # Admin Tổng duyệt tất cả. Admin Shop chỉ thấy người xin vào Shop mình.
                     if st.session_state.is_super_admin or req_shop == st.session_state.current_shop:
                         with st.container():
                             c1, c2, c3 = st.columns([4, 2, 2])
@@ -906,11 +923,9 @@ else:
             for u, uinfo in global_users.items():
                 u_shop = uinfo.get("shop_id", "Shop Chính (Mặc định)")
                 
-                # Admin Tổng thấy tất cả nhân viên của Shop đang chọn. Admin Shop chỉ thấy nv của Shop mình.
                 if st.session_state.is_super_admin or (u_shop == st.session_state.current_shop and uinfo.get("role") != "admin"):
                     with st.expander(f"👤 Cấu hình tài khoản: {u} (Vai trò: {uinfo.get('role', 'user')})"):
                         
-                        # Chúa tể có quyền điều chuyển Shop và thăng chức
                         new_shop = u_shop
                         new_role = uinfo.get("role", "user")
                         if st.session_state.is_super_admin:
