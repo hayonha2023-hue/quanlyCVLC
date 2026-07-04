@@ -14,34 +14,38 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="HTCV System", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 
-# --- HỆ THỐNG FIREBASE ĐA GIAN HÀNG ---
-BASE_FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv"
+FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
-def get_shop_data(shop_id):
-    if not shop_id: return {}
+# --- HÀM LẤY DỮ LIỆU TỔNG QUÁT ---
+def get_full_data():
     try:
-        r = requests.get(f"{BASE_FIREBASE_URL}/{shop_id}.json", timeout=5)
+        r = requests.get(FIREBASE_URL, timeout=5)
         return r.json() if r.status_code == 200 and r.json() else {}
     except: return {}
 
-def update_firebase(path, data): 
-    shop_id = st.session_state.get("shop_id")
-    if shop_id: requests.patch(f"{BASE_FIREBASE_URL}/{shop_id}/{path}.json", json=data)
-    
-def delete_firebase(path): 
-    shop_id = st.session_state.get("shop_id")
-    if shop_id: requests.delete(f"{BASE_FIREBASE_URL}/{shop_id}/{path}.json")
-    
-def update_firebase_direct(target_shop, path, data):
-    requests.patch(f"{BASE_FIREBASE_URL}/{target_shop}/{path}.json", json=data)
+# --- HỆ THỐNG ĐIỀU HƯỚNG SHOP (MULTI-TENANT) ---
+def get_db_path(path):
+    shop = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
+    if shop and shop != "Shop Chính (Mặc định)":
+        return f"shops/{shop}/{path}"
+    return path
 
-def delete_firebase_direct(target_shop, path=""):
-    url = f"{BASE_FIREBASE_URL}/{target_shop}/{path}.json" if path else f"{BASE_FIREBASE_URL}/{target_shop}.json"
-    requests.delete(url)
+def update_firebase(path, data):
+    requests.patch(f"{FIREBASE_URL.replace('.json', '')}/{get_db_path(path)}.json", json=data)
+
+def delete_firebase(path):
+    requests.delete(f"{FIREBASE_URL.replace('.json', '')}/{get_db_path(path)}.json")
+
+def update_firebase_global(path, data): # Dành cho lưu User/Settings toàn cục
+    requests.patch(f"{FIREBASE_URL.replace('.json', '')}/{path}.json", json=data)
+
+def delete_firebase_global(path):
+    requests.delete(f"{FIREBASE_URL.replace('.json', '')}/{path}.json")
 
 def format_vnd(amount): return f"{amount:,.0f} ₫".replace(",", ".")
 def get_hash(text): return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+# THUẬT TOÁN XỬ LÝ SỐ CHUẨN XÁC
 def s_float(val):
     if val is None or str(val).strip() == "": return 0.0
     if isinstance(val, (int, float)): return float(val)
@@ -64,7 +68,7 @@ def fmt_num(val):
 
 def logout():
     st.session_state.user = None
-    st.session_state.shop_id = None
+    st.session_state.current_shop = None
     st.session_state.is_admin = False
     st.session_state.is_super_admin = False
     st.query_params.clear()
@@ -73,35 +77,30 @@ def logout():
 # KHỞI TẠO BIẾN SESSION
 if "user" not in st.session_state:
     st.session_state.user = None
-    st.session_state.shop_id = None
+    st.session_state.current_shop = None
     st.session_state.is_admin = False
     st.session_state.is_super_admin = False
     st.session_state.page = "login"
+
+full_db = get_full_data()
 
 # TỰ ĐỘNG ĐĂNG NHẬP QUA LINK
 if st.session_state.user is None:
     if "u" in st.query_params and "t" in st.query_params:
         u_url = st.query_params["u"]
         t_url = st.query_params["t"]
-        
-        if st.query_params.get("sa") == "1":
-            sys_db = get_shop_data("system_super_admin")
-            users_db = sys_db.get("users", {})
-            if u_url in users_db and get_hash(users_db[u_url]["pass"]) == t_url:
+        global_users = full_db.get("users", {})
+        if u_url in global_users and get_hash(global_users[u_url]["pass"]) == t_url:
+            if st.query_params.get("sa") == "1" and global_users[u_url].get("role") == "admin":
                 st.session_state.is_super_admin = True
+                st.session_state.is_admin = True
                 st.session_state.user = u_url
-                st.session_state.shop_id = None
-        elif "s" in st.query_params:
-            s_url = st.query_params["s"]
-            shop_db = get_shop_data(s_url)
-            users_db = shop_db.get("users", {})
-            if u_url in users_db and get_hash(users_db[u_url]["pass"]) == t_url:
-                st.session_state.shop_id = s_url
+                st.session_state.current_shop = st.query_params.get("s", "Shop Chính (Mặc định)")
+            else:
+                st.session_state.is_super_admin = False
+                st.session_state.is_admin = (global_users[u_url].get("role") == "admin")
                 st.session_state.user = u_url
-                st.session_state.is_admin = (users_db[u_url].get("role") == "admin")
-
-# LẤY DỮ LIỆU ĐỘC LẬP CHO SHOP ĐANG ĐĂNG NHẬP
-db = get_shop_data(st.session_state.shop_id) if st.session_state.shop_id else {}
+                st.session_state.current_shop = global_users[u_url].get("shop_id", "Shop Chính (Mặc định)")
 
 # ==========================================
 # 2. XỬ LÝ CSS & THEME KÍNH MỜ
@@ -133,7 +132,7 @@ st.markdown(base_css, unsafe_allow_html=True)
 
 if "theme" not in st.session_state: st.session_state.theme = "Dark" 
 
-bg_b64 = db.get("users", {}).get(st.session_state.user, {}).get("bg_image", "") if st.session_state.user and st.session_state.shop_id else ""
+bg_b64 = full_db.get("users", {}).get(st.session_state.user, {}).get("bg_image", "") if st.session_state.user else ""
 
 if st.session_state.theme == "Light":
     bg_sb = "rgba(255, 255, 255, 0.92)" if bg_b64 else "#ffffff"
@@ -176,7 +175,7 @@ if bg_b64:
 st.markdown(theme_css, unsafe_allow_html=True)
 
 # ==========================================
-# 3. MÀN HÌNH ĐĂNG NHẬP (SAAS ĐA GIAN HÀNG & SUPER ADMIN)
+# 3. MÀN HÌNH ĐĂNG NHẬP
 # ==========================================
 if st.session_state.user is None:
     _, col_center, _ = st.columns([1, 1.8, 1])
@@ -195,48 +194,44 @@ if st.session_state.user is None:
         
         if st.session_state.page == "login":
             with st.form("login_form"):
-                st.markdown("<h4 style='text-align: center; margin-bottom: 10px; font-weight:800; color: #64748b;'>HỆ THỐNG ĐA GIAN HÀNG</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='text-align: center; margin-bottom: 10px; font-weight:800; color: #64748b;'>ĐĂNG NHẬP HỆ THỐNG</h4>", unsafe_allow_html=True)
                 
-                # CÔNG TẮC ĐĂNG NHẬP CHÚA TỂ
-                is_sa_login = st.checkbox("👑 Đăng nhập quyền Chúa Tể (Quản trị toàn hệ thống)")
+                # --- CHỖ NÀY THEO ĐÚNG Ý ÔNG ---
+                is_super = st.checkbox("👑 Đăng nhập quyền Admin tổng", value=False)
                 
-                if not is_sa_login:
-                    shop_code = st.text_input("🏢 MÃ SHOP (VD: fpt_hanoi)").strip().lower()
                 u = st.text_input("👤 TÀI KHOẢN").strip().lower()
                 p = st.text_input("🔑 MẬT KHẨU", type="password")
                 st.markdown("<br>", unsafe_allow_html=True)
                 
                 if st.form_submit_button("🚀 ĐĂNG NHẬP", type="primary", use_container_width=True):
-                    if is_sa_login:
-                        if u and p:
-                            sys_db = get_shop_data("system_super_admin")
-                            users = sys_db.get("users", {})
-                            if u in users and users[u]["pass"] == p:
-                                st.session_state.is_super_admin = True
-                                st.session_state.user = u
-                                st.session_state.shop_id = None
-                                st.query_params["sa"] = "1"
-                                st.query_params["u"] = u
-                                st.query_params["t"] = get_hash(p)
-                                st.success("👑 Đăng nhập quyền Chúa Tể thành công!")
-                                time.sleep(1); st.rerun()
+                    if u and p:
+                        global_users = full_db.get("users", {})
+                        if u in global_users and global_users[u]["pass"] == p:
+                            # Đăng nhập Admin Tổng
+                            if is_super:
+                                if global_users[u].get("role") == "admin":
+                                    st.session_state.is_super_admin = True
+                                    st.session_state.is_admin = True
+                                    st.session_state.user = u
+                                    st.session_state.current_shop = "Shop Chính (Mặc định)"
+                                    st.query_params["sa"] = "1"
+                                    st.query_params["u"] = u
+                                    st.query_params["t"] = get_hash(p)
+                                    st.success("👑 Đăng nhập quyền Admin Tổng thành công!")
+                                    time.sleep(1); st.rerun()
+                                else: st.error("❌ Tài khoản này không có thẩm quyền Admin Tổng!")
+                            # Đăng nhập bình thường
                             else:
-                                st.error("❌ Sai thông tin Chúa Tể!")
-                    else:
-                        if shop_code and u and p:
-                            shop_db = get_shop_data(shop_code)
-                            users = shop_db.get("users", {})
-                            if u in users and users[u]["pass"] == p:
-                                st.session_state.shop_id = shop_code
+                                st.session_state.is_super_admin = False
+                                st.session_state.is_admin = (global_users[u].get("role") == "admin")
                                 st.session_state.user = u
-                                st.session_state.is_admin = (users[u].get("role") == "admin")
-                                st.query_params["s"] = shop_code
+                                st.session_state.current_shop = global_users[u].get("shop_id", "Shop Chính (Mặc định)")
                                 st.query_params["u"] = u
                                 st.query_params["t"] = get_hash(p)
                                 st.rerun()
-                            elif u in shop_db.get("pending_users", {}): st.warning("⏳ Tài khoản đang chờ Admin Shop duyệt!")
-                            else: st.error("❌ Sai Mã Shop hoặc thông tin đăng nhập!")
-                        else: st.error("❌ Vui lòng nhập đầy đủ thông tin!")
+                        elif u in full_db.get("pending_users", {}): st.warning("⏳ Tài khoản đang chờ duyệt!")
+                        else: st.error("❌ Sai thông tin đăng nhập!")
+                    else: st.error("❌ Vui lòng nhập đầy đủ thông tin!")
                     
             c1, c2 = st.columns(2)
             if c1.button("📝 Đăng ký tài khoản", use_container_width=True): st.session_state.page = "register"; st.rerun()
@@ -244,46 +239,29 @@ if st.session_state.user is None:
 
         elif st.session_state.page == "register":
             with st.form("reg_form"):
-                st.markdown("<h4 style='text-align: center; margin-bottom: 10px; font-weight:800; color: #64748b;'>ĐĂNG KÝ SHOP HOẶC TÀI KHOẢN</h4>", unsafe_allow_html=True)
-                is_sa_reg = st.checkbox("👑 Đăng ký làm Chúa Tể (Dành cho tài khoản hệ thống đầu tiên)")
-                
-                if not is_sa_reg:
-                    new_shop = st.text_input("🏢 MÃ SHOP CẦN VÀO (Hoặc tự tạo mã Shop mới)").strip().lower()
+                st.markdown("<h4 style='text-align: center; margin-bottom: 30px; font-weight:800; color: #64748b;'>ĐĂNG KÝ TÀI KHOẢN MỚI</h4>", unsafe_allow_html=True)
+                new_shop = st.text_input("🏢 MÃ SHOP (Nếu bạn làm ở Shop nhánh, để trống nếu ở Shop Chính)").strip().lower()
                 new_u = st.text_input("Tên đăng nhập").strip().lower()
                 new_p = st.text_input("Mật khẩu truy cập", type="password")
                 st.markdown("<br>", unsafe_allow_html=True)
                 if st.form_submit_button("GỬI YÊU CẦU", type="primary", use_container_width=True):
-                    if is_sa_reg:
-                        sys_db = get_shop_data("system_super_admin")
-                        if not sys_db.get("users"):
-                            update_firebase_direct("system_super_admin", f"users/{new_u}", {"pass": new_p, "role": "super_admin"})
-                            st.success("👑 Chúc mừng! Bạn đã trở thành Chúa Tể của Hệ thống. Vui lòng quay lại Đăng nhập.")
-                        else: st.error("❌ Hệ thống đã có Chúa Tể! Không thể đăng ký thêm.")
-                    else:
-                        if new_shop and new_u and new_p:
-                            if new_shop == "system_super_admin": st.error("❌ Mã shop không hợp lệ!")
-                            else:
-                                shop_data = get_shop_data(new_shop)
-                                if not shop_data.get("users"):
-                                    update_firebase_direct(new_shop, f"users/{new_u}", {"pass": new_p, "role": "admin"})
-                                    st.success(f"🎉 Bạn đã tạo Shop '{new_shop}' và trở thành Admin của Shop này! Hãy quay lại đăng nhập.")
-                                else:
-                                    update_firebase_direct(new_shop, f"pending_users/{new_u}", {"pass": new_p})
-                                    st.success("✅ Đã gửi yêu cầu tham gia! Vui lòng báo Admin của Shop duyệt.")
-                        else: st.error("Nhập đủ thông tin!")
+                    if new_u and new_p:
+                        req_shop = new_shop if new_shop else "Shop Chính (Mặc định)"
+                        update_firebase_global(f"pending_users/{new_u}", {"pass": new_p, "shop_id": req_shop})
+                        st.success("✅ Đã gửi yêu cầu tham gia! Vui lòng báo Admin duyệt.")
+                    else: st.error("Nhập đủ thông tin!")
             if st.button("⬅ Quay lại", use_container_width=True): st.session_state.page = "login"; st.rerun()
 
         elif st.session_state.page == "forgot":
             with st.form("forgot_form"):
                 st.markdown("<h4 style='text-align: center; margin-bottom: 30px; font-weight:800; color: #64748b;'>KHÔI PHỤC MẬT KHẨU</h4>", unsafe_allow_html=True)
-                f_shop = st.text_input("Mã Shop").strip().lower()
                 u = st.text_input("Tài khoản cần khôi phục").strip().lower()
                 new_p = st.text_input("Mật khẩu mới", type="password")
-                secret = st.text_input("Mã xác thực Admin", type="password")
+                secret = st.text_input("Mã xác thực Admin Tổng", type="password")
                 st.markdown("<br>", unsafe_allow_html=True)
                 if st.form_submit_button("XÁC NHẬN", type="primary", use_container_width=True):
                     if secret == "admin123":
-                        update_firebase_direct(f_shop, f"users/{u}/pass", new_p)
+                        update_firebase_global(f"users/{u}/pass", new_p)
                         st.success("✅ Đổi thành công! Vui lòng đăng nhập lại.")
                     else: st.error("❌ Mã bảo mật sai!")
             if st.button("⬅ Quay lại", use_container_width=True): st.session_state.page = "login"; st.rerun()
@@ -292,111 +270,26 @@ if st.session_state.user is None:
 # 4. MÀN HÌNH CHÍNH & SIDEBAR
 # ==========================================
 else:
-    # --- LOGIC ĐIỀU HƯỚNG SUPER ADMIN CHÚA TỂ ---
-    if st.session_state.get("is_super_admin"):
-        with st.sidebar:
-            st.markdown(f"<h2 style='text-align: center; color: #f43f5e; font-weight:900; margin-bottom: 0;'>👑 CHÚA TỂ</h2>", unsafe_allow_html=True)
-            st.markdown(f"<p style='text-align: center; color: #cbd5e1; font-size: 14px; font-weight: bold;'>{st.session_state.user.upper()}</p>", unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            try:
-                r_shallow = requests.get(f"{BASE_FIREBASE_URL}.json?shallow=true", timeout=5).json()
-                shop_list = [k for k in (r_shallow or {}) if k != "system_super_admin"]
-            except: shop_list = []
-            
-            options = ["🌍 QUẢN TRỊ TỔNG"] + [f"🏢 {s}" for s in shop_list]
-            curr_idx = options.index(f"🏢 {st.session_state.shop_id}") if st.session_state.shop_id and f"🏢 {st.session_state.shop_id}" in options else 0
-            
-            sel_shop = st.selectbox("CHỌN PHÂN VÙNG HOẠT ĐỘNG", options, index=curr_idx)
-            
-            if sel_shop != "🌍 QUẢN TRỊ TỔNG":
-                target_shop = sel_shop.replace("🏢 ", "")
-                if target_shop != st.session_state.shop_id:
-                    st.session_state.shop_id = target_shop
-                    st.session_state.is_admin = True # Trao full quyền Admin cho Chúa tể chui vào Shop này
-                    st.rerun()
-            else:
-                if st.session_state.shop_id is not None:
-                    st.session_state.shop_id = None
-                    st.rerun()
-                
-            st.markdown("<hr style='border-color: rgba(150,150,150,0.1);'>", unsafe_allow_html=True)
-            theme_txt = "☀️ Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Giao diện Tối"
-            if st.button(theme_txt, use_container_width=True):
-                st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
-                st.rerun()
-            if st.button("🚪 Đăng xuất", use_container_width=True): logout()
-            
-    # --- MÀN HÌNH QUẢN TRỊ TỔNG DÀNH RIÊNG CHO CHÚA TỂ ---
-    if st.session_state.get("is_super_admin") and st.session_state.shop_id is None:
-        st.markdown("<h2 style='color: #0ea5e9; font-weight:900;'>🌍 TRUNG TÂM KIỂM SOÁT ĐA GIAN HÀNG</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 16px; color: #94a3b8;'>Tạo mới, giám sát và phân quyền toàn bộ các Shop trên hệ thống.</p>", unsafe_allow_html=True)
-        
-        with st.expander("➕ TẠO SHOP MỚI & CẤP QUYỀN ADMIN SHOP", expanded=True):
-            with st.form("new_shop_form", clear_on_submit=True):
-                ns1, ns2, ns3 = st.columns(3)
-                n_shop = ns1.text_input("🏢 Mã Shop mới (Không dấu, VD: fpt_hcm)").strip().lower()
-                n_user = ns2.text_input("👤 Tài khoản Admin của Shop").strip().lower()
-                n_pass = ns3.text_input("🔑 Mật khẩu Admin", type="password")
-                if st.form_submit_button("🚀 KHỞI TẠO SHOP", type="primary"):
-                    if n_shop and n_user and n_pass:
-                        if n_shop == "system_super_admin": st.error("Mã Shop không hợp lệ!")
-                        else:
-                            chk = get_shop_data(n_shop)
-                            if chk: st.error("Mã Shop này đã tồn tại trên hệ thống!")
-                            else:
-                                update_firebase_direct(n_shop, f"users/{n_user}", {"pass": n_pass, "role": "admin"})
-                                st.success(f"✅ Đã tạo Shop {n_shop} và cấp quyền Admin cho {n_user}!")
-                                time.sleep(1); st.rerun()
-                    else: st.error("Điền đầy đủ thông tin!")
-        
-        st.markdown("<br><h4 style='color: #f8fafc;'>🏢 QUẢN LÝ CÁC SHOP ĐANG HOẠT ĐỘNG</h4>", unsafe_allow_html=True)
-        
-        try:
-            full_db = requests.get(f"{BASE_FIREBASE_URL}.json?shallow=false", timeout=10).json() or {}
-        except: full_db = {}
-        
-        for scode, sdata in full_db.items():
-            if scode == "system_super_admin": continue
-            with st.expander(f"📍 Shop: {scode.upper()}", expanded=False):
-                shop_users = sdata.get("users", {})
-                shop_admins = {u: info for u, info in shop_users.items() if info.get("role") == "admin"}
-                
-                if shop_admins:
-                    st.markdown("**Các Admin đang cai quản Shop này:**")
-                    for u, info in shop_admins.items():
-                        c_a1, c_a2, c_a3 = st.columns([2,2,2])
-                        c_a1.markdown(f"<div style='padding-top:10px;'>👤 <b>{u}</b></div>", unsafe_allow_html=True)
-                        new_p = c_a2.text_input("Đổi Pass Admin", placeholder="Nhập pass mới...", key=f"sa_p_{scode}_{u}", label_visibility="collapsed")
-                        
-                        btn_c1, btn_c2 = c_a3.columns(2)
-                        if btn_c1.button("💾 Lưu Pass", key=f"sa_bp_{scode}_{u}", use_container_width=True):
-                            if new_p:
-                                update_firebase_direct(scode, f"users/{u}/pass", new_p)
-                                st.success("Đã đổi!"); time.sleep(0.5); st.rerun()
-                        if btn_c2.button("⚠️ Giáng chức", key=f"sa_bd_{scode}_{u}", use_container_width=True):
-                            update_firebase_direct(scode, f"users/{u}/role", "user")
-                            st.warning(f"Đã hạ cấp {u} xuống User thường!"); time.sleep(0.5); st.rerun()
-                else: st.info("Shop này hiện chưa có Admin nào.")
-                
-                st.markdown("<hr style='border-color: rgba(150,150,150,0.1); margin: 10px 0;'>", unsafe_allow_html=True)
-                if st.button(f"🗑️ HỦY DIỆT TOÀN BỘ SHOP {scode.upper()}", key=f"sa_del_{scode}", type="primary"):
-                    delete_firebase_direct(scode)
-                    st.success(f"Đã xóa sổ {scode} khỏi hệ thống!"); time.sleep(1); st.rerun()
-        st.stop()
-        
-    # --- LOGIC HOẠT ĐỘNG BÌNH THƯỜNG CỦA SHOP ---
-    u_info = db.get("users", {}).get(st.session_state.user, {}) if not st.session_state.get("is_super_admin") else {"role": "admin", "permissions": ["XEM LỊCH", "TÍCH LŨY", "CHIA TARGET", "THỊ TRƯỜNG", "QUỸ SHOP", "LỊCH ECOM", "AI TƯ VẤN"], "edit_permissions": ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA", "TÍNH TARGET"]}
-    
-    perms = u_info.get("permissions", [])
-    edit_perms = u_info.get("edit_permissions", []) 
+    # LOAD DỮ LIỆU ĐỘC LẬP TÙY VÀO SHOP ĐANG ĐỨNG
+    if st.session_state.current_shop == "Shop Chính (Mặc định)":
+        db = full_db
+    else:
+        db = full_db.get("shops", {}).get(st.session_state.current_shop, {})
+
+    u_info = full_db.get("users", {}).get(st.session_state.user, {})
+    if st.session_state.is_super_admin:
+        perms = ["XEM LỊCH", "TÍCH LŨY", "CHIA TARGET", "THỊ TRƯỜNG", "QUỸ SHOP", "LỊCH ECOM", "AI TƯ VẤN"]
+        edit_perms = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA", "TÍNH TARGET"]
+    else:
+        perms = u_info.get("permissions", [])
+        edit_perms = u_info.get("edit_permissions", []) 
     
     tab_dict = {"🗓️ LỊCH TRỰC": "XEM LỊCH", "🛒 LỊCH ECOM": "LỊCH ECOM", "🎯 BẢNG KPI": "TÍCH LŨY", "📍 THI TRƯỜNG": "THỊ TRƯỜNG", "💰 SỔ QUỸ SHOP": "QUỸ SHOP", "📊 CHIA TARGET": "CHIA TARGET", "🤖 AI TƯ VẤN": "AI TƯ VẤN"}
     allowed_tabs = []
-    hidden = db.get("settings", {}).get("hidden_features", [])
+    hidden = full_db.get("settings", {}).get("hidden_features", [])
 
     if st.session_state.is_admin: 
-        allowed_tabs = [k for k, v in tab_dict.items() if v not in hidden] + ["👥 QUẢN TRỊ SHOP"]
+        allowed_tabs = [k for k, v in tab_dict.items() if v not in hidden] + ["👥 QUẢN TRỊ ADMIN"]
     else: 
         allowed_tabs = [k for k, v in tab_dict.items() if (v in perms) and (v not in hidden)]
 
@@ -405,33 +298,54 @@ else:
         if st.button("Thoát"): logout()
     else:
         with st.sidebar:
-            if not st.session_state.get("is_super_admin"):
-                role_icon = "👑" if st.session_state.is_admin else "👤"
-                st.markdown(f"<h2 style='text-align: center; color: #0ea5e9; font-weight:800; margin-bottom: 0;'>{role_icon} {st.session_state.user.upper()}</h2>", unsafe_allow_html=True)
-                st.markdown(f"<p style='text-align: center; color: #10b981; font-weight: bold; font-size: 14px;'>📍 Shop: {st.session_state.shop_id.upper()}</p>", unsafe_allow_html=True)
-                st.markdown(f"<p style='text-align: center; color: #64748b; font-size: 13px; margin-top: -10px;'>{ 'BAN QUẢN TRỊ' if st.session_state.is_admin else 'NHÂN VIÊN CƠ SỞ' }</p>", unsafe_allow_html=True)
-                st.markdown("<br>", unsafe_allow_html=True)
+            role_icon = "👑" if st.session_state.is_super_admin else ("⭐" if st.session_state.is_admin else "👤")
+            st.markdown(f"<h2 style='text-align: center; color: #0ea5e9; font-weight:800; margin-bottom: 0;'>{role_icon} {st.session_state.user.upper()}</h2>", unsafe_allow_html=True)
             
+            role_name = "ADMIN TỔNG HỆ THỐNG" if st.session_state.is_super_admin else ("QUẢN TRỊ SHOP" if st.session_state.is_admin else "NHÂN VIÊN CƠ SỞ")
+            st.markdown(f"<p style='text-align: center; color: #64748b; font-size: 13px;'>{role_name}</p>", unsafe_allow_html=True)
+            
+            # --- ACTION CHỌN MÃ SHOP DÀNH RIÊNG CHO ADMIN TỔNG ---
+            if st.session_state.is_super_admin:
+                all_shops = ["Shop Chính (Mặc định)"] + list(full_db.get("shops", {}).keys())
+                if st.session_state.current_shop not in all_shops: all_shops.append(st.session_state.current_shop)
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                new_shop = st.selectbox("🏢 ACTION: CHỌN MÃ SHOP", all_shops, index=all_shops.index(st.session_state.current_shop))
+                if new_shop != st.session_state.current_shop:
+                    st.session_state.current_shop = new_shop
+                    st.query_params["s"] = new_shop
+                    st.rerun()
+                    
+                with st.expander("➕ Tạo Mã Shop Mới", expanded=False):
+                    ns = st.text_input("Nhập mã nhánh mới (vd: hcm)", placeholder="fpt_hcm", label_visibility="collapsed")
+                    if st.button("Tạo Không Gian & Chuyển", use_container_width=True):
+                        if ns:
+                            update_firebase_global(f"shops/{ns}", {"created": True})
+                            st.session_state.current_shop = ns
+                            st.rerun()
+            else:
+                st.markdown(f"<p style='text-align: center; color: #10b981; font-weight: bold; font-size: 14px;'>📍 Không gian: {st.session_state.current_shop}</p>", unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
             selected_tab = st.radio("MENU CHỨC NĂNG", allowed_tabs, label_visibility="collapsed")
             st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1);'><br>", unsafe_allow_html=True)
             
-            if not st.session_state.get("is_super_admin"):
-                if st.button("🖼️ Đổi hình nền cá nhân", use_container_width=True):
-                    st.session_state.show_bg_setting = not st.session_state.get("show_bg_setting", False)
-                    st.session_state.show_pass = False
-                    st.session_state.force_close_sidebar = True
-    
-                if st.button("🔑 Cài đặt mật khẩu", use_container_width=True):
-                    st.session_state.show_pass = not st.session_state.get("show_pass", False)
-                    st.session_state.show_bg_setting = False
-                    st.session_state.force_close_sidebar = True
-                    
-                theme_txt = "☀️ Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Giao diện Tối"
-                if st.button(theme_txt, use_container_width=True):
-                    st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
-                    st.session_state.force_close_sidebar = True
-                    
-                if st.button("🚪 Đăng xuất", use_container_width=True): logout()
+            if st.button("🖼️ Đổi hình nền cá nhân", use_container_width=True):
+                st.session_state.show_bg_setting = not st.session_state.get("show_bg_setting", False)
+                st.session_state.show_pass = False
+                st.session_state.force_close_sidebar = True
+
+            if st.button("🔑 Cài đặt mật khẩu", use_container_width=True):
+                st.session_state.show_pass = not st.session_state.get("show_pass", False)
+                st.session_state.show_bg_setting = False
+                st.session_state.force_close_sidebar = True
+                
+            theme_txt = "☀️ Giao diện Sáng" if st.session_state.theme == "Dark" else "🌙 Giao diện Tối"
+            if st.button(theme_txt, use_container_width=True):
+                st.session_state.theme = "Light" if st.session_state.theme == "Dark" else "Dark"
+                st.session_state.force_close_sidebar = True
+                
+            if st.button("🚪 Đăng xuất", use_container_width=True): logout()
 
         # Logic thu gọn thanh Menu
         if "last_tab" not in st.session_state: st.session_state.last_tab = selected_tab
@@ -461,13 +375,13 @@ else:
                         img.thumbnail((1920, 1080))
                         buffered = io.BytesIO()
                         img.convert("RGB").save(buffered, format="JPEG", quality=85)
-                        update_firebase(f"users/{st.session_state.user}", {"bg_image": base64.b64encode(buffered.getvalue()).decode()})
+                        update_firebase_global(f"users/{st.session_state.user}/bg_image", base64.b64encode(buffered.getvalue()).decode())
                         st.session_state.show_bg_setting = False
                         st.success("Thành công!"); time.sleep(1); st.rerun()
                 
                 if u_info.get("bg_image"):
                     if c_bg2.button("🗑️ XÓA ẢNH", use_container_width=True):
-                        delete_firebase(f"users/{st.session_state.user}/bg_image")
+                        delete_firebase_global(f"users/{st.session_state.user}/bg_image")
                         st.session_state.show_bg_setting = False
                         st.success("Đã xóa!"); time.sleep(1); st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
@@ -482,7 +396,7 @@ else:
                 cc3.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True)
                 if cc3.button("💾 CẬP NHẬT", type="primary", use_container_width=True):
                     if old_p == u_info.get("pass"):
-                        update_firebase(f"users/{st.session_state.user}", {"pass": new_p, "role": u_info.get("role"), "permissions": perms, "edit_permissions": edit_perms})
+                        update_firebase_global(f"users/{st.session_state.user}/pass", new_p)
                         st.query_params["t"] = get_hash(new_p)
                         st.success("Thành công!")
                         st.session_state.show_pass = False; time.sleep(1); st.rerun()
@@ -490,7 +404,7 @@ else:
                 st.markdown("</div>", unsafe_allow_html=True)
 
         # ==========================================
-        # CÁC TÍNH NĂNG SHOP (KPI, LỊCH, TARGET, ECOM, QUỸ...)
+        # 1. TAB BẢNG KPI
         # ==========================================
         if selected_tab == "🎯 BẢNG KPI":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🎯 Tiến Độ Hoàn Thành KPI Tháng Này</h3>", unsafe_allow_html=True)
@@ -568,6 +482,9 @@ else:
                         st.success("Đã đồng bộ!"); time.sleep(0.5); st.rerun()
                 else: st.dataframe(df_kpi, hide_index=True, use_container_width=True)
 
+        # ==========================================
+        # 2. TAB LỊCH TRỰC
+        # ==========================================
         elif selected_tab == "🗓️ LỊCH TRỰC":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🗓️ Bảng Phân Phối Lịch Trực Tuần</h3>", unsafe_allow_html=True)
             sched_imgs = db.get("schedule_images", [])
@@ -620,7 +537,7 @@ else:
             history = db.get("detailed_history", {})
             if not history: st.info("Chưa có thông tin lịch chia tự động.")
             else:
-                hidden = db.get("settings", {}).get("hidden_features", [])
+                hidden = full_db.get("settings", {}).get("hidden_features", [])
                 lich_list = []
                 for date_str, shifts in history.items():
                     row_data = {
@@ -632,6 +549,9 @@ else:
                     lich_list.append(row_data)
                 st.dataframe(pd.DataFrame(lich_list), hide_index=True, use_container_width=True)
 
+        # ==========================================
+        # 2.5 TAB CHIA TARGET
+        # ==========================================
         elif selected_tab == "📊 CHIA TARGET":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
             
@@ -823,6 +743,9 @@ else:
             with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
             with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
 
+        # ==========================================
+        # 3. TAB LỊCH ECOM
+        # ==========================================
         elif selected_tab == "🛒 LỊCH ECOM":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🛒 Bảng Phân Phối Ca Trực Khối ECOM</h3>", unsafe_allow_html=True)
             ecom_data = db.get("ecom_history", {})
@@ -849,6 +772,9 @@ else:
                         if s or c: ecom_list.append({"Thứ / Ngày": d, "Trực Sáng": s if s else "-", "Trực Chiều": c if c else "-"})
                 st.dataframe(pd.DataFrame(ecom_list), hide_index=True, use_container_width=True)
 
+        # ==========================================
+        # 4. TAB THI TRƯỜNG & QUỸ SHOP
+        # ==========================================
         elif selected_tab == "📍 THI TRƯỜNG":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📍 Bản Đồ Phân Công Công Tác Thị Trường</h3>", unsafe_allow_html=True)
             market_data = db.get("market_history", {})
@@ -888,6 +814,9 @@ else:
                         delete_firebase(f"quy_shop/{[tid for tid in qs.keys() if tid[-4:] == xoa_id[-4:]][0]}")
                         st.success("Đã xóa!"); time.sleep(0.5); st.rerun()
 
+        # ==========================================
+        # 5. TAB AI TƯ VẤN
+        # ==========================================
         elif selected_tab == "🤖 AI TƯ VẤN":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🤖 Trợ Lý AI Tư Vấn Y Khoa</h3>", unsafe_allow_html=True)
             
@@ -907,7 +836,7 @@ else:
                         placeholder = st.empty()
                         placeholder.markdown("⏳ Đang phân tích dữ liệu y khoa...")
                         
-                        k_list = db.get("settings", {}).get("api_keys", [])
+                        k_list = full_db.get("settings", {}).get("api_keys", [])
                         if not k_list: reply = "❌ Hệ thống chưa có API Key."
                         else:
                             messages = [{"role": "system", "content": "Bạn là Bác sĩ và Dược sĩ lâm sàng cấp cao tại Việt Nam, chuyên gia hàng đầu về Thuốc và Vắc xin. Nhiệm vụ của bạn là giải đáp chuyên sâu các câu hỏi y khoa, bao gồm cả những ca lâm sàng khó, tương tác thuốc phức tạp. Yêu cầu: Văn phong chuyên nghiệp, đanh thép, bám sát y học thực chứng. Phân tích rõ ràng về cơ chế, dược động học, tương tác thuốc, chống chỉ định, và phác đồ. TUYỆT ĐỐI KHÔNG dùng văn phong dịch máy. Bắt buộc dùng đúng thuật ngữ y khoa/dược khoa chuẩn Việt Nam. Trình bày logic, chia mục thật rõ ràng. TUYỆT ĐỐI KHÔNG dùng emoji."}]
@@ -943,27 +872,52 @@ else:
                 st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ chuyên gia tư vấn Vắc xin. Bạn cần hỗ trợ thông tin gì về các loại vắc xin, phác đồ tiêm hay chống chỉ định không?"}]
                 st.rerun()
 
-        elif selected_tab == "👥 QUẢN TRỊ SHOP":
-            st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>⚙️ Quản Trị Nhân Sự Gian Hàng</h3>", unsafe_allow_html=True)
+        # ==========================================
+        # 6. TAB QUẢN TRỊ ADMIN (PHÂN QUYỀN ĐA NHÁNH)
+        # ==========================================
+        elif selected_tab == "👥 QUẢN TRỊ ADMIN":
+            st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>⚙️ Trung Tâm Điều Hành Quản Trị Hệ Thống</h3>", unsafe_allow_html=True)
             
-            pending = db.get("pending_users", {})
+            # --- DANH SÁCH DUYỆT TÀI KHOẢN ---
+            pending = full_db.get("pending_users", {})
             if pending:
                 for pu, pinfo in pending.items():
-                    with st.container():
-                        c1, c2, c3 = st.columns([4, 2, 2])
-                        c1.markdown(f"**👤 Tài khoản xin vào Shop: {pu}**")
-                        if c2.button("✅ Phê duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
-                            pwd = pinfo.get("pass", "123456") if isinstance(pinfo, dict) else pinfo
-                            update_firebase(f"users/{pu}", {"pass": pwd, "role": "user", "permissions": ["XEM LỊCH", "TÍCH LŨY"], "edit_permissions": []})
-                            delete_firebase(f"pending_users/{pu}"); st.rerun()
-                        if c3.button("❌ Bác bỏ", key=f"rej_{pu}", use_container_width=True):
-                            delete_firebase(f"pending_users/{pu}"); st.rerun()
+                    req_shop = pinfo.get("shop_id", "Shop Chính (Mặc định)")
+                    # Admin Tổng duyệt tất cả. Admin Shop chỉ thấy người xin vào Shop mình.
+                    if st.session_state.is_super_admin or req_shop == st.session_state.current_shop:
+                        with st.container():
+                            c1, c2, c3 = st.columns([4, 2, 2])
+                            c1.markdown(f"**👤 Xin duyệt:** {pu} (📍 {req_shop})")
+                            if c2.button("✅ Phê duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
+                                pwd = pinfo.get("pass", "123456") if isinstance(pinfo, dict) else pinfo
+                                update_firebase_global(f"users/{pu}", {"pass": pwd, "role": "user", "shop_id": req_shop, "permissions": ["XEM LỊCH", "TÍCH LŨY"], "edit_permissions": []})
+                                delete_firebase_global(f"pending_users/{pu}")
+                                st.rerun()
+                            if c3.button("❌ Bác bỏ", key=f"rej_{pu}", use_container_width=True):
+                                delete_firebase_global(f"pending_users/{pu}")
+                                st.rerun()
             
             st.divider()
-            users = db.get("users", {})
-            for u, uinfo in users.items():
-                if uinfo.get("role") != "admin" or st.session_state.get("is_super_admin"):
-                    with st.expander(f"👤 Cấu hình quyền cho: {u}"):
+            
+            # --- DANH SÁCH QUẢN LÝ NHÂN VIÊN ĐÃ DUYỆT ---
+            global_users = full_db.get("users", {})
+            all_shops = ["Shop Chính (Mặc định)"] + list(full_db.get("shops", {}).keys())
+            
+            for u, uinfo in global_users.items():
+                u_shop = uinfo.get("shop_id", "Shop Chính (Mặc định)")
+                
+                # Admin Tổng thấy tất cả nhân viên của Shop đang chọn. Admin Shop chỉ thấy nv của Shop mình.
+                if st.session_state.is_super_admin or (u_shop == st.session_state.current_shop and uinfo.get("role") != "admin"):
+                    with st.expander(f"👤 Cấu hình tài khoản: {u} (Vai trò: {uinfo.get('role', 'user')})"):
+                        
+                        # Chúa tể có quyền điều chuyển Shop và thăng chức
+                        new_shop = u_shop
+                        new_role = uinfo.get("role", "user")
+                        if st.session_state.is_super_admin:
+                            col_s1, col_s2 = st.columns(2)
+                            new_shop = col_s1.selectbox("Điều chuyển Shop:", all_shops, index=all_shops.index(u_shop) if u_shop in all_shops else 0, key=f"shop_{u}")
+                            new_role = col_s2.selectbox("Cấp bậc:", ["user", "admin"], index=0 if uinfo.get("role")=="user" else 1, key=f"role_{u}")
+                        
                         current_perms = uinfo.get("permissions", [])
                         current_edits = uinfo.get("edit_permissions", [])
                         
@@ -973,6 +927,6 @@ else:
                         edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA", "TÍNH TARGET"]
                         new_edits = st.multiselect("Bật/tắt quyền thao tác trực tiếp:", edit_options, default=[p for p in current_edits if p in edit_options], key=f"edit_{u}")
                         
-                        if st.button("💾 LƯU PHÂN QUYỀN", key=f"save_{u}", type="primary", use_container_width=True):
-                            update_firebase(f"users/{u}", {"permissions": new_perms, "edit_permissions": new_edits})
+                        if st.button("💾 LƯU CẤU HÌNH TÀI KHOẢN NÀY", key=f"save_{u}", type="primary", use_container_width=True):
+                            update_firebase_global(f"users/{u}", {"pass": uinfo.get("pass"), "bg_image": uinfo.get("bg_image", ""), "role": new_role, "shop_id": new_shop, "permissions": new_perms, "edit_permissions": new_edits})
                             st.success(f"Đã cập nhật!"); time.sleep(0.5); st.rerun()
