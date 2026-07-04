@@ -211,8 +211,6 @@ if st.session_state.user is None:
             with st.form("login_form"):
                 st.markdown("<h4 style='text-align: center; margin-bottom: 10px; font-weight:800; color: #64748b;'>ĐĂNG NHẬP HỆ THỐNG</h4>", unsafe_allow_html=True)
                 
-                is_super = st.checkbox("👑 Đăng nhập quyền Admin tổng", value=False)
-                
                 u = st.text_input("👤 TÀI KHOẢN").strip().lower()
                 p = st.text_input("🔑 MẬT KHẨU", type="password")
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -221,18 +219,18 @@ if st.session_state.user is None:
                     if u and p:
                         global_users = full_db.get("users", {})
                         if u in global_users and global_users[u]["pass"] == p:
-                            if is_super:
-                                if global_users[u].get("role") == "admin":
-                                    st.session_state.is_super_admin = True
-                                    st.session_state.is_admin = True
-                                    st.session_state.user = u
-                                    st.session_state.current_shop = "Shop Chính (Mặc định)"
-                                    st.query_params["sa"] = "1"
-                                    st.query_params["u"] = u
-                                    st.query_params["t"] = get_hash(p)
-                                    st.success("👑 Đăng nhập quyền Admin Tổng thành công!")
-                                    time.sleep(1); st.rerun()
-                                else: st.error("❌ Tài khoản này không có thẩm quyền Admin Tổng!")
+                            
+                            # --- TỰ ĐỘNG KHÓA QUYỀN CHÚA TỂ CHO ADMIN ---
+                            if u == "admin":
+                                st.session_state.is_super_admin = True
+                                st.session_state.is_admin = True
+                                st.session_state.user = u
+                                st.session_state.current_shop = "Shop Chính (Mặc định)"
+                                st.query_params["sa"] = "1"
+                                st.query_params["u"] = u
+                                st.query_params["t"] = get_hash(p)
+                                st.success("👑 Đăng nhập quyền Admin Tổng thành công!")
+                                time.sleep(1); st.rerun()
                             else:
                                 st.session_state.is_super_admin = False
                                 st.session_state.is_admin = (global_users[u].get("role") == "admin")
@@ -241,6 +239,7 @@ if st.session_state.user is None:
                                 st.query_params["u"] = u
                                 st.query_params["t"] = get_hash(p)
                                 st.rerun()
+                                
                         elif u in full_db.get("pending_users", {}): st.warning("⏳ Tài khoản đang chờ duyệt!")
                         else: st.error("❌ Sai thông tin đăng nhập!")
                     else: st.error("❌ Vui lòng nhập đầy đủ thông tin!")
