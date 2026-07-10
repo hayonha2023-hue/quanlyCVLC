@@ -91,7 +91,14 @@ if st.session_state.user is None:
         t_url = st.query_params["t"]
         global_users = full_db.get("users", {})
         if u_url in global_users and get_hash(global_users[u_url]["pass"]) == t_url:
-            if st.query_params.get("sa") == "1" and global_users[u_url].get("role") == "admin":
+            
+            # --- ÉP CỨNG: TÀI KHOẢN 'admin' MẶC ĐỊNH LUÔN LÀ CHÚA TỂ ---
+            if u_url == "admin":
+                st.session_state.is_super_admin = True
+                st.session_state.is_admin = True
+                st.session_state.user = u_url
+                st.session_state.current_shop = st.query_params.get("s", "Shop Chính (Mặc định)")
+            elif st.query_params.get("sa") == "1" and global_users[u_url].get("role") == "admin":
                 st.session_state.is_super_admin = True
                 st.session_state.is_admin = True
                 st.session_state.user = u_url
@@ -320,7 +327,11 @@ else:
             st.markdown(f"<p style='text-align: center; color: #64748b; font-size: 13px;'>{role_name}</p>", unsafe_allow_html=True)
             
             if st.session_state.is_super_admin:
-                all_shops = ["Shop Chính (Mặc định)"] + list(full_db.get("shops", {}).keys())
+                # BỌC THÉP: Chống lỗi văng App nếu chưa có Shop nhánh nào được tạo
+                shops_data = full_db.get("shops", {})
+                if not isinstance(shops_data, dict): shops_data = {}
+                
+                all_shops = ["Shop Chính (Mặc định)"] + list(shops_data.keys())
                 if st.session_state.current_shop not in all_shops: all_shops.append(st.session_state.current_shop)
                 
                 st.markdown("<br>", unsafe_allow_html=True)
