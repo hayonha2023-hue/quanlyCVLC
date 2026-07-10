@@ -811,16 +811,24 @@ else:
         elif selected_tab == "💰 SỔ QUỸ SHOP":
             st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>💰 Sổ Theo Dõi Thu Chi</h3>", unsafe_allow_html=True)
             qs = db.get("quy_shop", {})
+            
+            # Tính toán phân tách 3 loại
             tong_thu = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Thu")
             tong_chi = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Chi")
+            tong_chi_rieng = sum(float(i.get("amount", 0)) for i in qs.values() if i.get("type") == "Chi riêng")
+            
+            # TỒN QUỸ TỰ ĐỘNG BỎ QUA CHI RIÊNG
             st.metric("🏦 TỒN QUỸ", format_vnd(tong_thu - tong_chi))
-            c1, c2 = st.columns(2)
-            c1.metric("🟢 TỔNG THU", format_vnd(tong_thu)); c2.metric("🔴 TỔNG CHI", format_vnd(tong_chi))
+            
+            c1, c2, c3 = st.columns(3)
+            c1.metric("🟢 TỔNG THU", format_vnd(tong_thu))
+            c2.metric("🔴 TỔNG CHI", format_vnd(tong_chi))
+            c3.metric("🟠 CHI RIÊNG", format_vnd(tong_chi_rieng))
             
             if st.session_state.is_admin or "QUẢN LÝ QUỸ SHOP" in edit_perms:
                 with st.expander("➕ HÀNH ĐỘNG GHI CHỨNG TỪ", expanded=False):
                     with st.form("fund_form", clear_on_submit=True):
-                        f_type = st.selectbox("Phân loại", ["Thu", "Chi"])
+                        f_type = st.selectbox("Phân loại", ["Thu", "Chi", "Chi riêng"])
                         f_amt = st.number_input("Giá trị (VNĐ)", min_value=0, step=50000)
                         f_desc = st.text_input("Nội dung diễn giải")
                         if st.form_submit_button("LƯU PHIẾU", type="primary", use_container_width=True):
@@ -830,7 +838,12 @@ else:
                             else: st.error("❌ Không được bỏ trống!")
             
             if qs:
-                quy_list = [{"Mã CT": f"...{tid[-4:]}", "Thời Gian": tx.get("date", ""), "Phân Loại": "➕ Thu" if tx.get("type") == "Thu" else "➖ Chi", "Giá Trị": f"{float(tx.get('amount', 0)):,.0f} ₫".replace(",", "."), "Lý Do": tx.get("desc", ""), "Người Lập": tx.get("user", "")} for tid, tx in sorted(qs.items(), key=lambda x: x[0], reverse=True)]
+                def get_tx_label(t):
+                    if t == "Thu": return "➕ Thu"
+                    if t == "Chi riêng": return "💸 Chi riêng"
+                    return "➖ Chi"
+                
+                quy_list = [{"Mã CT": f"...{tid[-4:]}", "Thời Gian": tx.get("date", ""), "Phân Loại": get_tx_label(tx.get("type")), "Giá Trị": f"{float(tx.get('amount', 0)):,.0f} ₫".replace(",", "."), "Lý Do": tx.get("desc", ""), "Người Lập": tx.get("user", "")} for tid, tx in sorted(qs.items(), key=lambda x: x[0], reverse=True)]
                 st.dataframe(pd.DataFrame(quy_list), hide_index=True, use_container_width=True)
                 if st.session_state.is_admin or "QUẢN LÝ QUỸ SHOP" in edit_perms:
                     c_sel, c_del = st.columns([3, 1])
