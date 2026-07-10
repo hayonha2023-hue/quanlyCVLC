@@ -465,6 +465,7 @@ else:
                                 buffered = io.BytesIO()
                                 img.convert("RGB").save(buffered, format="JPEG", quality=85)
                                 new_img_list.append(base64.b64encode(buffered.getvalue()).decode())
+                            delete_firebase("kpi_images") # <-- Thêm dòng này để dọn rác
                             update_firebase("kpi_images", new_img_list)
                             st.session_state.rot_angles_kpi = {} 
                             st.success(f"Đã lưu ảnh!"); time.sleep(1); st.rerun()
@@ -544,6 +545,7 @@ else:
                                 buffered = io.BytesIO()
                                 img.convert("RGB").save(buffered, format="JPEG", quality=85)
                                 new_img_list.append(base64.b64encode(buffered.getvalue()).decode())
+                            delete_firebase("schedule_images") # <-- Thêm dòng này để dọn rác
                             update_firebase("schedule_images", new_img_list)
                             st.session_state.rot_angles_sched = {}
                             st.success(f"Đã tải ảnh lên!"); time.sleep(1); st.rerun()
