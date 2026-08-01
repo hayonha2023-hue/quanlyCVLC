@@ -65,6 +65,9 @@ def main_layout():
     elif menu == "📋 Xem Lịch":
         from views.schedule import render_schedule
         render_schedule()
+    elif menu == "📈 Theo Dõi KPI":
+        from views.kpi import render_kpi
+        render_kpi()
 
 if st.session_state.current_user is None:
     login_layout()
