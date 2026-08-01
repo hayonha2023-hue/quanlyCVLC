@@ -4,7 +4,6 @@ import time
 import io
 import base64
 from PIL import Image, ImageOps
-import streamlit.components.v1 as components
 
 st.set_page_config(page_title="HTCV Web System", layout="wide", initial_sidebar_state="expanded")
 
@@ -197,61 +196,68 @@ else:
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
 # ==========================================
-# 4. JS TIÊM MÀU GIAO DIỆN SÁNG/TỐI 
-# ==========================================
-if st.session_state.theme == "Dark":
-    components.html("""
-    <script>
-        const doc = window.parent.document;
-        let style = doc.getElementById('hack-dark-mode');
-        if (!style) {
-            style = doc.createElement('style');
-            style.id = 'hack-dark-mode';
-            style.innerHTML = `
-                .stApp, .main, [data-testid="stHeader"] { background-color: #121212 !important; }
-                [data-testid="stSidebar"] { background-color: #1e1e1e !important; }
-                h1, h2, h3, h4, h5, h6, p, span, label, div { color: #fafafa !important; }
-                [data-baseweb="input"] > div, [data-baseweb="select"] > div { background-color: #333 !important; border-color: #555 !important; }
-                input, textarea { color: #fff !important; }
-                .stButton button[kind="primary"] { background-color: #ff4b4b !important; color: white !important; border: none !important; }
-                .stButton button { background-color: #333 !important; color: white !important; border: 1px solid #555 !important; }
-            `;
-            doc.head.appendChild(style);
-        }
-    </script>
-    """, height=0, width=0)
-else:
-    components.html("""
-    <script>
-        const doc = window.parent.document;
-        let style = doc.getElementById('hack-dark-mode');
-        if (style) { style.remove(); }
-    </script>
-    """, height=0, width=0)
-
-# ==========================================
-# 5. HIỂN THỊ HÌNH NỀN & LỚP KÍNH MỜ
+# 4. CSS ĐIỀU KHIỂN GIAO DIỆN SÁNG/TỐI (BỌC THÉP CHỐNG LỖI)
 # ==========================================
 current_bg = u_info.get("bg_image", "")
+
+# Thiết lập mã màu nền và chữ theo Theme
+if st.session_state.theme == "Dark":
+    bg_sidebar = "rgba(14, 17, 23, 0.85)" if current_bg else "#262730"
+    bg_main = "rgba(0, 0, 0, 0.65)" if current_bg else "#0e1117"
+    text_color = "#fafafa"
+else:
+    bg_sidebar = "rgba(255, 255, 255, 0.9)" if current_bg else "#f0f2f6"
+    bg_main = "rgba(255, 255, 255, 0.85)" if current_bg else "#ffffff"
+    text_color = "#111827"
+
+css = f"""
+<style>
+    /* Chỉnh màu chữ tổng thể */
+    .stApp, .main, [data-testid="stSidebar"], div.block-container {{ color: {text_color} !important; }}
+    p, span, label, h1, h2, h3, h4, h5, h6 {{ color: {text_color} !important; }}
+    
+    /* Chỉnh màu nền Menu */
+    [data-testid="stSidebar"] {{ background-color: {bg_sidebar} !important; }}
+    
+    /* 🛡️ ÁO GIÁP BẢO VỆ CARDS MÀU TRẮNG TRONG LỊCH TRỰC 🛡️ */
+    /* Nếu phát hiện thẻ nào có background màu trắng, ép toàn bộ chữ bên trong thành màu đen */
+    div[style*="background-color: white"], div[style*="background: white"],
+    div[style*="background-color: #fff"], div[style*="background: #fff"],
+    div[style*="background-color: #ffffff"], div[style*="background: #ffffff"] {{
+        color: #111827 !important; 
+    }}
+    div[style*="background-color: white"] *, div[style*="background: white"] *,
+    div[style*="background-color: #fff"] *, div[style*="background: #fff"] *,
+    div[style*="background-color: #ffffff"] *, div[style*="background: #ffffff"] * {{
+        color: #111827 !important;
+    }}
+"""
+
+# Hiển thị ảnh nền (Nếu có)
 if current_bg:
-    st.markdown(f"""
-    <style>
-        .stApp {{
-            background-image: url("data:image/jpeg;base64,{current_bg}") !important;
-            background-size: cover !important;
-            background-attachment: fixed !important;
-            background-position: center !important;
-        }}
-        [data-testid="stSidebar"] {{ background-color: rgba(14, 17, 23, 0.85) !important; }}
-        [data-testid="stHeader"] {{ background-color: transparent !important; }}
-        
-        /* Đã fix: Bổ sung lớp kính mờ màu đen lót dưới bảng dữ liệu để chữ trắng nổi bật lên */
-        div.block-container {{
-            background-color: rgba(0, 0, 0, 0.6) !important;
-            border-radius: 15px;
-            padding-top: 2rem !important;
-            padding-bottom: 2rem !important;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }}
-    </style>
-    """, unsafe_allow_html=True)
+    css += f"""
+    .stApp {{
+        background-image: url("data:image/jpeg;base64,{current_bg}") !important;
+        background-size: cover !important;
+        background-attachment: fixed !important;
+        background-position: center !important;
+    }}
+    [data-testid="stHeader"] {{ background-color: transparent !important; }}
+    
+    /* Kính mờ lót dưới nội dung */
+    div.block-container {{
+        background-color: {bg_main} !important;
+        border-radius: 15px; padding: 2rem !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }}
+    """
+else:
+    # Nếu không có ảnh nền, dùng màu trơn
+    bg_solid = "#0e1117" if st.session_state.theme == "Dark" else "#ffffff"
+    css += f"""
+    .stApp, .main, [data-testid="stHeader"] {{ background-color: {bg_solid} !important; }}
+    div.block-container {{ background-color: transparent !important; box-shadow: none; }}
+    """
+
+css += "</style>"
+st.markdown(css, unsafe_allow_html=True)
