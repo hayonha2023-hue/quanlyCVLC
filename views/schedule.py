@@ -5,52 +5,74 @@ def render_schedule():
     st.markdown("""
     <div class='html-card'>
         <h3 class='html-title' style='text-align: left;'>📋 LỊCH TRỰC TUẦN</h3>
-        <p class='html-text' style='text-align: left; margin-bottom: 0px;'>Ảnh lịch trực mới nhất được phân bổ từ Quản lý</p>
+        <p class='html-text' style='text-align: left; margin-bottom: 0px;'>Danh sách ca trực và Ảnh lịch phân bổ từ Quản lý</p>
     </div>
     """, unsafe_allow_html=True)
 
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
     
-    # 1. Trỏ đúng vào Ngăn Tủ chứa ảnh ("schedule_images")
+    # ==========================================
+    # PHẦN 1: HIỂN THỊ CA TRỰC BẰNG CHỮ (TEXT)
+    # ==========================================
     if shop_id == "Shop Chính (Mặc định)":
-        schedule_data = st.session_state.db.get("schedule_images", [])
+        schedule_text = st.session_state.db.get("schedule", {})
     else:
-        schedule_data = st.session_state.db.get("shops", {}).get(shop_id, {}).get("schedule_images", [])
+        schedule_text = st.session_state.db.get("shops", {}).get(shop_id, {}).get("schedule", {})
 
-    # 2. Xử lý hiển thị
-    if not schedule_data:
-        st.info("📌 Hiện tại Quản lý chưa tải lên ảnh lịch trực nào cho chi nhánh này.")
+    st.markdown("#### 📅 PHÂN BỔ CA TRỰC CHI TIẾT")
+    if not schedule_text:
+        st.info("📌 Chưa có dữ liệu phân bổ ca trực bằng chữ cho tuần này.")
+    else:
+        days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
+        for day in days:
+            if day in schedule_text:
+                with st.expander(f"📌 {day}", expanded=True):
+                    ca_truc = schedule_text[day]
+                    if isinstance(ca_truc, dict):
+                        for ca, nhan_vien in ca_truc.items():
+                            st.markdown(f"- **{ca}:** {nhan_vien}")
+                    else:
+                        st.markdown(f"{ca_truc}")
+                        
+    st.markdown("<hr>", unsafe_allow_html=True)
+    
+    # ==========================================
+    # PHẦN 2: HIỂN THỊ ẢNH LỊCH TẢI LÊN TỪ WINDOWS
+    # ==========================================
+    st.markdown("#### 🖼️ ẢNH LỊCH TỔNG HỢP")
+    if shop_id == "Shop Chính (Mặc định)":
+        schedule_images = st.session_state.db.get("schedule_images", [])
+    else:
+        schedule_images = st.session_state.db.get("shops", {}).get(shop_id, {}).get("schedule_images", [])
+
+    if not schedule_images:
+        st.info("📌 Hiện tại Quản lý chưa tải lên ảnh lịch trực nào.")
         return
 
     try:
         base64_str = ""
-        
-        # TRƯỜNG HỢP 1: Firebase lưu dưới dạng List (Danh sách) - Bắt đúng bệnh của bạn
-        if isinstance(schedule_data, list):
-            # Lọc bỏ các giá trị rỗng và lấy ảnh cuối cùng (ảnh mới nhất)
-            valid_images = [img for img in schedule_data if img]
+        # Xử lý nếu là dạng Danh sách (List)
+        if isinstance(schedule_images, list):
+            valid_images = [img for img in schedule_images if img]
             if valid_images:
                 base64_str = valid_images[-1]
                 
-        # TRƯỜNG HỢP 2: Firebase tự động chuyển thành Dict (Từ điển)
-        elif isinstance(schedule_data, dict):
-            sorted_keys = sorted(schedule_data.keys(), reverse=True)
+        # Xử lý nếu là dạng Từ điển (Dict)
+        elif isinstance(schedule_images, dict):
+            sorted_keys = sorted(schedule_images.keys(), reverse=True)
             if sorted_keys:
-                base64_str = schedule_data[sorted_keys[0]]
+                base64_str = schedule_images[sorted_keys[0]]
 
         if not base64_str:
-            st.info("📌 Không tìm thấy dữ liệu ảnh hợp lệ.")
             return
 
-        # Xóa các tiền tố bừa bãi (nếu app Windows có gắn vào)
+        # Xóa tiền tố nếu có
         if "," in base64_str:
             base64_str = base64_str.split(",")[1]
             
-        # Dịch ngược mã hóa thành ảnh thật
+        # Dịch ngược và hiển thị
         image_bytes = base64.b64decode(base64_str)
-        
-        # Hiển thị ảnh căng nét
         st.image(image_bytes, use_container_width=True, caption="Ảnh Lịch Trực Mới Nhất")
             
     except Exception as e:
-        st.error(f"⚠️ Lỗi hiển thị ảnh lịch: {e}. Vui lòng kiểm tra lại định dạng ảnh.")
+        st.error(f"⚠️ Lỗi hiển thị ảnh lịch: {e}. Vui lòng kiểm tra lại định dạng ảnh trên App Windows.")
