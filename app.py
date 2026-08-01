@@ -68,6 +68,9 @@ def main_layout():
     elif menu == "📈 Theo Dõi KPI":
         from views.kpi import render_kpi
         render_kpi()
+    elif menu == "📊 Chia Target":
+        from views.target import render_target
+        render_target()
 
 if st.session_state.current_user is None:
     login_layout()
