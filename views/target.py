@@ -6,7 +6,6 @@ import time
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
-# CÁC HÀM XỬ LÝ SỐ LIỆU CHUẨN XÁC TỪ BẢN GỐC
 def s_float(val):
     if val is None or str(val).strip() == "": return 0.0
     if isinstance(val, (int, float)): return float(val)
@@ -37,7 +36,7 @@ def update_firebase_target(path, data, shop_id):
 def render_target():
     st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📊 Công Cụ Chia Target Đa Nền Tảng</h3>", unsafe_allow_html=True)
     
-    # Giữ nguyên siêu hiệu ứng JS định dạng tiền tệ khi gõ
+    # Script JS tự định dạng tiền tệ khi gõ
     components.html("""
     <script>
     const doc = window.parent.document;
@@ -72,19 +71,31 @@ def render_target():
     """, height=0, width=0)
 
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
-    db = st.session_state.db if shop_id == "Shop Chính (Mặc định)" else st.session_state.db.get("shops", {}).get(shop_id, {})
+    
+    # Lấy DB toàn cục từ session_state
+    full_db = st.session_state.get("db", {})
+    if shop_id == "Shop Chính (Mặc định)":
+        db = full_db
+    else:
+        db = full_db.get("shops", {}).get(shop_id, {})
     
     dt_data = db.get("daily_targets", {})
     dt_cfg = dt_data.get("config", {})
     dt_mts = dt_data.get("metrics", {})
 
-    # Kiểm tra quyền y hệt bản gốc
-    is_admin = st.session_state.get("is_admin", False)
+    # Kiểm tra quyền sửa
     is_super = st.session_state.get("is_super_admin", False)
-    u_info = st.session_state.db.get("users", {}).get(st.session_state.get("user", ""), {})
-    edit_perms = ["TÍNH TARGET"] if is_super else u_info.get("edit_permissions", [])
-    can_edit = is_admin or ("TÍNH TARGET" in edit_perms)
+    is_admin = st.session_state.get("is_admin", False)
+    current_user = st.session_state.get("user", "")
+    u_info = full_db.get("users", {}).get(current_user, {})
+    edit_perms = u_info.get("edit_permissions", [])
+    
+    can_edit = is_super or is_admin or ("TÍNH TARGET" in edit_perms)
 
+    # ==========================================
+    # 1. KHU VỰC CHỈNH SỬA SỐ LIỆU (CHO ADMIN/QUYỀN SỬA)
+    # ==========================================
+    live_mts = {}
     if can_edit:
         st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>⚙️ BẢNG NHẬP LIỆU TÙY CHỈNH (Nảy số tự động)</h5>", unsafe_allow_html=True)
         
@@ -116,7 +127,6 @@ def render_target():
             ng2_str = c8.text_input("🌙 CA 2 (Người)", value=fmt_num(dt_cfg.get("ng2", 1)))
             ng2 = s_float(ng2_str)
             
-        live_mts = {}
         with tab_chiso:
             st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
             metrics = ["Doanh Số (VNĐ)", "Tổng Số Bill", "Cắt Liều", "Tỷ Lệ HOT", "Tỷ Lệ FS", "Tỷ Lệ 5 Sao"]
@@ -167,10 +177,6 @@ def render_target():
         
         if del_btn:
             update_firebase_target("daily_targets", {"config": {}, "metrics": {}}, shop_id)
-            if shop_id == "Shop Chính (Mặc định)":
-                st.session_state.db["daily_targets"] = {"config": {}, "metrics": {}}
-            else:
-                st.session_state.db["shops"][shop_id]["daily_targets"] = {"config": {}, "metrics": {}}
             st.success("✅ Đã dọn sạch bảng chia Target!")
             time.sleep(1)
             st.rerun()
@@ -190,18 +196,11 @@ def render_target():
                 
                 updated_data = {"config": new_config, "metrics": save_mts}
                 update_firebase_target("daily_targets", updated_data, shop_id)
-                
-                if shop_id == "Shop Chính (Mặc định)":
-                    st.session_state.db["daily_targets"] = updated_data
-                else:
-                    st.session_state.db["shops"][shop_id]["daily_targets"] = updated_data
-                    
                 st.success("✅ Đã lưu kết quả lên hệ thống để nhân viên cùng xem!")
                 time.sleep(1)
                 st.rerun()
 
     else:
-        live_mts = {}
         nv = s_float(dt_cfg.get("nv", 1))
         pc1 = s_float(dt_cfg.get("pc1", 50))
         ng1 = s_float(dt_cfg.get("ng1", 1))
@@ -215,6 +214,9 @@ def render_target():
                 "n": s_float(m_data.get("n", 0))
             }
 
+    # ==========================================
+    # 2. KHU VỰC HIỂN THỊ KẾT QUẢ (BẢNG CÁ NHÂN & BẢNG CA TRỰC)
+    # ==========================================
     st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật nhảy số)</b>", unsafe_allow_html=True)
     t1, t2 = st.tabs(["👤 BẢNG CÁ NHÂN", "🏪 BẢNG CA TRỰC"])
     
@@ -244,5 +246,7 @@ def render_target():
         res1_data.append({"Chỉ Số": m, "CÒN PHẢI BÁN": fm_res(thang_1, is_ds)})
         res2_data.append({"Chỉ Số": m, "Mỗi Ngày Cần": fm_res(val_n, is_ds), f"CA 1 ({pc1_cur:g}%)": fm_res(round(ca1_t), is_ds), f"1 Người C1": fm_res(ca1_1, is_ds), f"CA 2 ({pc2_cur:g}%)": fm_res(round(ca2_t), is_ds), f"1 Người C2": fm_res(ca2_1, is_ds)})
         
-    with t1: st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
-    with t2: st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
+    with t1: 
+        st.dataframe(pd.DataFrame(res1_data), hide_index=True, use_container_width=True)
+    with t2: 
+        st.dataframe(pd.DataFrame(res2_data), hide_index=True, use_container_width=True)
