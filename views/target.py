@@ -46,7 +46,8 @@ def render_target():
             document.addEventListener('input', function(e) {
                 if (e.isTrusted && e.target && e.target.tagName === 'INPUT') {
                     let p = e.target.placeholder || "";
-                    if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Ngày") || p.includes("Đã bán") || p.includes("Còn lại") || p.includes("Mỗi ngày") || p.includes("VD: 30") || p.includes("để trống") || p.includes("Gợi ý")) {
+                    // Bổ sung thêm từ khóa "Nợ" để tự động format số tiền cho ô Nợ tháng trước
+                    if (p.includes("1.500.000") || p.includes("Mục tiêu") || p.includes("Nợ") || p.includes("Ngày") || p.includes("Đã bán") || p.includes("Còn lại") || p.includes("Mỗi ngày") || p.includes("VD: 30") || p.includes("để trống") || p.includes("Gợi ý")) {
                         let oldVal = e.target.value;
                         let oldCursor = e.target.selectionStart;
                         let raw = oldVal.replace(/[^0-9]/g, '');
@@ -77,11 +78,7 @@ def render_target():
     dt_cfg = dt_data.get("config", {})
     dt_mts = dt_data.get("metrics", {})
 
-    # ==========================================
-    # ĐÃ FIX TẬN GỐC: QUÉT MỌI BIẾN USER ĐỂ TÌM ADMIN
-    # ==========================================
     current_user = st.session_state.get("current_user", st.session_state.get("user", ""))
-    
     is_sys_admin = st.session_state.get("is_admin", False)
     is_sys_super = st.session_state.get("is_super_admin", False)
     
@@ -89,7 +86,6 @@ def render_target():
     user_role = u_info.get("role", "")
     edit_perms = u_info.get("edit_permissions", [])
     
-    # Ép kiểu an toàn, bắt chuẩn admin
     can_edit = (str(current_user).lower() == "admin") or is_sys_admin or is_sys_super or (user_role == "admin") or ("TÍNH TARGET" in edit_perms)
 
     live_mts = {}
@@ -135,18 +131,22 @@ def render_target():
                 icon = icon_map.get(m, "🔹")
                 
                 with st.expander(f"{icon} {m}", expanded=False):
-                    r1c1, r1c2 = st.columns([1.5, 1])
+                    # KHÔI PHỤC Ô NHẬP NỢ THÁNG TRƯỚC
+                    r1c1, r1c2, r1c3 = st.columns([1.5, 1, 1.5])
                     g_str = r1c1.text_input("Mục tiêu gốc", value=fmt_dot(m_data.get("g", 0)), key=f"g_{m}", placeholder="Mục tiêu...")
                     p_str = r1c2.text_input("% Đạt", value=fmt_num(m_data.get("p", 100)), key=f"p_{m}", placeholder="%...")
+                    tt_str = r1c3.text_input("Nợ tháng trước", value=fmt_dot(m_data.get("tt", 0)), key=f"tt_{m}", placeholder="Nợ...")
                     
                     r2c1, r2c2 = st.columns(2)
-                    db_str = r2c1.text_input("Đã bán", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
+                    db_str = r2c1.text_input("Đã bán (Cộng dồn)", value=fmt_dot(m_data.get("db", 0)), key=f"db_{m}", placeholder="Đã bán...")
                     
                     g_val = s_float(g_str)
                     p_val = s_float(p_str)
+                    tt_val = s_float(tt_str)
                     db_val = s_float(db_str)
                     
-                    t_val = (g_val * p_val) / 100
+                    # LOGIC CỘNG DỒN MỚI
+                    t_val = ((g_val * p_val) / 100) + tt_val
                     if m == "Doanh Số (VNĐ)" and vac_chk:
                         t_val -= vac
                         
@@ -162,9 +162,9 @@ def render_target():
                     final_n = s_float(n_str) if n_str.strip() else auto_n
                     
                     live_mts[m] = {
-                        "g": g_val, "p": p_val, "db": db_val,
+                        "g": g_val, "p": p_val, "tt": tt_val, "db": db_val,
                         "cl": cl_val, "n": final_n,
-                        "g_str": g_str, "p_str": p_str, "db_str": db_str, "n_str": n_str
+                        "g_str": g_str, "p_str": p_str, "tt_str": tt_str, "db_str": db_str, "n_str": n_str
                     }
             
         st.markdown("<br>", unsafe_allow_html=True)
@@ -193,7 +193,8 @@ def render_target():
                 
                 for m in metrics:
                     lm = live_mts[m]
-                    save_mts[m] = {"g": fmt(lm["g"]), "p": fmt(lm["p"]), "db": fmt(lm["db"]), "cl": fmt(lm["cl"]), "n": fmt(lm["n"])}
+                    # LƯU KÈM BIẾN NỢ (tt) LÊN FIREBASE CHO WINDOW KÉO VỀ
+                    save_mts[m] = {"g": fmt(lm["g"]), "p": fmt(lm["p"]), "tt": fmt(lm["tt"]), "db": fmt(lm["db"]), "cl": fmt(lm["cl"]), "n": fmt(lm["n"])}
                     save_mts[m]["n_str_saved"] = lm["n_str"]
                 
                 updated_data = {"config": new_config, "metrics": save_mts}
@@ -206,7 +207,7 @@ def render_target():
                     if shop_id not in st.session_state.db["shops"]: st.session_state.db["shops"][shop_id] = {}
                     st.session_state.db["shops"][shop_id]["daily_targets"] = updated_data
                     
-                st.success("✅ Đã lưu kết quả lên hệ thống để nhân viên cùng xem!")
+                st.success("✅ Đã lưu kết quả (bao gồm Nợ tháng trước) lên hệ thống!")
                 time.sleep(1)
                 st.rerun()
 
@@ -225,7 +226,7 @@ def render_target():
             }
 
     # ==========================================
-    # KHU VỰC HIỂN THỊ KẾT QUẢ CHO TẤT CẢ MỌI NGƯỜI
+    # KHU VỰC HIỂN THỊ KẾT QUẢ
     # ==========================================
     st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật nhảy số)</b>", unsafe_allow_html=True)
     t1, t2 = st.tabs(["👤 BẢNG CÁ NHÂN", "🏪 BẢNG CA TRỰC"])
