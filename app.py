@@ -85,11 +85,34 @@ def close_settings_panels():
     st.session_state.show_pass = False
 
 # ==========================================
-# 2. THANH MENU BÊN TRÁI (SIDEBAR)
+# 2. THANH MENU BÊN TRÁI (SIDEBAR) VỚI TÍNH NĂNG CHỌN NHÁNH
 # ==========================================
 with st.sidebar:
     st.markdown(f"### 👤 {str(user_id).upper()}")
-    st.markdown(f"📍 {st.session_state.get('current_shop', 'Shop Chính (Mặc định)')}")
+    
+    # 🔓 MỞ KHÓA CHỌN CHI NHÁNH CHO ADMIN
+    if st.session_state.get("is_admin", False) or st.session_state.get("is_super_admin", False):
+        # Quét lấy toàn bộ danh sách các nhánh shop đang có trên Firebase
+        db_shops = list(db.get("shops", {}).keys())
+        all_shops = ["Shop Chính (Mặc định)"] + [s for s in db_shops if s != "Shop Chính (Mặc định)"]
+        
+        cur_shop = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
+        if cur_shop not in all_shops:
+            all_shops.append(cur_shop)
+            
+        cur_idx = all_shops.index(cur_shop)
+        
+        # Bố trí Khung chọn (Dropdown)
+        selected_shop = st.selectbox("📍 Chi Nhánh", all_shops, index=cur_idx)
+        
+        # Nếu Admin đổi nhánh -> Lưu vào RAM và Tải lại trang để load số liệu nhánh mới
+        if selected_shop != cur_shop:
+            st.session_state.current_shop = selected_shop
+            st.rerun()
+    else:
+        # Nhân viên thường chỉ được xem (Khóa cứng nhánh)
+        st.markdown(f"📍 {st.session_state.get('current_shop', 'Shop Chính (Mặc định)')}")
+        
     st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
     
     menu_options = ["🛒 Lịch Ecom", "💰 Quỹ Shop", "📋 Xem Lịch", "📈 Theo Dõi KPI", "📊 Chia Target", "📍 Thị Trường", "🤖 AI Tư Vấn", "👥 Quản Trị Admin"]
@@ -196,11 +219,10 @@ else:
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
 # ==========================================
-# 4. CSS ĐIỀU KHIỂN GIAO DIỆN (ĐÃ FIX LỖI KHÓA NÚT VÀ CHỮ TÀNG HÌNH ADMIN)
+# 4. CSS ĐIỀU KHIỂN GIAO DIỆN CHỐNG LỖI TÀNG HÌNH
 # ==========================================
 current_bg = u_info.get("bg_image", "")
 
-# Xóa bỏ cái "or current_bg" ngớ ngẩn ở đây. Giờ nút Sáng/Tối hoạt động bình thường!
 if st.session_state.theme == "Dark":
     bg_sidebar = "rgba(14, 17, 23, 0.85)" if current_bg else "#262730"
     bg_main = "rgba(0, 0, 0, 0.65)" if current_bg else "#0e1117"
@@ -236,7 +258,6 @@ css = f"""
         color: {text_global} !important;
     }}
     
-    /* Màu chữ cơ bản cho toàn bộ Text khác */
     div.block-container p, div.block-container span, div.block-container label, div.block-container li,
     div.block-container h1, div.block-container h2, div.block-container h3, div.block-container h4, div.block-container h5, div.block-container h6 {{
         color: {text_global};
