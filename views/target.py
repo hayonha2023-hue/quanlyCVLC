@@ -78,21 +78,19 @@ def render_target():
     dt_mts = dt_data.get("metrics", {})
 
     # ==========================================
-    # ĐÃ FIX BỌC THÉP: KIỂM TRA QUYỀN ADMIN CHUẨN XÁC
+    # ĐÃ FIX TẬN GỐC: QUÉT MỌI BIẾN USER ĐỂ TÌM ADMIN
     # ==========================================
-    current_user = st.session_state.get("user", "")
+    current_user = st.session_state.get("current_user", st.session_state.get("user", ""))
     
-    # Lấy cờ trạng thái Admin từ RAM (do lúc đăng nhập gán)
     is_sys_admin = st.session_state.get("is_admin", False)
     is_sys_super = st.session_state.get("is_super_admin", False)
     
-    # Lấy thông tin từ Database
     u_info = full_db.get("users", {}).get(current_user, {})
     user_role = u_info.get("role", "")
     edit_perms = u_info.get("edit_permissions", [])
     
-    # Bắt bằng được mọi loại Admin + Quyền chỉnh sửa
-    can_edit = (is_sys_admin) or (is_sys_super) or (current_user == "admin") or (user_role == "admin") or ("TÍNH TARGET" in edit_perms)
+    # Ép kiểu an toàn, bắt chuẩn admin
+    can_edit = (str(current_user).lower() == "admin") or is_sys_admin or is_sys_super or (user_role == "admin") or ("TÍNH TARGET" in edit_perms)
 
     live_mts = {}
     
