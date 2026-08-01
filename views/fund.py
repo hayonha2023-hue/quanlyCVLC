@@ -1,98 +1,110 @@
 import streamlit as st
 import requests
 import time
-import datetime
+from datetime import datetime
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
+DB_KEY = "quy_shop" 
 
 def save_fund_to_firebase(fund_data, shop_id):
     try:
         url = FIREBASE_URL if shop_id == "Shop Chính (Mặc định)" else FIREBASE_URL.replace(".json", f"/shops/{shop_id}.json")
-        requests.patch(url, json={"fund_history": fund_data}, timeout=10)
+        requests.patch(url, json={DB_KEY: fund_data}, timeout=10)
         return True
     except Exception as e:
         st.error(f"Lỗi đồng bộ: {e}")
         return False
 
 def render_fund():
-    st.markdown("""
-    <div class='html-card'>
-        <h3 class='html-title' style='text-align: left;'>💰 QUẢN LÝ QUỸ SHOP</h3>
-        <p class='html-text' style='text-align: left; margin-bottom: 0px;'>Ghi chép các khoản Thu/Chi của chi nhánh</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #0D6EFD; margin-bottom: 20px;'>💰 SỔ QUẢN LÝ THU CHI (QUỸ SHOP)</h3>", unsafe_allow_html=True)
 
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
     
-    # Kéo dữ liệu từ Mây (Đảm bảo luôn là dạng Từ điển {} để Windows gộp được)
+    # 1. Kéo dữ liệu dạng Từ điển (Dict) chuẩn theo Firebase của bạn
     if shop_id == "Shop Chính (Mặc định)":
-        fund_history = st.session_state.db.get("fund_history", {})
+        fund_data = st.session_state.db.get(DB_KEY, {})
     else:
-        fund_history = st.session_state.db.get("shops", {}).get(shop_id, {}).get("fund_history", {})
+        fund_data = st.session_state.db.get("shops", {}).get(shop_id, {}).get(DB_KEY, {})
         
-    if not isinstance(fund_history, dict):
-        fund_history = {}
+    if not isinstance(fund_data, dict):
+        fund_data = {}
 
-    # Tính toán tổng quỹ
-    tong_thu = sum([int(item.get("amount", 0)) for item in fund_history.values() if item.get("type") == "Thu"])
-    tong_chi = sum([int(item.get("amount", 0)) for item in fund_history.values() if item.get("type") == "Chi"])
-    ton_quy = tong_thu - tong_chi
+    # 2. Tính toán 4 chỉ số (Khớp hoàn toàn form Windows)
+    tong_thu = sum([float(item.get("amount", 0)) for item in fund_data.values() if item.get("type") == "Thu"])
+    tong_chi = sum([float(item.get("amount", 0)) for item in fund_data.values() if item.get("type") == "Chi"])
+    chi_rieng = sum([float(item.get("amount", 0)) for item in fund_data.values() if item.get("type") == "Chi Riêng"])
+    ton_quy = tong_thu - tong_chi - chi_rieng 
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("🟢 TỔNG THU", f"{tong_thu:,.0f} VNĐ")
-    col2.metric("🔴 TỔNG CHI", f"{tong_chi:,.0f} VNĐ")
-    col3.metric("💎 TỒN QUỸ", f"{ton_quy:,.0f} VNĐ")
+    # 3. Hiển thị 4 Khối Thống Kê
+    c1, c2, c3, c4 = st.columns(4)
+    c1.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🏦 TỒN QUỸ</b><br><h3 style='color:#0d6efd; margin-top:5px;'>{ton_quy:,.0f} ₫</h3></div>", unsafe_allow_html=True)
+    c2.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🟢 TỔNG THU</b><br><h3 style='color:#198754; margin-top:5px;'>{tong_thu:,.0f} ₫</h3></div>", unsafe_allow_html=True)
+    c3.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🔴 TỔNG CHI</b><br><h3 style='color:#dc3545; margin-top:5px;'>{tong_chi:,.0f} ₫</h3></div>", unsafe_allow_html=True)
+    c4.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🟡 CHI RIÊNG</b><br><h3 style='color:#ffc107; margin-top:5px;'>{chi_rieng:,.0f} ₫</h3></div>", unsafe_allow_html=True)
+
+    # 4. Hiển thị Danh sách Giao Dịch
+    # Sắp xếp theo ID (chuỗi số thời gian) để cái mới nhất nổi lên đầu
+    sorted_funds = sorted(fund_data.items(), key=lambda x: x[0], reverse=True)
     
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("**➕ THÊM GIAO DỊCH MỚI**")
-    
+    for tx_id, item in sorted_funds:
+        loai = item.get("type", "")
+        color = "#198754" if loai == "Thu" else "#dc3545" if loai == "Chi" else "#ffc107"
+        icon = "➕" if loai == "Thu" else "➖"
+
+        st.markdown(f"""
+        <div style='background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;'>
+            <div style='width: 15%; color: #666; font-size: 13px;'>{item.get('date', '')}</div>
+            <div style='width: 10%; color: {color}; font-weight: bold;'>{icon} {loai}</div>
+            <div style='width: 15%; font-weight: bold; font-size: 16px;'>{float(item.get('amount', 0)):,.0f} ₫</div>
+            <div style='width: 45%; color: #333;'>{item.get('desc', '')}</div>
+            <div style='width: 15%; text-align: right; color: #0d6efd; font-style: italic;'>{item.get('user', '')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 5. Form nhập liệu Ghi Phiếu (Dàn hàng ngang dưới cùng)
     with st.form("fund_form", clear_on_submit=True):
-        c1, c2 = st.columns(2)
-        with c1:
-            gd_type = st.selectbox("Loại giao dịch", ["Thu", "Chi"])
-            amount = st.number_input("Số tiền (VNĐ)", min_value=0, step=1000)
-        with c2:
-            reason = st.text_input("Lý do / Nội dung")
-            date_str = st.date_input("Ngày giao dịch")
-            
-        submitted = st.form_submit_button("💾 LƯU GIAO DỊCH", type="primary", use_container_width=True)
-        
-        if submitted:
-            if amount <= 0 or not reason:
-                st.warning("Vui lòng nhập số tiền lớn hơn 0 và ghi rõ lý do!")
+        st.markdown("<b>GHI PHIẾU MỚI</b>", unsafe_allow_html=True)
+        col1, col2, col3, col4 = st.columns([2, 3, 5, 2])
+        with col1:
+            loai_gd = st.selectbox("Phân Loại", ["Thu", "Chi", "Chi Riêng"], label_visibility="collapsed")
+        with col2:
+            gia_tri = st.number_input("Giá trị", min_value=0, step=1000, label_visibility="collapsed", placeholder="Nhập số tiền...")
+        with col3:
+            ly_do = st.text_input("Lý do", label_visibility="collapsed", placeholder="Nội dung...")
+        with col4:
+            submit = st.form_submit_button("💾 GHI PHIẾU", type="primary", use_container_width=True)
+
+        if submit:
+            if gia_tri <= 0 or not ly_do:
+                st.warning("Vui lòng nhập số tiền và nội dung!")
             else:
-                # Tạo ID mã hóa riêng cho từng giao dịch (Khớp với Smart Merge của Windows)
-                tx_id = f"TX_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+                # Tạo ID dạng chuỗi số giống hệt app Windows (thời gian mili-giây)
+                tx_id = str(int(time.time() * 1000)) 
                 
-                new_tx = {
-                    "date": date_str.strftime("%d/%m/%Y"),
-                    "type": gd_type,
-                    "amount": amount,
-                    "reason": reason,
-                    "user": st.session_state.current_user,
-                    "timestamp": datetime.datetime.now().isoformat()
+                # Cấu trúc dùng 'desc', 'date', 'amount' khớp 100% với Firebase
+                new_item = {
+                    "amount": float(gia_tri),
+                    "date": now_str,
+                    "desc": ly_do,
+                    "type": loai_gd,
+                    "user": st.session_state.current_user
                 }
                 
-                fund_history[tx_id] = new_tx
-                
-                if save_fund_to_firebase(fund_history, shop_id):
-                    st.success("✅ Đã đồng bộ giao dịch lên hệ thống thời gian thực!")
+                fund_data[tx_id] = new_item
+
+                # Lưu vào RAM
+                if shop_id == "Shop Chính (Mặc định)":
+                    st.session_state.db[DB_KEY] = fund_data
+                else:
+                    if "shops" not in st.session_state.db: st.session_state.db["shops"] = {}
+                    if shop_id not in st.session_state.db["shops"]: st.session_state.db["shops"][shop_id] = {}
+                    st.session_state.db["shops"][shop_id][DB_KEY] = fund_data
+
+                # Bắn lên Firebase
+                if save_fund_to_firebase(fund_data, shop_id):
+                    st.success("✅ Đã ghi phiếu và đồng bộ thành công!")
                     time.sleep(1.5)
                     st.rerun()
-
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("**📜 LỊCH SỬ GIAO DỊCH**")
-    if not fund_history:
-        st.info("Chưa có giao dịch nào.")
-    else:
-        # Sắp xếp từ điển theo mã ID (thời gian mới nhất lên đầu)
-        sorted_funds = sorted(fund_history.items(), key=lambda x: x[0], reverse=True)
-        for tx_id, item in sorted_funds: 
-            color = "green" if item.get("type") == "Thu" else "red"
-            sign = "+" if item.get("type") == "Thu" else "-"
-            st.markdown(f"""
-            <div style='padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; background-color: #f9f9f9;'>
-                <span style='color: gray; font-size: 13px;'>📅 {item.get('date', '')} | 👤 {item.get('user', '').upper()}</span><br>
-                <b>{item.get('reason', '')}</b>: <span style='color: {color}; font-weight: bold;'>{sign}{item.get('amount', 0):,.0f} đ</span>
-            </div>
-            """, unsafe_allow_html=True)
