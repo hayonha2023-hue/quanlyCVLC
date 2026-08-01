@@ -4,6 +4,7 @@ import time
 import io
 import base64
 from PIL import Image, ImageOps
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="HTCV Web System", layout="wide", initial_sidebar_state="expanded")
 
@@ -80,6 +81,11 @@ if "show_bg" not in st.session_state: st.session_state.show_bg = False
 if "show_pass" not in st.session_state: st.session_state.show_pass = False
 if "theme" not in st.session_state: st.session_state.theme = "Light"
 
+# Hàm mồi: Tự động đóng cài đặt khi bấm vào các chức năng trên Menu
+def close_settings_panels():
+    st.session_state.show_bg = False
+    st.session_state.show_pass = False
+
 # ==========================================
 # 2. THANH MENU BÊN TRÁI (SIDEBAR)
 # ==========================================
@@ -89,21 +95,19 @@ with st.sidebar:
     st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
     
     menu_options = ["🛒 Lịch Ecom", "💰 Quỹ Shop", "📋 Xem Lịch", "📈 Theo Dõi KPI", "📊 Chia Target", "📍 Thị Trường", "🤖 AI Tư Vấn", "👥 Quản Trị Admin"]
-    menu = st.radio("MAIN MENU", menu_options, label_visibility="collapsed")
+    # Đã nối dây: Bấm chọn menu là kích hoạt hàm đóng cài đặt
+    menu = st.radio("MAIN MENU", menu_options, label_visibility="collapsed", on_change=close_settings_panels)
     
     st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1); margin: 10px 0px;'>", unsafe_allow_html=True)
     
-    # NÚT ĐỔI HÌNH NỀN
     if st.button("🖼️ Đổi hình nền", use_container_width=True):
         st.session_state.show_bg = not st.session_state.show_bg
         st.session_state.show_pass = False
 
-    # NÚT ĐỔI MẬT KHẨU
     if st.button("🔑 Đổi mật khẩu", use_container_width=True):
         st.session_state.show_pass = not st.session_state.show_pass
         st.session_state.show_bg = False
     
-    # NÚT ĐỔI SÁNG/TỐI (Đã được khôi phục)
     theme_label = "🌙 Giao diện Tối" if st.session_state.theme == "Light" else "☀️ Giao diện Sáng"
     if st.button(theme_label, use_container_width=True):
         st.session_state.theme = "Dark" if st.session_state.theme == "Light" else "Light"
@@ -114,15 +118,15 @@ with st.sidebar:
         st.rerun()
 
 # ==========================================
-# 3. XỬ LÝ FORM CÀI ĐẶT (HIỂN THỊ CHÍNH GIỮA)
+# 3. ĐIỀU HƯỚNG CHÍNH MÀN HÌNH (ĐÃ GỠ LỖI BỊ KẸT FORM)
 # ==========================================
 if st.session_state.show_bg:
     st.info("🖼️ ĐỔI HÌNH NỀN CÁ NHÂN (Tự động áp dụng sau khi tải xong)")
     bg_up = st.file_uploader("Chọn ảnh (Hệ thống tự nén cho nhẹ)", type=["png", "jpg", "jpeg"])
-    c_bg1, c_bg2 = st.columns(2)
+    c_bg1, c_bg2, c_bg3 = st.columns(3)
     
     if bg_up:
-        if c_bg1.button("💾 ÁP DỤNG MỚI", type="primary", use_container_width=True):
+        if c_bg1.button("💾 ÁP DỤNG", type="primary", use_container_width=True):
             img = Image.open(bg_up)
             img = ImageOps.exif_transpose(img)
             img.thumbnail((1920, 1080))
@@ -137,91 +141,114 @@ if st.session_state.show_bg:
             
     current_bg = u_info.get("bg_image", "")
     if current_bg:
-        if c_bg2.button("🗑️ XÓA NỀN ĐỂ VỀ MẶC ĐỊNH", use_container_width=True):
+        if c_bg2.button("🗑️ XÓA NỀN", use_container_width=True):
             delete_firebase_user(f"users/{user_id}/bg_image")
             st.session_state.db["users"][user_id]["bg_image"] = ""
             st.session_state.show_bg = False
             st.success("Đã xóa nền!"); time.sleep(1); st.rerun()
             
-    st.stop() 
+    # Nút chủ động đóng form
+    if c_bg3.button("❌ ĐÓNG CÀI ĐẶT", use_container_width=True):
+        st.session_state.show_bg = False
+        st.rerun()
 
-if st.session_state.show_pass:
+elif st.session_state.show_pass:
     st.info("🔑 THAY ĐỔI MẬT KHẨU")
     c_p1, c_p2 = st.columns(2)
     old_p = c_p1.text_input("Nhập mật khẩu cũ", type="password")
     new_p = c_p2.text_input("Nhập mật khẩu mới", type="password")
     
-    if st.button("💾 CẬP NHẬT MẬT KHẨU", type="primary"):
+    c_btn1, c_btn2, c_btn3 = st.columns(3)
+    if c_btn1.button("💾 CẬP NHẬT", type="primary", use_container_width=True):
         if old_p == str(u_info.get("pass", "")):
             update_firebase_user(f"users/{user_id}/pass", new_p)
-            st.success("Đổi thành công! Đang đăng xuất để áp dụng...")
+            st.success("Đổi thành công! Đang đăng xuất...")
             time.sleep(1.5)
             st.session_state.clear()
             st.rerun()
         else:
-            st.error("❌ Mật khẩu cũ không chính xác!")
-    st.stop()
+            st.error("❌ Mật khẩu cũ sai!")
+            
+    # Nút chủ động đóng form
+    if c_btn2.button("❌ ĐÓNG", use_container_width=True):
+        st.session_state.show_pass = False
+        st.rerun()
+
+else:
+    # HIỂN THỊ CÁC CHỨC NĂNG CHÍNH
+    if menu == "🛒 Lịch Ecom":
+        try: from views.ecom import render_ecom; render_ecom()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    elif menu == "💰 Quỹ Shop":
+        try: from views.fund import render_fund; render_fund()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    elif menu == "📋 Xem Lịch":
+        try: from views.schedule import render_schedule; render_schedule()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    elif menu == "📈 Theo Dõi KPI":
+        try: from views.kpi import render_kpi; render_kpi()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    elif menu == "📊 Chia Target":
+        try: from views.target import render_target; render_target()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    elif menu == "📍 Thị Trường":
+        try: from views.market import render_market; render_market()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    elif menu == "🤖 AI Tư Vấn":
+        try: from views.ai_chat import render_ai_chat; render_ai_chat()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    elif menu == "👥 Quản Trị Admin":
+        try: from views.admin import render_admin; render_admin()
+        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
 # ==========================================
-# 4. ĐIỀU HƯỚNG VÀO CÁC MODULE CHỨC NĂNG
+# 4. JS TIÊM MÀU GIAO DIỆN SÁNG/TỐI
 # ==========================================
-if menu == "🛒 Lịch Ecom":
-    try: from views.ecom import render_ecom; render_ecom()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-elif menu == "💰 Quỹ Shop":
-    try: from views.fund import render_fund; render_fund()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-elif menu == "📋 Xem Lịch":
-    try: from views.schedule import render_schedule; render_schedule()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-elif menu == "📈 Theo Dõi KPI":
-    try: from views.kpi import render_kpi; render_kpi()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-elif menu == "📊 Chia Target":
-    try: from views.target import render_target; render_target()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-elif menu == "📍 Thị Trường":
-    try: from views.market import render_market; render_market()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-elif menu == "🤖 AI Tư Vấn":
-    try: from views.ai_chat import render_ai_chat; render_ai_chat()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-elif menu == "👥 Quản Trị Admin":
-    try: from views.admin import render_admin; render_admin()
-    except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-
-# ==========================================
-# 5. MÃ LỆNH ĐIỀU KHIỂN GIAO DIỆN & HÌNH NỀN
-# ==========================================
-theme_css = ""
 if st.session_state.theme == "Dark":
-    theme_css = """
-    <style>
-        /* Ép toàn bộ nền thành màu đen và chữ thành màu trắng */
-        .stApp, .main, [data-testid="stHeader"] { background-color: #0e1117 !important; color: #fafafa !important; }
-        [data-testid="stSidebar"] { background-color: #262730 !important; }
-        p, h1, h2, h3, h4, h5, h6, label, span { color: #fafafa !important; }
-        .stTextInput>div>div>input { color: #fafafa !important; background-color: #262730 !important; }
-        .stSelectbox>div>div>div { color: #fafafa !important; background-color: #262730 !important; }
-        .stDataFrame { filter: invert(0.85) hue-rotate(180deg); } /* Làm dịu màu bảng */
-    </style>
-    """
+    components.html("""
+    <script>
+        const doc = window.parent.document;
+        let style = doc.getElementById('hack-dark-mode');
+        if (!style) {
+            style = doc.createElement('style');
+            style.id = 'hack-dark-mode';
+            style.innerHTML = `
+                .stApp, .main, [data-testid="stHeader"] { background-color: #121212 !important; }
+                [data-testid="stSidebar"] { background-color: #1e1e1e !important; }
+                h1, h2, h3, h4, h5, h6, p, span, label, div { color: #fafafa !important; }
+                [data-baseweb="input"] > div, [data-baseweb="select"] > div { background-color: #333 !important; border-color: #555 !important; }
+                input, textarea { color: #fff !important; }
+                .stDataFrame { filter: invert(0.9) hue-rotate(180deg); }
+                .stButton button[kind="primary"] { background-color: #ff4b4b !important; color: white !important; border: none !important; }
+                .stButton button { background-color: #333 !important; color: white !important; border: 1px solid #555 !important; }
+            `;
+            doc.head.appendChild(style);
+        }
+    </script>
+    """, height=0, width=0)
+else:
+    components.html("""
+    <script>
+        const doc = window.parent.document;
+        let style = doc.getElementById('hack-dark-mode');
+        if (style) { style.remove(); }
+    </script>
+    """, height=0, width=0)
 
+# ==========================================
+# 5. HIỂN THỊ HÌNH NỀN
+# ==========================================
 current_bg = u_info.get("bg_image", "")
-bg_css = ""
 if current_bg:
-    bg_css = f"""
+    st.markdown(f"""
     <style>
         .stApp {{
-            background-image: url("data:image/jpeg;base64,{current_bg}");
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center;
+            background-image: url("data:image/jpeg;base64,{current_bg}") !important;
+            background-size: cover !important;
+            background-attachment: fixed !important;
+            background-position: center !important;
         }}
         [data-testid="stSidebar"] {{ background-color: rgba(14, 17, 23, 0.85) !important; }}
         [data-testid="stHeader"] {{ background-color: transparent !important; }}
     </style>
-    """
-
-# Chèn CSS để bắt buộc đổi màu
-st.markdown(theme_css + bg_css, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
