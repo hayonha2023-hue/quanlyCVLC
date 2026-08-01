@@ -83,7 +83,8 @@ def main_layout():
         from views.ecom import render_ecom
         render_ecom()
     elif menu == "💰 Quỹ Shop":
-        st.markdown("<div class='html-card'><h3 class='html-title' style='text-align: left;'>💰 SỔ QUỸ SHOP</h3><p class='html-text' style='text-align: left;'>Khu vực nhập liệu dòng tiền Thu/Chi.</p></div>", unsafe_allow_html=True)
+        from views.fund import render_fund
+        render_fund()
     elif menu == "📋 Xem Lịch":
         st.markdown("<div class='html-card'><h3 class='html-title' style='text-align: left;'>📋 LỊCH TRỰC TUẦN</h3><p class='html-text' style='text-align: left;'>Lịch trực đã được hệ thống phân bổ.</p></div>", unsafe_allow_html=True)
 
