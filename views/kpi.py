@@ -37,9 +37,6 @@ def render_kpi():
     
     tab1, tab2 = st.tabs(["🖼️ BẢNG KPI (ẢNH)", "📊 DỮ LIỆU CHI TIẾT & CẬP NHẬT"])
 
-    # ==========================================
-    # TAB 1: HIỂN THỊ ẢNH KPI
-    # ==========================================
     with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
         kpi_images = db.get("kpi_images", [])
@@ -67,18 +64,14 @@ def render_kpi():
             except Exception as e:
                 st.error(f"⚠️ Lỗi hiển thị ảnh KPI: {e}")
 
-    # ==========================================
-    # TAB 2: DỮ LIỆU SỐ + FORM CẬP NHẬT ĐỒNG BỘ
-    # ==========================================
     with tab2:
         st.markdown("<br>", unsafe_allow_html=True)
         kpi_data = db.get("kpi", {})
         emp_kpi = kpi_data.get("emp", {})
         
         if not emp_kpi:
-            st.info("📌 Chưa có dữ liệu KPI nhân viên. Hãy nhập từ phần mềm Windows trước để tạo cấu trúc.")
+            st.info("📌 Chưa có dữ liệu KPI nhân viên.")
         else:
-            # 1. BẢNG XẾP HẠNG
             sorted_emps = sorted(
                 [(name, data) for name, data in emp_kpi.items() if isinstance(data, dict) and "tgt" in data],
                 key=lambda x: int(x[1].get("sold", 0)), 
@@ -91,8 +84,19 @@ def render_kpi():
             for name, data in sorted_emps:
                 tgt = int(data.get("tgt", 0))
                 sold = int(data.get("sold", 0))
-                short = int(data.get("short", 0))
-                percent = min((sold / tgt * 100) if tgt > 0 else 0, 100)
+                
+                # SỬA LỖI 1: Tính % thật để hiển thị chữ, và % giới hạn (max 100) để vẽ thanh Progress
+                true_percent = (sold / tgt * 100) if tgt > 0 else 0
+                bar_percent = min(int(true_percent), 100)
+                
+                # SỬA LỖI 2: Tính toán lại số Còn nợ / Vượt chỉ tiêu dựa trên số thực tế (Không dùng biến short của app Windows nữa)
+                if sold >= tgt:
+                    vuot = sold - tgt
+                    short_display = f"<span class='stat-val' style='color:#0dcaf0;'>+{vuot:,} (Vượt)</span>"
+                else:
+                    con_thieu = tgt - sold
+                    short_display = f"<span class='stat-val' style='color:#dc3545;'>{con_thieu:,}</span>"
+                
                 medal = "🥇" if idx == 0 else "🥈" if idx == 1 else "🥉" if idx == 2 else "👤"
                 
                 with cols[idx % 3]:
@@ -101,16 +105,15 @@ def render_kpi():
                         <div class='kpi-name'>{medal} {name}</div>
                         <div class='stat-row'><span>Chỉ tiêu:</span> <span class='stat-val' style='color:#6c757d;'>{tgt:,}</span></div>
                         <div class='stat-row'><span>Đã đạt:</span> <span class='stat-val' style='color:#198754;'>{sold:,}</span></div>
-                        <div class='stat-row'><span>Còn thiếu:</span> <span class='stat-val' style='color:#dc3545;'>{short:,}</span></div>
+                        <div class='stat-row'><span>Còn thiếu:</span> {short_display}</div>
                     </div>
                     """, unsafe_allow_html=True)
-                    st.progress(int(percent), text=f"Hoàn thành: {percent:.1f}%")
+                    # Hiển thị % thật cho người dùng, vẽ thanh max 100
+                    st.progress(bar_percent, text=f"Hoàn thành: {true_percent:.1f}%")
                 idx += 1
 
             st.markdown("<hr>", unsafe_allow_html=True)
             
-            # 2. FORM CẬP NHẬT TỰ ĐỒNG BỘ (ĐÃ KHÓA BẢO MẬT)
-            # 🔴 Đặt rào chắn: Chỉ tài khoản "admin" mới được nhìn thấy và sử dụng Form này
             if st.session_state.current_user == "admin":
                 st.markdown("#### 🔄 CẬP NHẬT SỐ LIỆU KPI (Quyền Admin)")
                 
@@ -130,10 +133,12 @@ def render_kpi():
                     submit_kpi = st.form_submit_button("💾 LƯU & ĐỒNG BỘ LÊN CLOUD", type="primary", use_container_width=True)
                     
                     if submit_kpi:
-                        new_short = new_tgt - new_sold
+                        # Giữ nguyên cấu trúc logic tính short (Target - Base) để tránh lỗi với app Windows
+                        base = int(emp_kpi[nv_chon].get("base", 0))
+                        
                         emp_kpi[nv_chon]["sold"] = new_sold
                         emp_kpi[nv_chon]["tgt"] = new_tgt
-                        emp_kpi[nv_chon]["short"] = new_short
+                        emp_kpi[nv_chon]["short"] = new_tgt - base
                         
                         kpi_data["emp"] = emp_kpi
                         
