@@ -6,16 +6,13 @@ import time
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
-# ĐÃ FIX: Hàm xử lý số thông minh, không bị nhân bản số thập phân
 def s_float(val):
     if val is None or str(val).strip() == "": return 0.0
     if isinstance(val, (int, float)): return float(val)
     s = str(val).strip()
     try:
-        # Ưu tiên đọc theo chuẩn quốc tế (nếu là số thập phân thực sự)
         return float(s)
     except ValueError:
-        # Nếu đọc lỗi (do người dùng gõ 1.500.000 có dấu chấm hàng nghìn), mới xóa dấu chấm
         try: return float(s.replace('.', '').replace(',', ''))
         except: return 0.0
     
@@ -80,16 +77,25 @@ def render_target():
     dt_cfg = dt_data.get("config", {})
     dt_mts = dt_data.get("metrics", {})
 
-    # ĐÃ FIX: Nhận diện chuẩn xác quyền Admin để hiện Bảng Form Nhập liệu
-    current_user = st.session_state.get("current_user", st.session_state.get("user", ""))
+    # ==========================================
+    # ĐÃ FIX BỌC THÉP: KIỂM TRA QUYỀN ADMIN CHUẨN XÁC
+    # ==========================================
+    current_user = st.session_state.get("user", "")
+    
+    # Lấy cờ trạng thái Admin từ RAM (do lúc đăng nhập gán)
+    is_sys_admin = st.session_state.get("is_admin", False)
+    is_sys_super = st.session_state.get("is_super_admin", False)
+    
+    # Lấy thông tin từ Database
     u_info = full_db.get("users", {}).get(current_user, {})
+    user_role = u_info.get("role", "")
     edit_perms = u_info.get("edit_permissions", [])
     
-    can_edit = (current_user == "admin") or ("TÍNH TARGET" in edit_perms)
+    # Bắt bằng được mọi loại Admin + Quyền chỉnh sửa
+    can_edit = (is_sys_admin) or (is_sys_super) or (current_user == "admin") or (user_role == "admin") or ("TÍNH TARGET" in edit_perms)
 
     live_mts = {}
     
-    # NẾU CÓ QUYỀN: HIỂN THỊ KHU VỰC NHẬP LIỆU
     if can_edit:
         st.markdown("<h5 style='color:#0ea5e9; font-weight: bold;'>⚙️ BẢNG NHẬP LIỆU TÙY CHỈNH (Nảy số tự động)</h5>", unsafe_allow_html=True)
         
@@ -183,7 +189,6 @@ def render_target():
             if pc1 + pc2 != 100:
                 st.error("❌ Tổng tỷ lệ 2 ca phải bằng 100%!")
             else:
-                # Đảm bảo lưu dưới dạng chuỗi float thuần chuẩn để không bị lỗi khi parse lại
                 fmt = lambda x: f"{int(x)}" if float(x).is_integer() else str(float(x))
                 new_config = {"nv": fmt(nv), "vac": fmt(vac), "vac_chk": vac_chk, "nc": fmt(nc), "pc1": fmt(pc1), "ng1": fmt(ng1), "pc2": fmt(pc2), "ng2": fmt(ng2)}
                 save_mts = {}
@@ -208,7 +213,6 @@ def render_target():
                 st.rerun()
 
     else:
-        # NẾU KHÔNG CÓ QUYỀN (CHỈ LÀ NHÂN VIÊN XEM): LẤY DỮ LIỆU ĐÃ LƯU
         nv = s_float(dt_cfg.get("nv", 1))
         pc1 = s_float(dt_cfg.get("pc1", 45))
         ng1 = s_float(dt_cfg.get("ng1", 1))
@@ -223,7 +227,7 @@ def render_target():
             }
 
     # ==========================================
-    # 2. KHU VỰC HIỂN THỊ BẢNG KẾT QUẢ CHO TẤT CẢ MỌI NGƯỜI
+    # KHU VỰC HIỂN THỊ KẾT QUẢ CHO TẤT CẢ MỌI NGƯỜI
     # ==========================================
     st.markdown("<br><b>📊 KẾT QUẢ PHÂN BỔ (Tự động cập nhật nhảy số)</b>", unsafe_allow_html=True)
     t1, t2 = st.tabs(["👤 BẢNG CÁ NHÂN", "🏪 BẢNG CA TRỰC"])
