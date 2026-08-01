@@ -18,6 +18,7 @@ def fmt_dot(val):
     return f"{v:,.1f}".replace(",", ".")
 
 def update_kpi_db(shop_id, user_kpi, data):
+    # Khi lưu mới sẽ tự động lưu vào nhánh hiện tại
     path = f"kpi/{shop_id}/{user_kpi}"
     try:
         requests.patch(f"{FIREBASE_URL.replace('.json', '')}/{path}.json", json=data)
@@ -28,7 +29,7 @@ def render_kpi():
     st.markdown("<h3 style='margin-top: 0px; margin-bottom: 5px; font-weight:800;'>📈 THEO DÕI & CẬP NHẬT KPI</h3>", unsafe_allow_html=True)
     st.markdown("<p style='margin-bottom: 25px; color: #d1d5db;'>Xem tiến độ và đồng bộ số liệu chạy số thời gian thực</p>", unsafe_allow_html=True)
     
-    # Giữ nguyên code tự động nảy dấu chấm phẩy khi gõ tiền
+    # Mã JavaScript giúp tự động nảy dấu chấm khi gõ tiền (VD: 1.000.000)
     components.html("""
     <script>
     const doc = window.parent.document;
@@ -62,21 +63,50 @@ def render_kpi():
     </script>
     """, height=0, width=0)
 
-    full_db = st.session_state.get("db", {})
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
     
     # ==========================================
-    # FIX LỖI TÀNG HÌNH: Đọc thẳng tên nhân viên từ kho dữ liệu KPI 
+    # MẮT THẦN QUÉT LIVE DỮ LIỆU TỪ MỌI NHÁNH (CHỐNG MẤT DỮ LIỆU CŨ)
     # ==========================================
-    kpi_data = full_db.get("kpi", {}).get(shop_id, {})
-    kpi_users = list(kpi_data.keys()) # Sẽ lấy được chính xác các tên NGỌC, HOÀNG, AN...
+    kpi_merged = {}
+    try:
+        # Kéo trực tiếp dữ liệu Live từ kho Firebase
+        r = requests.get(f"{FIREBASE_URL.replace('.json', '')}/kpi.json")
+        if r.status_code == 200:
+            live_kpi = r.json() or {}
+            if isinstance(live_kpi, dict):
+                for k, v in live_kpi.items():
+                    if isinstance(v, dict):
+                        if "target" in v: # Dữ liệu cũ bị kẹt ở gốc
+                            kpi_merged[k] = v
+                        else: # Dữ liệu phân theo nhánh shop
+                            for sub_k, sub_v in v.items():
+                                if isinstance(sub_v, dict) and "target" in sub_v:
+                                    # Ưu tiên lấy số liệu mới nhất của nhánh đang đứng nếu có người trùng tên
+                                    if sub_k not in kpi_merged or k == shop_id:
+                                        kpi_merged[sub_k] = sub_v
+    except:
+        pass
     
+    # Nếu rớt mạng hoặc Firebase phản hồi chậm, dùng RAM dự phòng
+    if not kpi_merged:
+        full_db = st.session_state.get("db", {})
+        db_kpi = full_db.get("kpi", {})
+        if isinstance(db_kpi, dict):
+            for k, v in db_kpi.items():
+                if isinstance(v, dict):
+                    if "target" in v: kpi_merged[k] = v
+                    else:
+                        for sub_k, sub_v in v.items():
+                            if isinstance(sub_v, dict) and "target" in sub_v:
+                                if sub_k not in kpi_merged or k == shop_id:
+                                    kpi_merged[sub_k] = sub_v
+
+    kpi_users = list(kpi_merged.keys())
+    kpi_users.sort()
+    
+    full_db = st.session_state.get("db", {})
     users = full_db.get("users", {})
-    db_users = [u for u, info in users.items() if info.get("shop_id", "Shop Chính (Mặc định)") == shop_id and u.lower() != "admin"]
-    
-    # Gộp tất cả tùy chọn tên để hiển thị ở Dropdown
-    all_options = list(set(kpi_users + db_users))
-    all_options.sort()
     
     current_user = st.session_state.get("current_user", "")
     u_info = users.get(current_user, {})
@@ -95,8 +125,8 @@ def render_kpi():
             medals = ["🥇", "🥈", "🥉"]
             
             user_metrics = []
-            for u in kpi_users: # Chỉ vẽ thẻ Card cho những người có dữ liệu KPI (NGỌC, HOÀNG...)
-                u_kpi = kpi_data.get(u, {})
+            for u in kpi_users: 
+                u_kpi = kpi_merged.get(u, {})
                 t_val = s_float(u_kpi.get("target", 0))
                 d_val = s_float(u_kpi.get("debt", 0))
                 a_val = s_float(u_kpi.get("achieved", 0))
@@ -150,8 +180,12 @@ def render_kpi():
         st.markdown("<br>", unsafe_allow_html=True)
         if can_edit:
             st.markdown("#### ⚙️ CẬP NHẬT SỐ LIỆU NHÂN VIÊN")
+            
+            db_users = [u for u in users.keys() if u.lower() != "admin"]
+            all_options = list(set(kpi_users + db_users))
+            all_options.sort()
+            
             c_sel, c_new = st.columns(2)
-            # Khung chọn thông minh: Cho phép chọn tên có sẵn hoặc nhập hẳn tên mới
             selected_user_dd = c_sel.selectbox("👤 Chọn Nhân Viên để sửa", ["-- Thêm nhân viên mới (Gõ tay) --"] + all_options)
             
             if selected_user_dd == "-- Thêm nhân viên mới (Gõ tay) --":
@@ -160,14 +194,14 @@ def render_kpi():
                 selected_user = selected_user_dd
             
             if selected_user and selected_user.strip() != "":
-                u_kpi = kpi_data.get(selected_user, {})
+                u_kpi = kpi_merged.get(selected_user, {})
                 c1, c2, c3 = st.columns(3)
                 
                 target = c1.text_input("🎯 Mục tiêu tháng này", value=fmt_dot(u_kpi.get("target", 0)), placeholder="Mục tiêu...")
                 debt = c2.text_input("⚠️ Nợ tháng trước", value=fmt_dot(u_kpi.get("debt", 0)), placeholder="Nợ...")
                 achieved = c3.text_input("✅ Đã đạt (Thực tế)", value=fmt_dot(u_kpi.get("achieved", 0)), placeholder="Đã đạt...")
                 
-                if st.button("💾 LƯU DỮ LIỆU", type="primary", use_container_width=True):
+                if st.button("💾 LƯU DỮ LIỆU KPI", type="primary", use_container_width=True):
                     t_val, d_val, a_val = s_float(target), s_float(debt), s_float(achieved)
                     update_kpi_db(shop_id, selected_user, {"target": t_val, "debt": d_val, "achieved": a_val})
                     
@@ -175,12 +209,12 @@ def render_kpi():
                     if shop_id not in st.session_state.db["kpi"]: st.session_state.db["kpi"][shop_id] = {}
                     st.session_state.db["kpi"][shop_id][selected_user] = {"target": t_val, "debt": d_val, "achieved": a_val}
                     
-                    st.success(f"Đã cập nhật dữ liệu cho {selected_user}!"); time.sleep(1); st.rerun()
+                    st.success(f"Đã cập nhật dữ liệu cho {selected_user} vào chi nhánh {shop_id}!"); time.sleep(1); st.rerun()
                     
         st.markdown("#### 📋 BẢNG CHỮ TỔNG HỢP (DÙNG ĐỂ COPY/PASTE)")
         df_list = []
         for u in kpi_users:
-            u_kpi = kpi_data.get(u, {})
+            u_kpi = kpi_merged.get(u, {})
             t_val = s_float(u_kpi.get("target", 0))
             d_val = s_float(u_kpi.get("debt", 0))
             a_val = s_float(u_kpi.get("achieved", 0))
