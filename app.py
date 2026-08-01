@@ -196,53 +196,67 @@ else:
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
 # ==========================================
-# 4. CSS ĐIỀU KHIỂN GIAO DIỆN (CHỐNG LỖI MẤT CHỮ 100%)
+# 4. CSS ĐIỀU KHIỂN GIAO DIỆN SÁNG/TỐI (ĐÃ FIX TÀNG HÌNH CHỮ)
 # ==========================================
 current_bg = u_info.get("bg_image", "")
 
-if st.session_state.theme == "Dark":
+if st.session_state.theme == "Dark" or current_bg:
     bg_sidebar = "rgba(14, 17, 23, 0.85)" if current_bg else "#262730"
     bg_main = "rgba(0, 0, 0, 0.65)" if current_bg else "#0e1117"
     text_global = "#ffffff"
-    btn_bg = "#333333"
+    btn_bg = "rgba(255, 255, 255, 0.1)" if current_bg else "#333333"
     btn_text = "#ffffff"
 else:
-    bg_sidebar = "rgba(255, 255, 255, 0.9)" if current_bg else "#f0f2f6"
-    bg_main = "rgba(255, 255, 255, 0.85)" if current_bg else "#ffffff"
-    text_global = "#000000"
+    bg_sidebar = "#f0f2f6"
+    bg_main = "#ffffff"
+    text_global = "#111827"
     btn_bg = "#ffffff"
-    btn_text = "#000000"
+    btn_text = "#111827"
 
 css = f"""
 <style>
-    /* 1. MÀU CHỮ CƠ BẢN DỰA THEO THEME (KHÔNG DÙNG !IMPORTANT CẤP THẤP) */
-    .stMarkdown p, .stMarkdown span, .stMarkdown li, label {{
-        color: {text_global};
+    /* 1. MÀU CHỮ CHO TOÀN BỘ CÁC THÀNH PHẦN THANH MENU BÊN TRÁI */
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] span, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3 {{
+        color: {text_global} !important;
     }}
+    [data-testid="stSidebar"] {{ background-color: {bg_sidebar} !important; }}
+    
+    /* 2. MÀU CHỮ CHO CÁC TAB TIÊU ĐỀ, FORM VÀ TEXT CƠ BẢN */
+    [data-testid="stTabs"] button p,
+    [data-testid="stTabs"] button span,
+    .stMarkdown p, 
+    .stMarkdown li,
+    label p, 
     h1, h2, h3, h4, h5, h6 {{
         color: {text_global} !important;
     }}
     
-    /* 2. CHỈNH MÀU NỀN MENU TRÁI */
-    [data-testid="stSidebar"] {{ background-color: {bg_sidebar} !important; }}
-    
-    /* 3. FIX LỖI TÀNG HÌNH NÚT BẤM MENU */
+    /* 3. NÚT BẤM CÀI ĐẶT */
     .stButton > button {{
         background-color: {btn_bg} !important;
         color: {btn_text} !important;
         border: 1px solid rgba(150, 150, 150, 0.4) !important;
     }}
-    .stButton > button * {{
+    .stButton > button p, .stButton > button span {{
         color: {btn_text} !important;
     }}
     
-    /* 4. ÁO GIÁP CHO CÁC KHUNG LỊCH NỀN TRẮNG (ÉP BẮT BUỘC CHỮ ĐEN) */
-    /* Chữ 'i' giúp mã tìm kiếm bỏ qua việc viết hoa/viết thường */
-    [style*="background: white" i] *,
-    [style*="background-color: white" i] *,
-    [style*="background: #fff" i] *,
-    [style*="background-color: #fff" i] * {{
-        color: #000000 !important;
+    /* 4. LỚP BỌC THÉP CHO BẢNG LỊCH TRỰC NỀN TRẮNG (VÀ CÁC THẺ TRẮNG KHÁC) */
+    /* Phải để ở dưới cùng để ghi đè các luật màu trắng ở trên, nhưng tuyệt đối không ép thẻ SPAN để giữ màu chữ "Ca Chiều" (Đỏ) / "Ca Sáng" (Xanh) */
+    [style*="background-color: white" i] p,
+    [style*="background-color: white" i] div,
+    [style*="background: white" i] p,
+    [style*="background: white" i] div,
+    [style*="background-color: #fff" i] p,
+    [style*="background-color: #fff" i] div,
+    [style*="background-color: #ffffff" i] p,
+    [style*="background-color: #ffffff" i] div {{
+        color: #111827 !important;
     }}
 """
 
