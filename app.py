@@ -81,7 +81,6 @@ if "show_bg" not in st.session_state: st.session_state.show_bg = False
 if "show_pass" not in st.session_state: st.session_state.show_pass = False
 if "theme" not in st.session_state: st.session_state.theme = "Light"
 
-# Hàm mồi: Tự động đóng cài đặt khi bấm vào các chức năng trên Menu
 def close_settings_panels():
     st.session_state.show_bg = False
     st.session_state.show_pass = False
@@ -95,7 +94,6 @@ with st.sidebar:
     st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
     
     menu_options = ["🛒 Lịch Ecom", "💰 Quỹ Shop", "📋 Xem Lịch", "📈 Theo Dõi KPI", "📊 Chia Target", "📍 Thị Trường", "🤖 AI Tư Vấn", "👥 Quản Trị Admin"]
-    # Đã nối dây: Bấm chọn menu là kích hoạt hàm đóng cài đặt
     menu = st.radio("MAIN MENU", menu_options, label_visibility="collapsed", on_change=close_settings_panels)
     
     st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1); margin: 10px 0px;'>", unsafe_allow_html=True)
@@ -118,7 +116,7 @@ with st.sidebar:
         st.rerun()
 
 # ==========================================
-# 3. ĐIỀU HƯỚNG CHÍNH MÀN HÌNH (ĐÃ GỠ LỖI BỊ KẸT FORM)
+# 3. ĐIỀU HƯỚNG CHÍNH MÀN HÌNH
 # ==========================================
 if st.session_state.show_bg:
     st.info("🖼️ ĐỔI HÌNH NỀN CÁ NHÂN (Tự động áp dụng sau khi tải xong)")
@@ -147,7 +145,6 @@ if st.session_state.show_bg:
             st.session_state.show_bg = False
             st.success("Đã xóa nền!"); time.sleep(1); st.rerun()
             
-    # Nút chủ động đóng form
     if c_bg3.button("❌ ĐÓNG CÀI ĐẶT", use_container_width=True):
         st.session_state.show_bg = False
         st.rerun()
@@ -169,13 +166,11 @@ elif st.session_state.show_pass:
         else:
             st.error("❌ Mật khẩu cũ sai!")
             
-    # Nút chủ động đóng form
     if c_btn2.button("❌ ĐÓNG", use_container_width=True):
         st.session_state.show_pass = False
         st.rerun()
 
 else:
-    # HIỂN THỊ CÁC CHỨC NĂNG CHÍNH
     if menu == "🛒 Lịch Ecom":
         try: from views.ecom import render_ecom; render_ecom()
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
@@ -202,7 +197,7 @@ else:
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
 # ==========================================
-# 4. JS TIÊM MÀU GIAO DIỆN SÁNG/TỐI
+# 4. JS TIÊM MÀU GIAO DIỆN SÁNG/TỐI 
 # ==========================================
 if st.session_state.theme == "Dark":
     components.html("""
@@ -218,7 +213,6 @@ if st.session_state.theme == "Dark":
                 h1, h2, h3, h4, h5, h6, p, span, label, div { color: #fafafa !important; }
                 [data-baseweb="input"] > div, [data-baseweb="select"] > div { background-color: #333 !important; border-color: #555 !important; }
                 input, textarea { color: #fff !important; }
-                .stDataFrame { filter: invert(0.9) hue-rotate(180deg); }
                 .stButton button[kind="primary"] { background-color: #ff4b4b !important; color: white !important; border: none !important; }
                 .stButton button { background-color: #333 !important; color: white !important; border: 1px solid #555 !important; }
             `;
@@ -236,7 +230,7 @@ else:
     """, height=0, width=0)
 
 # ==========================================
-# 5. HIỂN THỊ HÌNH NỀN
+# 5. HIỂN THỊ HÌNH NỀN & LỚP KÍNH MỜ
 # ==========================================
 current_bg = u_info.get("bg_image", "")
 if current_bg:
@@ -250,5 +244,14 @@ if current_bg:
         }}
         [data-testid="stSidebar"] {{ background-color: rgba(14, 17, 23, 0.85) !important; }}
         [data-testid="stHeader"] {{ background-color: transparent !important; }}
+        
+        /* Đã fix: Bổ sung lớp kính mờ màu đen lót dưới bảng dữ liệu để chữ trắng nổi bật lên */
+        div.block-container {{
+            background-color: rgba(0, 0, 0, 0.6) !important;
+            border-radius: 15px;
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }}
     </style>
     """, unsafe_allow_html=True)
