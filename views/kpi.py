@@ -18,18 +18,15 @@ def fmt_dot(val):
     return f"{v:,.1f}".replace(",", ".")
 
 def update_kpi_db(shop_id, user_kpi, data):
-    # Khi lưu mới sẽ tự động lưu vào nhánh hiện tại
     path = f"kpi/{shop_id}/{user_kpi}"
     try:
         requests.patch(f"{FIREBASE_URL.replace('.json', '')}/{path}.json", json=data)
-    except Exception as e:
-        st.error(f"Lỗi đồng bộ: {e}")
+    except: pass
 
 def render_kpi():
     st.markdown("<h3 style='margin-top: 0px; margin-bottom: 5px; font-weight:800;'>📈 THEO DÕI & CẬP NHẬT KPI</h3>", unsafe_allow_html=True)
     st.markdown("<p style='margin-bottom: 25px; color: #d1d5db;'>Xem tiến độ và đồng bộ số liệu chạy số thời gian thực</p>", unsafe_allow_html=True)
     
-    # Mã JavaScript giúp tự động nảy dấu chấm khi gõ tiền (VD: 1.000.000)
     components.html("""
     <script>
     const doc = window.parent.document;
@@ -65,49 +62,50 @@ def render_kpi():
 
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
     
+    # Ép hệ thống kéo dữ liệu TƯƠI SỐNG nhất từ Firebase về để quét
+    full_db = st.session_state.get("db", {})
+    try:
+        r = requests.get(FIREBASE_URL)
+        if r.status_code == 200:
+            fresh_db = r.json() or {}
+            if isinstance(fresh_db, dict):
+                full_db = fresh_db
+                st.session_state.db = full_db
+    except: pass
+    
     # ==========================================
-    # MẮT THẦN QUÉT LIVE DỮ LIỆU TỪ MỌI NHÁNH (CHỐNG MẤT DỮ LIỆU CŨ)
+    # THUẬT TOÁN "MÁY HÚT DỮ LIỆU" - VÉT SẠCH MỌI NGÓC NGÁCH
     # ==========================================
     kpi_merged = {}
-    try:
-        # Kéo trực tiếp dữ liệu Live từ kho Firebase
-        r = requests.get(f"{FIREBASE_URL.replace('.json', '')}/kpi.json")
-        if r.status_code == 200:
-            live_kpi = r.json() or {}
-            if isinstance(live_kpi, dict):
-                for k, v in live_kpi.items():
-                    if isinstance(v, dict):
-                        if "target" in v: # Dữ liệu cũ bị kẹt ở gốc
-                            kpi_merged[k] = v
-                        else: # Dữ liệu phân theo nhánh shop
-                            for sub_k, sub_v in v.items():
-                                if isinstance(sub_v, dict) and "target" in sub_v:
-                                    # Ưu tiên lấy số liệu mới nhất của nhánh đang đứng nếu có người trùng tên
-                                    if sub_k not in kpi_merged or k == shop_id:
-                                        kpi_merged[sub_k] = sub_v
-    except:
-        pass
     
-    # Nếu rớt mạng hoặc Firebase phản hồi chậm, dùng RAM dự phòng
-    if not kpi_merged:
-        full_db = st.session_state.get("db", {})
-        db_kpi = full_db.get("kpi", {})
-        if isinstance(db_kpi, dict):
-            for k, v in db_kpi.items():
-                if isinstance(v, dict):
-                    if "target" in v: kpi_merged[k] = v
-                    else:
-                        for sub_k, sub_v in v.items():
-                            if isinstance(sub_v, dict) and "target" in sub_v:
-                                if sub_k not in kpi_merged or k == shop_id:
-                                    kpi_merged[sub_k] = sub_v
+    # 1. Đi càn quét tìm tất cả những hồ sơ có chữ "target", "achieved", "debt"
+    def hunt_kpi(node):
+        if isinstance(node, dict):
+            if "target" in node and "achieved" in node and "debt" in node:
+                return True
+            for k, v in node.items():
+                if hunt_kpi(v):
+                    # Tìm thấy dữ liệu cũ, nhặt bỏ vào giỏ
+                    if k not in kpi_merged:
+                        kpi_merged[k] = v
+        elif isinstance(node, list):
+            for item in node:
+                hunt_kpi(item)
+        return False
+        
+    hunt_kpi(full_db)
+    
+    # 2. Ghi đè ưu tiên bằng dữ liệu của nhánh hiện tại (nếu nhân viên vừa được cập nhật mới ở nhánh này)
+    shop_kpi = full_db.get("kpi", {}).get(shop_id, {})
+    if isinstance(shop_kpi, dict):
+        for k, v in shop_kpi.items():
+            if isinstance(v, dict) and "target" in v:
+                kpi_merged[k] = v
 
     kpi_users = list(kpi_merged.keys())
     kpi_users.sort()
     
-    full_db = st.session_state.get("db", {})
     users = full_db.get("users", {})
-    
     current_user = st.session_state.get("current_user", "")
     u_info = users.get(current_user, {})
     user_role = u_info.get("role", "")
@@ -137,7 +135,7 @@ def render_kpi():
                 surpassed = a_val - total_target if a_val > total_target else 0
                 
                 user_metrics.append({
-                    "name": u.upper(), "target": t_val, "debt": d_val, "total_target": total_target,
+                    "name": str(u).upper(), "target": t_val, "debt": d_val, "total_target": total_target,
                     "achieved": a_val, "percent": percent, "missing": missing, "surpassed": surpassed
                 })
             
@@ -224,7 +222,7 @@ def render_kpi():
             surpassed = a_val - total_target if a_val > total_target else 0
             
             df_list.append({
-                "👤 Tên": u.upper(),
+                "👤 Tên": str(u).upper(),
                 "🎯 Mục Tiêu": fmt_dot(t_val),
                 "⚠️ Nợ Cũ": fmt_dot(d_val),
                 "📌 Tổng MT": fmt_dot(total_target),
