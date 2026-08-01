@@ -50,7 +50,7 @@ def main_layout():
         st.markdown(f"### 👤 {st.session_state.current_user.upper()}")
         st.markdown(f"📍 **{st.session_state.current_shop}**")
         st.markdown("---")
-        menu = st.radio("MAIN MENU", ["🛒 Lịch Ecom", "💰 Quỹ Shop", "📋 Xem Lịch", "📈 Theo Dõi KPI", "📊 Chia Target", "📍 Thị Trường", "🤖 AI Tư Vấn"])
+        menu = st.radio("MAIN MENU", ["🛒 Lịch Ecom", "💰 Quỹ Shop", "📋 Xem Lịch", "📈 Theo Dõi KPI", "📊 Chia Target", "📍 Thị Trường", "🤖 AI Tư Vấn", "👥 Quản Trị Admin"])
         st.markdown("---")
         if st.button("👋 Đăng xuất", use_container_width=True):
             st.session_state.current_user = None
@@ -77,6 +77,9 @@ def main_layout():
     elif menu == "🤖 AI Tư Vấn":
         from views.ai_chat import render_ai_chat
         render_ai_chat()
+    elif menu == "👥 Quản Trị Admin":
+        from views.admin import render_admin
+        render_admin()
 
 if st.session_state.current_user is None:
     login_layout()
