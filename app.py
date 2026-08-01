@@ -196,44 +196,56 @@ else:
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
 # ==========================================
-# 4. CSS ĐIỀU KHIỂN GIAO DIỆN SÁNG/TỐI (BỌC THÉP CHỐNG LỖI)
+# 4. CSS ĐIỀU KHIỂN GIAO DIỆN (CHỐNG LỖI MẤT CHỮ 100%)
 # ==========================================
 current_bg = u_info.get("bg_image", "")
 
-# Thiết lập mã màu nền và chữ theo Theme
 if st.session_state.theme == "Dark":
     bg_sidebar = "rgba(14, 17, 23, 0.85)" if current_bg else "#262730"
     bg_main = "rgba(0, 0, 0, 0.65)" if current_bg else "#0e1117"
-    text_color = "#fafafa"
+    text_global = "#ffffff"
+    btn_bg = "#333333"
+    btn_text = "#ffffff"
 else:
     bg_sidebar = "rgba(255, 255, 255, 0.9)" if current_bg else "#f0f2f6"
     bg_main = "rgba(255, 255, 255, 0.85)" if current_bg else "#ffffff"
-    text_color = "#111827"
+    text_global = "#000000"
+    btn_bg = "#ffffff"
+    btn_text = "#000000"
 
 css = f"""
 <style>
-    /* Chỉnh màu chữ tổng thể */
-    .stApp, .main, [data-testid="stSidebar"], div.block-container {{ color: {text_color} !important; }}
-    p, span, label, h1, h2, h3, h4, h5, h6 {{ color: {text_color} !important; }}
+    /* 1. MÀU CHỮ CƠ BẢN DỰA THEO THEME (KHÔNG DÙNG !IMPORTANT CẤP THẤP) */
+    .stMarkdown p, .stMarkdown span, .stMarkdown li, label {{
+        color: {text_global};
+    }}
+    h1, h2, h3, h4, h5, h6 {{
+        color: {text_global} !important;
+    }}
     
-    /* Chỉnh màu nền Menu */
+    /* 2. CHỈNH MÀU NỀN MENU TRÁI */
     [data-testid="stSidebar"] {{ background-color: {bg_sidebar} !important; }}
     
-    /* 🛡️ ÁO GIÁP BẢO VỆ CARDS MÀU TRẮNG TRONG LỊCH TRỰC 🛡️ */
-    /* Nếu phát hiện thẻ nào có background màu trắng, ép toàn bộ chữ bên trong thành màu đen */
-    div[style*="background-color: white"], div[style*="background: white"],
-    div[style*="background-color: #fff"], div[style*="background: #fff"],
-    div[style*="background-color: #ffffff"], div[style*="background: #ffffff"] {{
-        color: #111827 !important; 
+    /* 3. FIX LỖI TÀNG HÌNH NÚT BẤM MENU */
+    .stButton > button {{
+        background-color: {btn_bg} !important;
+        color: {btn_text} !important;
+        border: 1px solid rgba(150, 150, 150, 0.4) !important;
     }}
-    div[style*="background-color: white"] *, div[style*="background: white"] *,
-    div[style*="background-color: #fff"] *, div[style*="background: #fff"] *,
-    div[style*="background-color: #ffffff"] *, div[style*="background: #ffffff"] * {{
-        color: #111827 !important;
+    .stButton > button * {{
+        color: {btn_text} !important;
+    }}
+    
+    /* 4. ÁO GIÁP CHO CÁC KHUNG LỊCH NỀN TRẮNG (ÉP BẮT BUỘC CHỮ ĐEN) */
+    /* Chữ 'i' giúp mã tìm kiếm bỏ qua việc viết hoa/viết thường */
+    [style*="background: white" i] *,
+    [style*="background-color: white" i] *,
+    [style*="background: #fff" i] *,
+    [style*="background-color: #fff" i] * {{
+        color: #000000 !important;
     }}
 """
 
-# Hiển thị ảnh nền (Nếu có)
 if current_bg:
     css += f"""
     .stApp {{
@@ -244,7 +256,7 @@ if current_bg:
     }}
     [data-testid="stHeader"] {{ background-color: transparent !important; }}
     
-    /* Kính mờ lót dưới nội dung */
+    /* Lớp kính mờ lót dưới */
     div.block-container {{
         background-color: {bg_main} !important;
         border-radius: 15px; padding: 2rem !important;
@@ -252,7 +264,6 @@ if current_bg:
     }}
     """
 else:
-    # Nếu không có ảnh nền, dùng màu trơn
     bg_solid = "#0e1117" if st.session_state.theme == "Dark" else "#ffffff"
     css += f"""
     .stApp, .main, [data-testid="stHeader"] {{ background-color: {bg_solid} !important; }}
