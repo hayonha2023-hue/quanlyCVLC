@@ -1,6 +1,9 @@
 import streamlit as st
 import base64
 
+# Đã khóa mục tiêu đúng tên ngăn tủ của bạn!
+TEXT_SCHEDULE_KEY = "detailed_history" 
+
 def render_schedule():
     st.markdown("""
     <div class='html-card'>
@@ -15,22 +18,26 @@ def render_schedule():
     # PHẦN 1: HIỂN THỊ CA TRỰC BẰNG CHỮ (TEXT)
     # ==========================================
     if shop_id == "Shop Chính (Mặc định)":
-        schedule_text = st.session_state.db.get("schedule", {})
+        schedule_text = st.session_state.db.get(TEXT_SCHEDULE_KEY, {})
     else:
-        schedule_text = st.session_state.db.get("shops", {}).get(shop_id, {}).get("schedule", {})
+        schedule_text = st.session_state.db.get("shops", {}).get(shop_id, {}).get(TEXT_SCHEDULE_KEY, {})
 
     st.markdown("#### 📅 PHÂN BỔ CA TRỰC CHI TIẾT")
     if not schedule_text:
-        st.info("📌 Chưa có dữ liệu phân bổ ca trực bằng chữ cho tuần này.")
+        st.info("📌 Hệ thống đang trống lịch trực tuần này.")
     else:
-        days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
-        for day in days:
-            if day in schedule_text:
+        if isinstance(schedule_text, dict):
+            for day, ca_truc in schedule_text.items():
+                # Tạo các thẻ mở rộng cho từng ngày (06-07 - Monday...)
                 with st.expander(f"📌 {day}", expanded=True):
-                    ca_truc = schedule_text[day]
                     if isinstance(ca_truc, dict):
                         for ca, nhan_vien in ca_truc.items():
-                            st.markdown(f"- **{ca}:** {nhan_vien}")
+                            # Xóa dấu ngoặc vuông [], ghép tên bằng dấu phẩy cho đẹp
+                            if isinstance(nhan_vien, list):
+                                nhan_vien_str = ", ".join(nhan_vien)
+                            else:
+                                nhan_vien_str = str(nhan_vien)
+                            st.markdown(f"- **Ca {ca}:** {nhan_vien_str}")
                     else:
                         st.markdown(f"{ca_truc}")
                         
@@ -51,13 +58,10 @@ def render_schedule():
 
     try:
         base64_str = ""
-        # Xử lý nếu là dạng Danh sách (List)
         if isinstance(schedule_images, list):
             valid_images = [img for img in schedule_images if img]
             if valid_images:
                 base64_str = valid_images[-1]
-                
-        # Xử lý nếu là dạng Từ điển (Dict)
         elif isinstance(schedule_images, dict):
             sorted_keys = sorted(schedule_images.keys(), reverse=True)
             if sorted_keys:
@@ -66,13 +70,11 @@ def render_schedule():
         if not base64_str:
             return
 
-        # Xóa tiền tố nếu có
         if "," in base64_str:
             base64_str = base64_str.split(",")[1]
             
-        # Dịch ngược và hiển thị
         image_bytes = base64.b64decode(base64_str)
         st.image(image_bytes, use_container_width=True, caption="Ảnh Lịch Trực Mới Nhất")
             
     except Exception as e:
-        st.error(f"⚠️ Lỗi hiển thị ảnh lịch: {e}. Vui lòng kiểm tra lại định dạng ảnh trên App Windows.")
+        st.error(f"⚠️ Lỗi hiển thị ảnh lịch: {e}")
