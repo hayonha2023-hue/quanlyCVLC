@@ -196,26 +196,27 @@ else:
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
 # ==========================================
-# 4. CSS ĐIỀU KHIỂN GIAO DIỆN SÁNG/TỐI (ĐÃ FIX TÀNG HÌNH CHỮ)
+# 4. CSS ĐIỀU KHIỂN GIAO DIỆN (ĐÃ FIX LỖI KHÓA NÚT VÀ CHỮ TÀNG HÌNH ADMIN)
 # ==========================================
 current_bg = u_info.get("bg_image", "")
 
-if st.session_state.theme == "Dark" or current_bg:
+# Xóa bỏ cái "or current_bg" ngớ ngẩn ở đây. Giờ nút Sáng/Tối hoạt động bình thường!
+if st.session_state.theme == "Dark":
     bg_sidebar = "rgba(14, 17, 23, 0.85)" if current_bg else "#262730"
     bg_main = "rgba(0, 0, 0, 0.65)" if current_bg else "#0e1117"
     text_global = "#ffffff"
     btn_bg = "rgba(255, 255, 255, 0.1)" if current_bg else "#333333"
     btn_text = "#ffffff"
 else:
-    bg_sidebar = "#f0f2f6"
-    bg_main = "#ffffff"
+    bg_sidebar = "rgba(255, 255, 255, 0.9)" if current_bg else "#f0f2f6"
+    bg_main = "rgba(255, 255, 255, 0.85)" if current_bg else "#ffffff"
     text_global = "#111827"
-    btn_bg = "#ffffff"
+    btn_bg = "rgba(0, 0, 0, 0.05)" if current_bg else "#ffffff"
     btn_text = "#111827"
 
 css = f"""
 <style>
-    /* 1. MÀU CHỮ CHO TOÀN BỘ CÁC THÀNH PHẦN THANH MENU BÊN TRÁI */
+    /* 1. MÀU CHỮ CHO THANH MENU BÊN TRÁI */
     [data-testid="stSidebar"] p, 
     [data-testid="stSidebar"] span, 
     [data-testid="stSidebar"] label, 
@@ -226,14 +227,19 @@ css = f"""
     }}
     [data-testid="stSidebar"] {{ background-color: {bg_sidebar} !important; }}
     
-    /* 2. MÀU CHỮ CHO CÁC TAB TIÊU ĐỀ, FORM VÀ TEXT CƠ BẢN */
+    /* 2. ĐẶC TRỊ MÀU CHỮ CHO CÁC KHUNG GẬP (EXPANDER) TRONG QUẢN TRỊ ADMIN */
     [data-testid="stTabs"] button p,
     [data-testid="stTabs"] button span,
-    .stMarkdown p, 
-    .stMarkdown li,
-    label p, 
-    h1, h2, h3, h4, h5, h6 {{
+    [data-testid="stExpander"] summary p,
+    [data-testid="stExpander"] summary span,
+    [data-testid="stExpander"] details summary * {{
         color: {text_global} !important;
+    }}
+    
+    /* Màu chữ cơ bản cho toàn bộ Text khác */
+    div.block-container p, div.block-container span, div.block-container label, div.block-container li,
+    div.block-container h1, div.block-container h2, div.block-container h3, div.block-container h4, div.block-container h5, div.block-container h6 {{
+        color: {text_global};
     }}
     
     /* 3. NÚT BẤM CÀI ĐẶT */
@@ -246,8 +252,7 @@ css = f"""
         color: {btn_text} !important;
     }}
     
-    /* 4. LỚP BỌC THÉP CHO BẢNG LỊCH TRỰC NỀN TRẮNG (VÀ CÁC THẺ TRẮNG KHÁC) */
-    /* Phải để ở dưới cùng để ghi đè các luật màu trắng ở trên, nhưng tuyệt đối không ép thẻ SPAN để giữ màu chữ "Ca Chiều" (Đỏ) / "Ca Sáng" (Xanh) */
+    /* 4. LỚP BỌC THÉP CHO BẢNG LỊCH TRỰC NỀN TRẮNG */
     [style*="background-color: white" i] p,
     [style*="background-color: white" i] div,
     [style*="background: white" i] p,
