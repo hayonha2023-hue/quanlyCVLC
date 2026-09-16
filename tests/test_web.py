@@ -37,7 +37,7 @@ def test_existing_password():
     assert authenticate(DB,'admin','admin') is None
     assert authenticate({},'admin','123456') is None
 
-@pytest.mark.parametrize('menu',['🛒 Lịch Ecom','💰 Quỹ Shop','📋 Xem Lịch','📈 Theo Dõi KPI','📊 Chia Target','📍 Thị Trường','🤖 AI Tư Vấn','👥 Quản Trị Admin'])
+@pytest.mark.parametrize('menu',['🛒 Lịch Ecom','💰 Quỹ Shop','📋 Xem Lịch','📈 Theo Dõi KPI','📊 Target Ngày','📍 Thị Trường','🤖 AI Tư Vấn','👥 Quản Trị Admin'])
 def test_each_page_renders(app,menu):
     login(app)
     app.sidebar.radio[0].set_value(menu).run()
@@ -88,8 +88,14 @@ def test_kpi_numeric_does_not_multiply_decimal():
 def test_failed_ecom_save_never_reports_success(app,monkeypatch):
     login(app)
     before=copy.deepcopy(app.session_state['db'])
-    monkeypatch.setattr(database,'request',Mock(side_effect=database.DatabaseError('offline')))
+    app.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    app.sidebar.toggle[0].set_value(True).run()
     app.text_input[0].set_value('Changed')
+    original_request=database.request
+    def fail_write(method,*args,**kwargs):
+        if method != 'GET':raise database.DatabaseError('offline')
+        return original_request(method,*args,**kwargs)
+    monkeypatch.setattr(database,'request',fail_write)
     next(b for b in app.button if 'LƯU LỊCH ECOM' in b.label).click().run()
     assert app.error
     assert not app.success
@@ -97,6 +103,8 @@ def test_failed_ecom_save_never_reports_success(app,monkeypatch):
 
 def test_ecom_inputs_change_with_shop(app):
     login(app)
+    app.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    app.sidebar.toggle[0].set_value(True).run()
     app.text_input[0].set_value('Draft for main shop').run()
     app.sidebar.selectbox[0].set_value('A').run()
     assert app.text_input[0].value==''
@@ -104,6 +112,8 @@ def test_ecom_inputs_change_with_shop(app):
 
 def test_staff_write_controls_disabled(app):
     login(app,'staff','staff-test')
-    assert next(b for b in app.button if 'LƯU LỊCH ECOM' in b.label).disabled
+    app.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    assert not [b for b in app.button if 'LƯU LỊCH ECOM' in b.label]
+    assert not app.sidebar.toggle
     app.sidebar.radio[0].set_value('💰 Quỹ Shop').run()
     assert not [b for b in app.button if 'GHI PHIẾU' in b.label]

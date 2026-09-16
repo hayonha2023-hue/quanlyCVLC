@@ -4,7 +4,9 @@ import time
 import io
 import base64
 from services.database import fetch_data, save, DatabaseError
-from services.auth import authenticate, roles
+from services.auth import authenticate, roles, resolve_username
+from services import sync
+from views.employee import PAGES, render_employee
 from services.theme import apply_theme
 from PIL import Image, ImageOps
 
@@ -40,6 +42,7 @@ if "user" not in st.session_state or not st.session_state.user:
                     st.stop()
                 users = db.get("users", {})
 
+                user_in = resolve_username(db, user_in)
                 record = authenticate(db, user_in, pass_in)
                 is_valid = record is not None
 
@@ -82,20 +85,9 @@ def close_settings_panels():
 with st.sidebar:
     st.markdown('<div class="htcv-brand">HTCV</div><div class="htcv-subtitle">Không gian quản lý công việc</div>', unsafe_allow_html=True)
     st.write("Tài khoản: " + str(user_id))
-    st.caption("Web 2.1 • Dữ liệu dùng chung với HTCV")
+    st.caption("Web 2.2 • Cổng xem dữ liệu nhân viên")
     if st.button("↻ Làm mới dữ liệu", use_container_width=True):
-        try:
-            fresh = fetch_data()
-        except DatabaseError as exc:
-            st.error(str(exc))
-            st.stop()
-        if user_id not in fresh.get('users', {}):
-            st.session_state.clear()
-            st.rerun()
-        st.session_state.db = fresh
-        st.session_state.is_admin, st.session_state.is_super_admin = roles(user_id, fresh['users'][user_id])
-        if not st.session_state.is_super_admin:
-            st.session_state.current_shop = fresh['users'][user_id].get('shop_id', 'Shop Chính (Mặc định)')
+        sync.refresh(st.session_state, force=True)
         st.rerun()
 
     # 🔓 MỞ KHÓA CHỌN CHI NHÁNH CHO ADMIN
@@ -123,10 +115,15 @@ with st.sidebar:
 
     st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
 
-    menu_options = ["🛒 Lịch Ecom", "💰 Quỹ Shop", "📋 Xem Lịch", "📈 Theo Dõi KPI", "📊 Chia Target", "📍 Thị Trường", "🤖 AI Tư Vấn", "👥 Quản Trị Admin"]
-    if not st.session_state.get('is_admin'):
-        menu_options = [item for item in menu_options if item != "👥 Quản Trị Admin"]
-    menu = st.radio("MAIN MENU", menu_options, label_visibility="collapsed", on_change=close_settings_panels)
+    menu_options = list(PAGES) + ['🤖 AI Tư Vấn']
+    if st.session_state.get('is_admin'):
+        menu_options.append('👥 Quản Trị Admin')
+    menu = st.radio('Chức năng', menu_options, key='navigation', on_change=close_settings_panels)
+    edit_perms = u_info.get('edit_permissions', []) or []
+    edit_permission = {'🛒 Lịch Ecom':'SỬA LỊCH ECOM','💰 Quỹ Shop':'QUẢN LÝ QUỸ SHOP',
+                       '📍 Thị Trường':'SỬA THỊ TRƯỜNG','📈 Theo Dõi KPI':'SỬA SỐ KPI'}
+    can_edit = menu in edit_permission and (st.session_state.get('is_admin') or edit_permission[menu] in edit_perms)
+    edit_mode = st.toggle('Mở phần chỉnh sửa', value=False, key='editing_'+menu) if can_edit else False
 
     st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1); margin: 10px 0px;'>", unsafe_allow_html=True)
 
@@ -205,29 +202,47 @@ elif st.session_state.show_pass:
         st.rerun()
 
 else:
-    if menu == "🛒 Lịch Ecom":
-        try: from views.ecom import render_ecom; render_ecom()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-    elif menu == "💰 Quỹ Shop":
-        try: from views.fund import render_fund; render_fund()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-    elif menu == "📋 Xem Lịch":
-        try: from views.schedule import render_schedule; render_schedule()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-    elif menu == "📈 Theo Dõi KPI":
-        try: from views.kpi import render_kpi; render_kpi()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-    elif menu == "📊 Chia Target":
-        try: from views.target import render_target; render_target()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-    elif menu == "📍 Thị Trường":
-        try: from views.market import render_market; render_market()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-    elif menu == "🤖 AI Tư Vấn":
-        try: from views.ai_chat import render_ai_chat; render_ai_chat()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
-    elif menu == "👥 Quản Trị Admin":
-        try: from views.admin import render_admin; render_admin()
-        except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
+    if menu in PAGES and not edit_mode:
+        @st.fragment(run_every="30s")
+        def employee_page():
+            changed = st.session_state.get('_last_read_page') != menu
+            sync.refresh(st.session_state, force=changed)
+            if not st.session_state.get('user'):
+                st.rerun()
+            st.session_state['_last_read_page'] = menu
+            if st.session_state.get('sync_error'):
+                st.warning('Chưa tải được dữ liệu mới. Đang xem bản gần nhất đã tải thành công.')
+            st.caption('Chi nhánh: '+st.session_state.current_shop+' • Lần tải thành công: '+st.session_state.get('synced_at','chưa có')+' • Tự làm mới mỗi 30 giây khi mở trang')
+            render_employee(menu)
+        employee_page()
+    else:
+        # Fresh role check before exposing any editable view.
+        sync.refresh(st.session_state, force=True)
+        if not st.session_state.get('user'): st.rerun()
+        fresh_account=st.session_state.db.get('users',{}).get(st.session_state.user,{})
+        if menu == '👥 Quản Trị Admin' and not st.session_state.get('is_admin'):
+            st.warning('Tài khoản không có quyền quản trị.'); st.stop()
+        if menu in edit_permission and not (st.session_state.get('is_admin') or edit_permission[menu] in (fresh_account.get('edit_permissions') or [])):
+            st.warning('Tài khoản không có quyền chỉnh sửa.'); st.stop()
+        if st.session_state.get('sync_error') and menu != '🤖 AI Tư Vấn':
+            st.warning('Cần tải được dữ liệu mới trước khi chỉnh sửa.'); st.stop()
+        if menu == '🛒 Lịch Ecom':
+            from views.ecom import render_ecom
+            render_ecom()
+        elif menu == '💰 Quỹ Shop':
+            from views.fund import render_fund
+            render_fund()
+        elif menu == '📈 Theo Dõi KPI':
+            from views.kpi import render_kpi
+            render_kpi()
+        elif menu == '📍 Thị Trường':
+            from views.market import render_market
+            render_market()
+        elif menu == '🤖 AI Tư Vấn':
+            from views.ai_chat import render_ai_chat
+            render_ai_chat()
+        elif menu == '👥 Quản Trị Admin':
+            from views.admin import render_admin
+            render_admin()
 
 apply_theme(st.session_state.theme == 'Dark', u_info.get('bg_image', ''))
