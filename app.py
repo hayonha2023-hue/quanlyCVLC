@@ -3,26 +3,22 @@ import requests
 import time
 import io
 import base64
+from services.database import fetch_data, save, DatabaseError
+from services.auth import authenticate, roles
+from services.theme import apply_theme
 from PIL import Image, ImageOps
 
 st.set_page_config(page_title="HTCV Web System", layout="wide", initial_sidebar_state="expanded")
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
-def fetch_data():
-    try:
-        r = requests.get(FIREBASE_URL)
-        if r.status_code == 200: return r.json() or {}
-    except: pass
-    return {}
-
 def update_firebase_user(path, data):
-    try: requests.patch(f"{FIREBASE_URL.replace('.json', '')}/{path}.json", json=data)
-    except: pass
+    return save(path, data)
 
 def delete_firebase_user(path):
-    try: requests.delete(f"{FIREBASE_URL.replace('.json', '')}/{path}.json")
-    except: pass
+    return save(path, method='DELETE')
+
+apply_theme(st.session_state.get('theme') == 'Dark')
 
 # ==========================================
 # 1. HỆ THỐNG ĐĂNG NHẬP
@@ -32,41 +28,37 @@ if "user" not in st.session_state or not st.session_state.user:
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2.form("login_form"):
         user_in = st.text_input("👤 Tài khoản").strip()
-        pass_in = st.text_input("🔑 Mật khẩu", type="password").strip()
+        pass_in = st.text_input("🔑 Mật khẩu", type="password")
         if st.form_submit_button("🚀 ĐĂNG NHẬP", use_container_width=True):
             if not user_in or not pass_in:
                 st.error("Vui lòng nhập đầy đủ thông tin!")
             else:
-                db = fetch_data()
+                try:
+                    db = fetch_data()
+                except DatabaseError as exc:
+                    st.error(str(exc))
+                    st.stop()
                 users = db.get("users", {})
-                
-                is_valid = False
-                
-                if user_in in users and str(users[user_in].get("pass")) == pass_in:
-                    is_valid = True
-                elif user_in.lower() == "admin" and (pass_in == "123456" or pass_in == "admin"):
-                    is_valid = True
-                    user_in = "admin" 
-                    if "admin" not in users:
-                        update_firebase_user("users/admin", {"pass": "123456", "role": "admin"})
-                
+
+                record = authenticate(db, user_in, pass_in)
+                is_valid = record is not None
+
                 if is_valid:
                     st.session_state.user = user_in
                     st.session_state.current_user = user_in
                     st.session_state.db = db
-                    
+
                     u_info = users.get(user_in, {})
                     st.session_state.current_shop = u_info.get("shop_id", "Shop Chính (Mặc định)")
                     role = str(u_info.get("role", "")).lower()
-                    
-                    st.session_state.is_super_admin = (user_in.lower() == "admin")
-                    st.session_state.is_admin = (role == "admin" or user_in.lower() == "admin")
-                    
+
+                    st.session_state.is_admin, st.session_state.is_super_admin = roles(user_in, u_info)
+
                     st.success("✅ Đăng nhập thành công!")
                     time.sleep(0.5)
                     st.rerun()
                 else:
-                    st.error("❌ Sai tài khoản hoặc mật khẩu! (Nếu quên, hãy gõ tài khoản: admin, mật khẩu: 123456)")
+                    st.error("Sai tài khoản hoặc mật khẩu. Liên hệ quản trị nếu cần đặt lại.")
     st.stop()
 
 # ==========================================
@@ -88,23 +80,39 @@ def close_settings_panels():
 # 2. THANH MENU BÊN TRÁI (SIDEBAR) VỚI TÍNH NĂNG CHỌN NHÁNH
 # ==========================================
 with st.sidebar:
-    st.markdown(f"### 👤 {str(user_id).upper()}")
-    
+    st.markdown('<div class="htcv-brand">HTCV</div><div class="htcv-subtitle">Không gian quản lý công việc</div>', unsafe_allow_html=True)
+    st.write("Tài khoản: " + str(user_id))
+    st.caption("Web 2.1 • Dữ liệu dùng chung với HTCV")
+    if st.button("↻ Làm mới dữ liệu", use_container_width=True):
+        try:
+            fresh = fetch_data()
+        except DatabaseError as exc:
+            st.error(str(exc))
+            st.stop()
+        if user_id not in fresh.get('users', {}):
+            st.session_state.clear()
+            st.rerun()
+        st.session_state.db = fresh
+        st.session_state.is_admin, st.session_state.is_super_admin = roles(user_id, fresh['users'][user_id])
+        if not st.session_state.is_super_admin:
+            st.session_state.current_shop = fresh['users'][user_id].get('shop_id', 'Shop Chính (Mặc định)')
+        st.rerun()
+
     # 🔓 MỞ KHÓA CHỌN CHI NHÁNH CHO ADMIN
-    if st.session_state.get("is_admin", False) or st.session_state.get("is_super_admin", False):
+    if st.session_state.get("is_super_admin", False):
         # Quét lấy toàn bộ danh sách các nhánh shop đang có trên Firebase
         db_shops = list(db.get("shops", {}).keys())
         all_shops = ["Shop Chính (Mặc định)"] + [s for s in db_shops if s != "Shop Chính (Mặc định)"]
-        
+
         cur_shop = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
         if cur_shop not in all_shops:
             all_shops.append(cur_shop)
-            
+
         cur_idx = all_shops.index(cur_shop)
-        
+
         # Bố trí Khung chọn (Dropdown)
         selected_shop = st.selectbox("📍 Chi Nhánh", all_shops, index=cur_idx)
-        
+
         # Nếu Admin đổi nhánh -> Lưu vào RAM và Tải lại trang để load số liệu nhánh mới
         if selected_shop != cur_shop:
             st.session_state.current_shop = selected_shop
@@ -112,14 +120,16 @@ with st.sidebar:
     else:
         # Nhân viên thường chỉ được xem (Khóa cứng nhánh)
         st.markdown(f"📍 {st.session_state.get('current_shop', 'Shop Chính (Mặc định)')}")
-        
+
     st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
-    
+
     menu_options = ["🛒 Lịch Ecom", "💰 Quỹ Shop", "📋 Xem Lịch", "📈 Theo Dõi KPI", "📊 Chia Target", "📍 Thị Trường", "🤖 AI Tư Vấn", "👥 Quản Trị Admin"]
+    if not st.session_state.get('is_admin'):
+        menu_options = [item for item in menu_options if item != "👥 Quản Trị Admin"]
     menu = st.radio("MAIN MENU", menu_options, label_visibility="collapsed", on_change=close_settings_panels)
-    
+
     st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1); margin: 10px 0px;'>", unsafe_allow_html=True)
-    
+
     if st.button("🖼️ Đổi hình nền", use_container_width=True):
         st.session_state.show_bg = not st.session_state.show_bg
         st.session_state.show_pass = False
@@ -127,12 +137,12 @@ with st.sidebar:
     if st.button("🔑 Đổi mật khẩu", use_container_width=True):
         st.session_state.show_pass = not st.session_state.show_pass
         st.session_state.show_bg = False
-    
+
     theme_label = "🌙 Giao diện Tối" if st.session_state.theme == "Light" else "☀️ Giao diện Sáng"
     if st.button(theme_label, use_container_width=True):
         st.session_state.theme = "Dark" if st.session_state.theme == "Light" else "Light"
         st.rerun()
-        
+
     if st.button("🚪 Đăng xuất", use_container_width=True):
         st.session_state.clear()
         st.rerun()
@@ -144,7 +154,7 @@ if st.session_state.show_bg:
     st.info("🖼️ ĐỔI HÌNH NỀN CÁ NHÂN (Tự động áp dụng sau khi tải xong)")
     bg_up = st.file_uploader("Chọn ảnh (Hệ thống tự nén cho nhẹ)", type=["png", "jpg", "jpeg"])
     c_bg1, c_bg2, c_bg3 = st.columns(3)
-    
+
     if bg_up:
         if c_bg1.button("💾 ÁP DỤNG", type="primary", use_container_width=True):
             img = Image.open(bg_up)
@@ -153,12 +163,12 @@ if st.session_state.show_bg:
             buffered = io.BytesIO()
             img.convert("RGB").save(buffered, format="JPEG", quality=85)
             img_str = base64.b64encode(buffered.getvalue()).decode()
-            
+
             update_firebase_user(f"users/{user_id}/bg_image", img_str)
             st.session_state.db["users"][user_id]["bg_image"] = img_str
             st.session_state.show_bg = False
             st.success("Thành công!"); time.sleep(1); st.rerun()
-            
+
     current_bg = u_info.get("bg_image", "")
     if current_bg:
         if c_bg2.button("🗑️ XÓA NỀN", use_container_width=True):
@@ -166,7 +176,7 @@ if st.session_state.show_bg:
             st.session_state.db["users"][user_id]["bg_image"] = ""
             st.session_state.show_bg = False
             st.success("Đã xóa nền!"); time.sleep(1); st.rerun()
-            
+
     if c_bg3.button("❌ ĐÓNG CÀI ĐẶT", use_container_width=True):
         st.session_state.show_bg = False
         st.rerun()
@@ -176,10 +186,12 @@ elif st.session_state.show_pass:
     c_p1, c_p2 = st.columns(2)
     old_p = c_p1.text_input("Nhập mật khẩu cũ", type="password")
     new_p = c_p2.text_input("Nhập mật khẩu mới", type="password")
-    
+
     c_btn1, c_btn2, c_btn3 = st.columns(3)
     if c_btn1.button("💾 CẬP NHẬT", type="primary", use_container_width=True):
-        if old_p == str(u_info.get("pass", "")):
+        if not new_p.strip():
+            st.error("Mật khẩu mới không được để trống.")
+        elif old_p == str(u_info.get("pass", "")):
             update_firebase_user(f"users/{user_id}/pass", new_p)
             st.success("Đổi thành công! Đang đăng xuất...")
             time.sleep(1.5)
@@ -187,7 +199,7 @@ elif st.session_state.show_pass:
             st.rerun()
         else:
             st.error("❌ Mật khẩu cũ sai!")
-            
+
     if c_btn2.button("❌ ĐÓNG", use_container_width=True):
         st.session_state.show_pass = False
         st.rerun()
@@ -218,97 +230,4 @@ else:
         try: from views.admin import render_admin; render_admin()
         except Exception as e: st.warning(f"Tính năng đang bảo trì: {e}")
 
-# ==========================================
-# 4. CSS ĐIỀU KHIỂN GIAO DIỆN CHỐNG LỖI TÀNG HÌNH
-# ==========================================
-current_bg = u_info.get("bg_image", "")
-
-if st.session_state.theme == "Dark":
-    bg_sidebar = "rgba(14, 17, 23, 0.85)" if current_bg else "#262730"
-    bg_main = "rgba(0, 0, 0, 0.65)" if current_bg else "#0e1117"
-    text_global = "#ffffff"
-    btn_bg = "rgba(255, 255, 255, 0.1)" if current_bg else "#333333"
-    btn_text = "#ffffff"
-else:
-    bg_sidebar = "rgba(255, 255, 255, 0.9)" if current_bg else "#f0f2f6"
-    bg_main = "rgba(255, 255, 255, 0.85)" if current_bg else "#ffffff"
-    text_global = "#111827"
-    btn_bg = "rgba(0, 0, 0, 0.05)" if current_bg else "#ffffff"
-    btn_text = "#111827"
-
-css = f"""
-<style>
-    /* 1. MÀU CHỮ CHO THANH MENU BÊN TRÁI */
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] span, 
-    [data-testid="stSidebar"] label, 
-    [data-testid="stSidebar"] h1, 
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3 {{
-        color: {text_global} !important;
-    }}
-    [data-testid="stSidebar"] {{ background-color: {bg_sidebar} !important; }}
-    
-    /* 2. ĐẶC TRỊ MÀU CHỮ CHO CÁC KHUNG GẬP (EXPANDER) TRONG QUẢN TRỊ ADMIN */
-    [data-testid="stTabs"] button p,
-    [data-testid="stTabs"] button span,
-    [data-testid="stExpander"] summary p,
-    [data-testid="stExpander"] summary span,
-    [data-testid="stExpander"] details summary * {{
-        color: {text_global} !important;
-    }}
-    
-    div.block-container p, div.block-container span, div.block-container label, div.block-container li,
-    div.block-container h1, div.block-container h2, div.block-container h3, div.block-container h4, div.block-container h5, div.block-container h6 {{
-        color: {text_global};
-    }}
-    
-    /* 3. NÚT BẤM CÀI ĐẶT */
-    .stButton > button {{
-        background-color: {btn_bg} !important;
-        color: {btn_text} !important;
-        border: 1px solid rgba(150, 150, 150, 0.4) !important;
-    }}
-    .stButton > button p, .stButton > button span {{
-        color: {btn_text} !important;
-    }}
-    
-    /* 4. LỚP BỌC THÉP CHO BẢNG LỊCH TRỰC NỀN TRẮNG */
-    [style*="background-color: white" i] p,
-    [style*="background-color: white" i] div,
-    [style*="background: white" i] p,
-    [style*="background: white" i] div,
-    [style*="background-color: #fff" i] p,
-    [style*="background-color: #fff" i] div,
-    [style*="background-color: #ffffff" i] p,
-    [style*="background-color: #ffffff" i] div {{
-        color: #111827 !important;
-    }}
-"""
-
-if current_bg:
-    css += f"""
-    .stApp {{
-        background-image: url("data:image/jpeg;base64,{current_bg}") !important;
-        background-size: cover !important;
-        background-attachment: fixed !important;
-        background-position: center !important;
-    }}
-    [data-testid="stHeader"] {{ background-color: transparent !important; }}
-    
-    /* Lớp kính mờ lót dưới */
-    div.block-container {{
-        background-color: {bg_main} !important;
-        border-radius: 15px; padding: 2rem !important;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    }}
-    """
-else:
-    bg_solid = "#0e1117" if st.session_state.theme == "Dark" else "#ffffff"
-    css += f"""
-    .stApp, .main, [data-testid="stHeader"] {{ background-color: {bg_solid} !important; }}
-    div.block-container {{ background-color: transparent !important; box-shadow: none; }}
-    """
-
-css += "</style>"
-st.markdown(css, unsafe_allow_html=True)
+apply_theme(st.session_state.theme == 'Dark', u_info.get('bg_image', ''))

@@ -1,7 +1,7 @@
 import streamlit as st
 import base64
 
-TEXT_SCHEDULE_KEY = "detailed_history" 
+TEXT_SCHEDULE_KEY = "detailed_history"
 
 def render_schedule():
     # 1. NHÚNG CSS ĐỂ TRANG WEB "LỘT XÁC"
@@ -58,7 +58,7 @@ def render_schedule():
     """, unsafe_allow_html=True)
 
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
-    
+
     # 2. CHIA TAB (THẺ) ĐỂ GIAO DIỆN GỌN GÀNG
     tab1, tab2 = st.tabs(["📅 BẢNG CA TRỰC (CHỮ)", "🖼️ ẢNH LỊCH TỔNG HỢP"])
 
@@ -79,24 +79,24 @@ def render_schedule():
                 # Chia màn hình thành 2 cột ngang cho cân đối
                 cols = st.columns(2)
                 idx = 0
-                
+
                 for day, ca_truc in schedule_text.items():
                     col = cols[idx % 2] # Luân phiên nhét dữ liệu vào cột Trái - Phải
                     with col:
                         html_content = f"<div class='schedule-card'><div class='day-title'>📅 {day}</div>"
-                        
+
                         if isinstance(ca_truc, dict):
                             for ca, nhan_vien in ca_truc.items():
                                 nhan_vien_str = ", ".join(nhan_vien) if isinstance(nhan_vien, list) else str(nhan_vien)
-                                
+
                                 # Đổ màu chữ phân biệt Sáng/Chiều cho sang
                                 color = "#198754" if "Sáng" in ca else "#fd7e14" if "Chiều" in ca else "#6c757d"
                                 icon = "🌅" if "Sáng" in ca else "🌇" if "Chiều" in ca else "🔹"
-                                
+
                                 html_content += f"<div class='shift-row'>{icon} <span style='color: {color}; font-weight: bold;'>Ca {ca}:</span> <b>{nhan_vien_str}</b></div>"
                         else:
                             html_content += f"<div class='shift-row'>{ca_truc}</div>"
-                            
+
                         html_content += "</div>"
                         st.markdown(html_content, unsafe_allow_html=True)
                     idx += 1
@@ -127,7 +127,7 @@ def render_schedule():
                     if "," in base64_str:
                         base64_str = base64_str.split(",")[1]
                     image_bytes = base64.b64decode(base64_str)
-                    
+
                     # Cho ảnh vào khung đổ bóng xịn xò
                     st.markdown("<div class='img-container'>", unsafe_allow_html=True)
                     st.image(image_bytes, use_container_width=True)
