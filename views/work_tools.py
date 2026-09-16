@@ -7,6 +7,7 @@ from services.workflows import allowed, names, make_draft, split_workbook
 from services.schedule_store import commit_schedule
 from services.database import DatabaseError
 from services.kpi_scan import analyze, image_bytes, PROMPT
+from views.workspace import page_header, workflow_steps, sync_status
 
 TOOLS = ['⚡ Sắp lịch & Đảo ca','🔍 Quét AI KPI','✂️ Chia Data']
 
@@ -26,8 +27,6 @@ def _schedule_table(history):
 
 def render_schedule():
     db,user,shop=_context(); data=shop_data(db,shop); settings=mapping(db.get('settings'))
-    st.title('Sắp lịch & Đảo ca')
-    st.caption('Nhập nhân viên → Xem trước lịch tuần tới → Lưu để app và web cùng xem.')
     can_make=allowed(db,user,shop,'CHIA LỊCH TỰ ĐỘNG')
     can_swap=allowed(db,user,shop,'ĐẢO TÊN CA')
     prefix=_identity('schedule'); draft_key=prefix+'_draft'
@@ -46,7 +45,8 @@ def render_schedule():
             raw=st.text_area('Ca '+shift,key=prefix+shift,height=180,placeholder='Mỗi dòng một nhân viên')
             pools[shift]=names(raw)
             st.caption(f'{len(pools[shift])} nhân viên')
-    special=st.text_input('Nhân viên đặc biệt (cách nhau bằng dấu phẩy)',value=str(settings.get('entry_ex','') or ''),key=prefix+'_special',help='Tối đa 2 ngày mỗi tuần, ưu tiên không liền nhau như app.')
+    with st.expander('Tùy chọn nhân viên đặc biệt', expanded=False):
+        special=st.text_input('Nhân viên đặc biệt (cách nhau bằng dấu phẩy)',value=str(settings.get('entry_ex','') or ''),key=prefix+'_special',help='Tối đa 2 ngày mỗi tuần, ưu tiên không liền nhau như app.')
     if not can_make: st.info('Quản trị cần cấp quyền CHIA LỊCH TỰ ĐỘNG để bạn tạo và lưu lịch.')
     locked=bool(mapping(data.get('schedule_lock')).get('locked'))
     if locked: st.warning('Lịch đang chốt. Quản trị cần mở khóa trong app trước khi sắp lại.')
@@ -74,8 +74,6 @@ def render_schedule():
 
 
 def render_scanner():
-    st.title('Quét AI KPI')
-    st.caption('Tải ảnh bảng KPI để phân tích doanh số và kết quả từng nhân viên.')
     db,user,shop=_context(); prefix=_identity('scan')
     uploaded=st.file_uploader('1. Chọn ảnh KPI',type=['png','jpg','jpeg'],key=prefix+'_upload')
     keys=mapping(db.get('settings')).get('api_keys') or []
@@ -109,8 +107,6 @@ def render_scanner():
 
 
 def render_split():
-    st.title('Chia Data')
-    st.caption('Chia đều các dòng Excel theo thứ tự người nhận, tải tất cả trong một file ZIP.')
     db,user,shop=_context(); prefix=_identity('split')
     if not allowed(db,user,shop,'CHIA ĐỀU SỐ LIỆU'):
         st.info('Quản trị cần cấp quyền CHIA ĐỀU SỐ LIỆU để bạn sử dụng chức năng này.'); return
@@ -150,4 +146,13 @@ def render_split():
 
 
 def render_tool(page):
-    {TOOLS[0]:render_schedule,TOOLS[1]:render_scanner,TOOLS[2]:render_split}[page]()
+    sync_status()
+    title, description, steps = {
+        TOOLS[0]: ('Sắp lịch & đảo ca', 'Chủ động phân ca cho đội ngũ. Kiểm tra lịch trước khi lưu.', ['Nhập nhân viên', 'Xem trước lịch', 'Lưu & đồng bộ']),
+        TOOLS[1]: ('Quét AI KPI', 'Đọc bảng KPI từ ảnh và xem phân tích kết quả làm việc.', ['Chọn ảnh', 'Phân tích', 'Xem & tải kết quả']),
+        TOOLS[2]: ('Chia data', 'Chia đều dữ liệu Excel cho danh sách người nhận bạn chọn.', ['Tải file Excel', 'Chọn người nhận', 'Chia & tải ZIP']),
+    }[page]
+    page_header(title, description, 'CÔNG CỤ LÀM VIỆC')
+    workflow_steps(steps)
+    with st.container(border=True, key='workspace_active_tool'):
+        {TOOLS[0]:render_schedule,TOOLS[1]:render_scanner,TOOLS[2]:render_split}[page]()

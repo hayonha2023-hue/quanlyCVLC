@@ -126,13 +126,15 @@ def app_for(monkeypatch,user='boss'):
 
 @pytest.mark.parametrize('page',['⚡ Sắp lịch & Đảo ca','🔍 Quét AI KPI','✂️ Chia Data'])
 def test_new_pages_render(monkeypatch,page):
-    a=app_for(monkeypatch);a.sidebar.radio[0].set_value(page).run()
+    a=app_for(monkeypatch);a.sidebar.button(key='nav_'+page).click().run()
     assert not a.exception
-    assert a.title[0].value in page
+    from html import unescape
+    heading = next(m.value for m in a.markdown if 'workspace-page-heading' in m.value and '<h1>' in m.value)
+    assert page.split(' ', 1)[1].casefold() in unescape(heading).casefold()
 
 
 def test_swap_then_preview_no_automatic_write(monkeypatch):
-    a=app_for(monkeypatch);a.sidebar.radio[0].set_value('⚡ Sắp lịch & Đảo ca').run()
+    a=app_for(monkeypatch);a.sidebar.button(key='nav_'+'⚡ Sắp lịch & Đảo ca').click().run()
     old=a.text_area[0].value
     next(b for b in a.button if b.label=='Đảo danh sách Sáng ⇄ Chiều').click().run()
     assert a.text_area[1].value==old
@@ -142,14 +144,14 @@ def test_swap_then_preview_no_automatic_write(monkeypatch):
 
 
 def test_staff_split_permission_message(monkeypatch):
-    a=app_for(monkeypatch,'staff');a.sidebar.radio[0].set_value('✂️ Chia Data').run()
+    a=app_for(monkeypatch,'staff');a.sidebar.button(key='nav_'+'✂️ Chia Data').click().run()
     assert any('CHIA ĐỀU SỐ LIỆU' in m.value for m in a.info)
     assert not a.exception
 
 
 def test_admin_tools_open_only_on_request(monkeypatch):
     a=app_for(monkeypatch)
-    assert '👥 Quản Trị Admin' not in a.sidebar.radio[0].options
+    assert 'nav_👥 Quản Trị Admin' not in [b.key for b in a.sidebar.button]
     assert not [w for w in a.selectbox if w.key=='admin_task']
     a.button(key='open_admin_tools').click().run()
     assert not a.exception
@@ -160,15 +162,39 @@ def test_admin_tools_open_only_on_request(monkeypatch):
     a.selectbox(key='admin_employee_A').set_value('staff').run()
     assert len(a.multiselect)==2 and not a.exception
     a.button(key='open_admin_tools').click().run()
-    assert '👥 Quản Trị Admin' not in a.sidebar.radio[0].options
+    assert 'nav_👥 Quản Trị Admin' not in [b.key for b in a.sidebar.button]
     assert not a.multiselect
 
 
 def test_navigation_closes_editing(monkeypatch):
     a=app_for(monkeypatch)
-    a.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    a.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
     a.sidebar.toggle[0].set_value(True).run()
-    a.sidebar.radio[0].set_value('💰 Quỹ Shop').run()
-    a.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    a.sidebar.button(key='nav_'+'💰 Quỹ Shop').click().run()
+    a.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
     assert not a.sidebar.toggle[0].value
+    assert not a.exception
+
+
+def test_mobile_navigation_and_sidebar_stay_in_sync(monkeypatch):
+    a=app_for(monkeypatch)
+    a.selectbox(key='mobile_destination').set_value('🛒 Lịch Ecom').run()
+    assert a.session_state.navigation == '🛒 Lịch Ecom'
+    a.sidebar.toggle[0].set_value(True).run()
+    a.selectbox(key='mobile_destination').set_value('⚡ Sắp lịch & Đảo ca').run()
+    assert not a.session_state['editing_🛒 Lịch Ecom']
+    assert a.text_area and not a.exception
+    a.sidebar.button(key='nav_🏠 Tổng quan').click().run()
+    assert a.selectbox(key='mobile_destination').value == '🏠 Tổng quan'
+    a.button(key='quick_🔍 Quét AI KPI').click().run()
+    assert a.selectbox(key='mobile_destination').value == '🔍 Quét AI KPI'
+    assert not a.exception
+
+
+def test_mobile_staff_menu_excludes_administration(monkeypatch):
+    a=app_for(monkeypatch,'staff')
+    assert '👥 Quản Trị Admin' not in a.selectbox(key='mobile_destination').options
+    assert not [b for b in a.button if b.key == 'open_admin_tools']
+    a.selectbox(key='mobile_destination').set_value('✂️ Chia Data').run()
+    assert any('CHIA ĐỀU SỐ LIỆU' in m.value for m in a.info)
     assert not a.exception

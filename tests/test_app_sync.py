@@ -87,7 +87,7 @@ def test_staff_sees_populated_app_data(staff,menu,monkeypatch):
         if method!='GET': writes.append(method)
         return copy.deepcopy(CLOUD)
     monkeypatch.setattr(database,'request',request)
-    staff.sidebar.radio[0].set_value(menu).run()
+    staff.sidebar.button(key='nav_'+menu).click().run()
     assert not staff.exception
     assert staff.dataframe
     assert not writes
@@ -99,7 +99,7 @@ def test_staff_sees_populated_app_data(staff,menu,monkeypatch):
 def test_refresh_picks_up_app_change(staff,monkeypatch):
     updated=copy.deepcopy(CLOUD);updated['shops']['A']['kpi']['emp']['An']['sold']=119
     monkeypatch.setattr(database,'request',lambda *a,**kw:updated)
-    staff.sidebar.radio[0].set_value('📈 Theo Dõi KPI').run()
+    staff.sidebar.button(key='nav_'+'📈 Theo Dõi KPI').click().run()
     assert staff.dataframe[0].value.iloc[0]['Đã bán']==119
 
 def test_server_delete_replaces_old_session_data(monkeypatch):

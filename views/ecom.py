@@ -2,6 +2,7 @@ from services.database import save, shop_path
 import streamlit as st
 import requests
 import time
+from views.workspace import page_header, sync_status
 
 # Đường dẫn DB của bạn
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
@@ -10,12 +11,8 @@ def save_ecom_to_firebase(ecom_data, shop_id):
     return save(shop_path(shop_id), {'ecom_history': ecom_data})
 
 def render_ecom():
-    st.markdown("""
-    <div class='html-card'>
-        <h3 class='html-title' style='text-align: left;'>🛒 QUẢN LÝ LỊCH ECOM</h3>
-        <p class='html-text' style='text-align: left; margin-bottom: 0px;'>Nhập tên nhân viên trực Ecom theo Ca Sáng và Ca Chiều</p>
-    </div>
-    """, unsafe_allow_html=True)
+    sync_status()
+    page_header('Chỉnh sửa lịch Ecom', 'Phân công nhân viên theo ca sáng và ca chiều trong tuần.', 'CHỈNH SỬA DỮ LIỆU')
 
     # Lấy ID của Chi nhánh hiện tại
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")

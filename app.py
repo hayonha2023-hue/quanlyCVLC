@@ -10,9 +10,10 @@ from views.employee import PAGES, render_employee
 from views.work_tools import TOOLS, render_tool
 from services.theme import apply_theme
 from views.login import login_form
+from views.workspace import sidebar_identity, sidebar_navigation, mobile_navigation, sync_status
 from PIL import Image, ImageOps
 
-st.set_page_config(page_title="HTCV Web System", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="HTCV | Không gian làm việc", layout="wide", initial_sidebar_state="auto")
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
@@ -22,7 +23,8 @@ def update_firebase_user(path, data):
 def delete_firebase_user(path):
     return save(path, method='DELETE')
 
-apply_theme(st.session_state.get('theme') == 'Dark')
+if not st.session_state.get('user'):
+    apply_theme(st.session_state.get('theme') == 'Dark')
 
 # ==========================================
 # 1. HỆ THỐNG ĐĂNG NHẬP
@@ -74,6 +76,7 @@ u_info = db.get("users", {}).get(user_id, {})
 if "show_bg" not in st.session_state: st.session_state.show_bg = False
 if "show_pass" not in st.session_state: st.session_state.show_pass = False
 if "theme" not in st.session_state: st.session_state.theme = "Light"
+apply_theme(st.session_state.theme == 'Dark', u_info.get('bg_image', ''))
 
 def close_settings_panels():
     st.session_state.show_bg = False
@@ -86,9 +89,8 @@ def close_settings_panels():
 # 2. THANH MENU BÊN TRÁI (SIDEBAR) VỚI TÍNH NĂNG CHỌN NHÁNH
 # ==========================================
 with st.sidebar:
-    st.markdown('<div class="htcv-brand">HTCV</div><div class="htcv-subtitle">Không gian quản lý công việc</div>', unsafe_allow_html=True)
-    st.write("Tài khoản: " + str(user_id))
-    st.caption("Web 2.4 • Không gian làm việc")
+    sidebar_identity(user_id, st.session_state.get('is_admin'), st.session_state.get('is_super_admin'))
+    st.caption("Web 2.5 • Không gian làm việc")
     if st.button("↻ Làm mới dữ liệu", use_container_width=True):
         sync.refresh(st.session_state, force=True)
         st.rerun()
@@ -116,14 +118,10 @@ with st.sidebar:
         # Nhân viên thường chỉ được xem (Khóa cứng nhánh)
         st.markdown(f"📍 {st.session_state.get('current_shop', 'Shop Chính (Mặc định)')}")
 
-    st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
-
     menu_options = [list(PAGES)[0]] + TOOLS + list(PAGES)[1:] + ['🤖 AI Tư Vấn']
     if st.session_state.get('is_admin') and st.session_state.get('navigation') == '👥 Quản Trị Admin':
         menu_options.append('👥 Quản Trị Admin')
-    if st.session_state.get('navigation') not in menu_options:
-        st.session_state.navigation = menu_options[0]
-    menu = st.radio('Chức năng', menu_options, key='navigation', on_change=close_settings_panels)
+    menu = sidebar_navigation(menu_options, TOOLS)
     edit_perms = u_info.get('edit_permissions', []) or []
     edit_permission = {'🛒 Lịch Ecom':'SỬA LỊCH ECOM','💰 Quỹ Shop':'QUẢN LÝ QUỸ SHOP',
                        '📍 Thị Trường':'SỬA THỊ TRƯỜNG','📈 Theo Dõi KPI':'SỬA SỐ KPI'}
@@ -141,8 +139,6 @@ with st.sidebar:
             close_settings_panels()
         st.button('Đóng công cụ quản trị' if menu == '👥 Quản Trị Admin' else '⚙ Công cụ quản trị',
                   key='open_admin_tools', on_click=switch_admin, use_container_width=True)
-
-    st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1); margin: 10px 0px;'>", unsafe_allow_html=True)
 
     with st.expander('Tài khoản & giao diện', expanded=False):
         if st.button("🖼️ Đổi hình nền", use_container_width=True):
@@ -165,6 +161,7 @@ with st.sidebar:
 # ==========================================
 # 3. ĐIỀU HƯỚNG CHÍNH MÀN HÌNH
 # ==========================================
+mobile_navigation(menu_options)
 if st.session_state.show_bg:
     st.info("🖼️ ĐỔI HÌNH NỀN CÁ NHÂN (Tự động áp dụng sau khi tải xong)")
     bg_up = st.file_uploader("Chọn ảnh (Hệ thống tự nén cho nhẹ)", type=["png", "jpg", "jpeg"])
@@ -230,7 +227,7 @@ else:
             st.session_state['_last_read_page'] = menu
             if st.session_state.get('sync_error'):
                 st.warning('Chưa tải được dữ liệu mới. Đang xem bản gần nhất đã tải thành công.')
-            st.caption('Chi nhánh: '+st.session_state.current_shop+' • Lần tải thành công: '+st.session_state.get('synced_at','chưa có')+' • Tự làm mới mỗi 30 giây khi mở trang')
+            sync_status()
             render_employee(menu)
         employee_page()
     else:
@@ -264,5 +261,3 @@ else:
         elif menu == '👥 Quản Trị Admin':
             from views.admin import render_admin
             render_admin()
-
-apply_theme(st.session_state.theme == 'Dark', u_info.get('bg_image', ''))

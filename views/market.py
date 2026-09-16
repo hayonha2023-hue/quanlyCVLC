@@ -1,3 +1,4 @@
+from views.workspace import page_header, sync_status
 from services.database import save, shop_path
 import streamlit as st
 import pandas as pd
@@ -10,7 +11,8 @@ def update_firebase_market(path, data, shop_id):
     return save(shop_path(shop_id, path), data)
 
 def render_market():
-    st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>📍 Bản Đồ Phân Công Công Tác Thị Trường</h3>", unsafe_allow_html=True)
+    sync_status()
+    page_header('Chỉnh sửa lịch thị trường', 'Phân công nhân viên theo ngày và địa điểm công tác.', 'CHỈNH SỬA DỮ LIỆU')
 
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
     full_db = st.session_state.get("db", {})

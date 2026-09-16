@@ -1,4 +1,12 @@
-# HTCV Web 2.4 — Công cụ làm việc và dữ liệu nhân viên
+# HTCV Web 2.5 — Không gian làm việc
+
+## Giao diện Web 2.5
+
+- Tổng quan đồng bộ tông xanh đậm – trắng với màn hình đăng nhập; ba thẻ mở nhanh Sắp lịch & Đảo ca, Quét AI KPI và Chia Data.
+- Menu chính ưu tiên Tổng quan và ba công cụ. Nhóm Dữ liệu & báo cáo thu gọn, tự mở khi chọn một trang trong nhóm. Quản trị tiếp tục chỉ mở khi người dùng yêu cầu.
+- Điện thoại có ô **Đi đến chức năng** ngay trong trang; thanh bên tự thu gọn theo kích thước màn hình. Chuyển trang bằng menu, ô chọn hoặc thẻ mở nhanh đều đóng chế độ chỉnh sửa.
+- Tiêu đề trang, thông tin chi nhánh/cập nhật, bảng, biểu mẫu và nút thống nhất. Ba công cụ có hướng dẫn theo bước. Giao dịch quỹ hiển thị bằng bảng có thể cuộn ngang trên màn hình nhỏ.
+- Giữ tài khoản, quyền và cấu trúc đồng bộ hiện có. 63 kiểm thử với dữ liệu giả đạt, chặn kết nối mạng thật; đã kiểm tra thêm điều hướng di động và chế độ sáng/tối. Chưa đăng nhập vào tài khoản sản xuất hoặc kiểm tra trên điện thoại thật trong lần cập nhật này.
 
 Bản này sửa trực tiếp trên kho `hayonha2023-hue/quanlyCVLC`, nền commit `06a2ce3597767a8e27a2e397c0c8621c7bbceee8`.
 

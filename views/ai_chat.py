@@ -1,8 +1,10 @@
+from views.workspace import page_header, sync_status
 import streamlit as st
 import requests
 
 def render_ai_chat():
-    st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>🤖 Trợ Lý AI Tư Vấn Y Khoa</h3>", unsafe_allow_html=True)
+    sync_status()
+    page_header('Trợ lý AI tư vấn', 'Trao đổi và tra cứu thông tin trong cuộc trò chuyện.', 'HỖ TRỢ CÔNG VIỆC')
 
     # Khởi tạo tin nhắn chào mừng nếu chưa có
     if "vaccine_chat" not in st.session_state:

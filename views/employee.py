@@ -1,10 +1,14 @@
 """Employee read views for all business data the desktop publishes to Firebase."""
 import base64
 import io
+from datetime import datetime
+from html import escape
+from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
 from PIL import Image
 from services.app_data import mapping, rows, snapshot, kpi_table, target_tables, number
+from views.workspace import navigate, page_header
 
 PAGES = {
     '🏠 Tổng quan':'overview', '📋 Xem Lịch':'schedule', '📊 Tích Lũy':'stats',
@@ -116,38 +120,53 @@ def phones(d):
            if not isinstance(phone,(dict,list)) and query in (str(name)+' '+str(phone)).casefold()], 'Danh bạ nội bộ','danh_ba')
 
 def overview(db,d):
-    st.markdown('<div class="htcv-hero"><h2>Công việc trong tầm tay</h2><p>Sắp lịch, đọc KPI và chia dữ liệu từ một nơi.</p></div>', unsafe_allow_html=True)
+    user = escape(str(st.session_state.get('user', 'bạn')))
+    now = datetime.now(ZoneInfo('Asia/Ho_Chi_Minh'))
+    day_name = ['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ nhật'][now.weekday()]
+    st.markdown(f'''<div class="workspace-welcome"><div class="workspace-eyebrow">TỔNG QUAN CÔNG VIỆC</div>
+<h1>Hôm nay, bạn cần làm gì?</h1><p>Chào {user}. Chọn công cụ bên dưới để bắt đầu.</p>
+<div class="workspace-date">{day_name} · {now:%d/%m/%Y}</div></div>''', unsafe_allow_html=True)
     result,meta=kpi_table(db,d['shop'])
-    cols=st.columns(3)
-    cols[0].metric('Ngày có lịch',len(mapping(d.get('detailed_history'))))
-    cols[1].metric('Nhân sự KPI',len(result))
-    cols[2].metric('Liên hệ',len(mapping(d.get('phones'))))
-    st.subheader('Công cụ làm việc')
+    with st.container(key='overview_metrics'):
+        cols=st.columns(3)
+        cols[0].metric('Ngày có lịch',len(mapping(d.get('detailed_history'))), help='Số ngày trong lịch đang lưu của chi nhánh.')
+        cols[1].metric('Nhân sự KPI',len(result), help='Số nhân viên có dữ liệu trong bảng KPI của chi nhánh.')
+        cols[2].metric('Liên hệ',len(mapping(d.get('phones'))), help='Số liên hệ trong danh bạ chung.')
+    st.markdown('<div class="workspace-section-title">Công cụ làm việc</div><div class="workspace-section-note">Ba tác vụ thường dùng, mở ngay khi cần.</div>', unsafe_allow_html=True)
     from views.work_tools import TOOLS
-    def go(page):
-        st.session_state.navigation=page
-        st.session_state.show_bg=False
-        st.session_state.show_pass=False
-    for col,page,description in zip(st.columns(3),TOOLS,[
-        'Đảo danh sách ca, tạo lịch tuần tới và đồng bộ với app.',
-        'Tải ảnh KPI, đọc phân tích và tải kết quả.',
-        'Chọn người nhận, chia Excel và tải trọn bộ ZIP.'
-    ]):
-        with col.container(border=True):
-            st.markdown('### '+page)
-            st.write(description)
-            st.button('Mở chức năng',key='quick_'+page,on_click=go,args=(page,),use_container_width=True)
-    st.subheader('Dữ liệu nhân viên có thể xem')
-    st.write('Lịch trực và ảnh lịch · Tích lũy ca · KPI và ảnh KPI · Target Ngày đã chốt · Ecom · Quỹ Shop · Thị Trường · Danh Bạ')
-    st.caption('Chọn chức năng ở menu bên trái. Trên điện thoại, mở menu bằng nút ở góc trên bên trái.')
+    cards = [
+        ('Sắp lịch & đảo ca', 'Phân chia ca làm, đảo danh sách và tạo lịch cho tuần tiếp theo.', 'Sắp lịch ngay →'),
+        ('Quét AI KPI', 'Tải ảnh bảng KPI để đọc, phân tích và đối chiếu kết quả.', 'Quét ảnh KPI →'),
+        ('Chia data', 'Chọn người nhận, chia file Excel và tải trọn bộ trong một file ZIP.', 'Chia dữ liệu →'),
+    ]
+    with st.container(key='overview_tools'):
+        for i,(col,page,(title,description,action)) in enumerate(zip(st.columns(3),TOOLS,cards),1):
+            with col.container(border=True):
+                st.markdown(f'<div class="workspace-tool-card"><div class="workspace-tool-number">0{i}</div><h3>{title}</h3><p>{description}</p></div>', unsafe_allow_html=True)
+                st.button(action,key='quick_'+page,on_click=navigate,args=(page,),use_container_width=True)
+    st.markdown('<div class="workspace-section-title">Lịch làm việc đã lưu</div><div class="workspace-section-note">Xem ca làm, ảnh lịch và các lần điều chỉnh của chi nhánh.</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        schedule(d)
     with st.expander('Các file làm việc trên máy tính'):
         st.write('Chia Data đã có trong mục Công cụ làm việc. File Lập Hàng và thao tác gửi Zalo PC vẫn dùng trên app máy tính.')
-    st.subheader('Lịch trực đã lưu')
-    schedule(d)
 
 def render_employee(page):
     db=st.session_state.get('db',{});d=snapshot(db,st.session_state.current_shop)
-    st.subheader(page)
-    if PAGES[page]=='overview':overview(db,d)
-    elif PAGES[page]=='kpi':kpi(db,d)
-    else:globals()[PAGES[page]](d)
+    if PAGES[page]=='overview':
+        overview(db,d)
+        return
+    descriptions = {
+        'schedule': ('Lịch làm việc', 'Theo dõi các ca làm, ảnh lịch và lịch sử điều chỉnh.'),
+        'stats': ('Tích lũy ca làm', 'Tổng số ca và phân bổ ca làm của từng nhân viên.'),
+        'kpi': ('Theo dõi KPI', 'Đối chiếu chỉ tiêu, kết quả đã bán và mức hoàn thành của đội ngũ.'),
+        'target': ('Target ngày', 'Xem chỉ tiêu mỗi người, mỗi ca và số liệu đã chốt.'),
+        'ecom': ('Lịch Ecom', 'Phân công ca sáng và ca chiều theo từng ngày trong tuần.'),
+        'fund': ('Quỹ shop', 'Theo dõi số dư, thu chi và chi tiết các phiếu quỹ.'),
+        'market': ('Lịch thị trường', 'Tra cứu tuyến, địa điểm và nhân viên được phân công.'),
+        'phones': ('Danh bạ', 'Tìm nhanh tên và số điện thoại trong danh bạ nội bộ.'),
+    }
+    title,description=descriptions[PAGES[page]]
+    page_header(title,description,'DỮ LIỆU & BÁO CÁO')
+    with st.container(border=True, key='workspace_report'):
+        if PAGES[page]=='kpi':kpi(db,d)
+        else:globals()[PAGES[page]](d)

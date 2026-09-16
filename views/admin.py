@@ -2,6 +2,7 @@ from services.database import save, shop_path
 import streamlit as st
 import requests
 import time
+from views.workspace import page_header, sync_status
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
@@ -12,8 +13,8 @@ def delete_firebase_global(path):
     return save(path, method='DELETE')
 
 def render_admin():
-    st.title('Công cụ quản trị')
-    st.caption('Chọn tác vụ cần dùng. Chỉ phần bạn chọn được mở bên dưới.')
+    sync_status()
+    page_header('Công cụ quản trị', 'Chọn một tác vụ để duyệt tài khoản hoặc quản lý nhân sự.', 'QUẢN TRỊ HỆ THỐNG')
 
     full_db = st.session_state.get("db", {})
     current_shop = st.session_state.get("current_shop", "Shop Chính (Mặc định)")

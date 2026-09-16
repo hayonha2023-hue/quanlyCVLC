@@ -58,3 +58,6 @@ def apply_theme(dark=False, background=''):
     .htcv-subtitle {{font-size:.9rem;color:{muted};margin-bottom:1.5rem;}}
     @media(max-width:700px) {{.block-container {{padding:1rem .75rem 2rem;}} h1 {{font-size:1.6rem;}} .stButton button {{min-height:48px;}}}}
     </style>''',unsafe_allow_html=True)
+    if st.session_state.get('user'):
+        from services.workspace_theme import apply_workspace_theme
+        apply_workspace_theme(dark)

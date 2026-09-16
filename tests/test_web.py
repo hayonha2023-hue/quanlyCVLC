@@ -43,13 +43,13 @@ def test_each_page_renders(app,menu):
     if menu == '👥 Quản Trị Admin':
         app.button(key='open_admin_tools').click().run()
     else:
-        app.sidebar.radio[0].set_value(menu).run()
+        app.sidebar.button(key='nav_'+menu).click().run()
     assert not app.exception
     assert not [x.value for x in app.warning if 'bảo trì' in x.value]
 
 def test_staff_cannot_see_admin(app):
     login(app,'staff','staff-test')
-    assert '👥 Quản Trị Admin' not in app.sidebar.radio[0].options
+    assert 'nav_👥 Quản Trị Admin' not in [b.key for b in app.sidebar.button]
     assert not app.sidebar.selectbox
 
 @pytest.mark.parametrize('failure',[requests.Timeout(),requests.HTTPError('403'),ValueError('bad json')])
@@ -91,7 +91,7 @@ def test_kpi_numeric_does_not_multiply_decimal():
 def test_failed_ecom_save_never_reports_success(app,monkeypatch):
     login(app)
     before=copy.deepcopy(app.session_state['db'])
-    app.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    app.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
     app.sidebar.toggle[0].set_value(True).run()
     app.text_input[0].set_value('Changed')
     original_request=database.request
@@ -106,7 +106,7 @@ def test_failed_ecom_save_never_reports_success(app,monkeypatch):
 
 def test_ecom_inputs_change_with_shop(app):
     login(app)
-    app.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    app.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
     app.sidebar.toggle[0].set_value(True).run()
     app.text_input[0].set_value('Draft for main shop').run()
     app.sidebar.selectbox[0].set_value('A').run()
@@ -115,8 +115,8 @@ def test_ecom_inputs_change_with_shop(app):
 
 def test_staff_write_controls_disabled(app):
     login(app,'staff','staff-test')
-    app.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    app.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
     assert not [b for b in app.button if 'LƯU LỊCH ECOM' in b.label]
     assert not app.sidebar.toggle
-    app.sidebar.radio[0].set_value('💰 Quỹ Shop').run()
+    app.sidebar.button(key='nav_'+'💰 Quỹ Shop').click().run()
     assert not [b for b in app.button if 'GHI PHIẾU' in b.label]

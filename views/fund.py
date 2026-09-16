@@ -1,4 +1,6 @@
+from views.workspace import page_header, sync_status
 import copy
+import pandas as pd
 from services.database import save, shop_path
 import streamlit as st
 import requests
@@ -12,7 +14,8 @@ def save_fund_to_firebase(fund_data, shop_id):
     return save(shop_path(shop_id), {DB_KEY: fund_data})
 
 def render_fund():
-    st.markdown("<h3 style='color: #0D6EFD; margin-bottom: 20px;'>💰 SỔ QUẢN LÝ THU CHI (QUỸ SHOP)</h3>", unsafe_allow_html=True)
+    sync_status()
+    page_header('Quản lý quỹ shop', 'Theo dõi thu chi và ghi phiếu cho chi nhánh đang chọn.', 'CHỈNH SỬA DỮ LIỆU')
 
     shop_id = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
 
@@ -34,32 +37,21 @@ def render_fund():
     ton_quy = tong_thu - tong_chi - chi_rieng
 
     # 3. Hiển thị 4 Khối Thống Kê
-    c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🏦 TỒN QUỸ</b><br><h3 style='color:#0d6efd; margin-top:5px;'>{ton_quy:,.0f} ₫</h3></div>", unsafe_allow_html=True)
-    c2.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🟢 TỔNG THU</b><br><h3 style='color:#198754; margin-top:5px;'>{tong_thu:,.0f} ₫</h3></div>", unsafe_allow_html=True)
-    c3.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🔴 TỔNG CHI</b><br><h3 style='color:#dc3545; margin-top:5px;'>{tong_chi:,.0f} ₫</h3></div>", unsafe_allow_html=True)
-    c4.markdown(f"<div class='html-card' style='text-align:center; padding: 15px;'><b>🟡 CHI RIÊNG</b><br><h3 style='color:#ffc107; margin-top:5px;'>{chi_rieng:,.0f} ₫</h3></div>", unsafe_allow_html=True)
+    for col, label, value in zip(st.columns(4), ['Tồn quỹ','Tổng thu','Tổng chi','Chi riêng'], [ton_quy,tong_thu,tong_chi,chi_rieng]):
+        col.metric(label, f'{value:,.0f} ₫')
 
     # 4. Hiển thị Danh sách Giao Dịch
     # Sắp xếp theo ID (chuỗi số thời gian) để cái mới nhất nổi lên đầu
     sorted_funds = sorted(fund_data.items(), key=lambda x: x[0], reverse=True)
 
-    for tx_id, item in sorted_funds:
-        loai = item.get("type", "")
-        color = "#198754" if loai == "Thu" else "#dc3545" if loai == "Chi" else "#ffc107"
-        icon = "➕" if loai == "Thu" else "➖"
-
-        st.markdown(f"""
-        <div style='background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;'>
-            <div style='width: 15%; color: #666; font-size: 13px;'>{item.get('date', '')}</div>
-            <div style='width: 10%; color: {color}; font-weight: bold;'>{icon} {loai}</div>
-            <div style='width: 15%; font-weight: bold; font-size: 16px;'>{float(item.get('amount', 0)):,.0f} ₫</div>
-            <div style='width: 45%; color: #333;'>{item.get('desc', '')}</div>
-            <div style='width: 15%; text-align: right; color: #0d6efd; font-style: italic;'>{item.get('user', '')}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
+    if sorted_funds:
+        st.dataframe(pd.DataFrame([{
+            'Ngày': item.get('date',''), 'Loại': item.get('type',''),
+            'Số tiền': float(item.get('amount',0)), 'Nội dung': item.get('desc',''),
+            'Người ghi': item.get('user',''),
+        } for _,item in sorted_funds]), hide_index=True, use_container_width=True)
+    else:
+        st.info('Chưa có phiếu thu chi. Bạn có thể ghi phiếu đầu tiên bên dưới.')
 
     account = st.session_state.db.get('users', {}).get(st.session_state.get('user', ''), {})
     if not (st.session_state.get('is_admin', False) or 'QUẢN LÝ QUỸ SHOP' in account.get('edit_permissions', [])):
