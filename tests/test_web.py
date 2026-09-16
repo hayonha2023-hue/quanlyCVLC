@@ -40,7 +40,10 @@ def test_existing_password():
 @pytest.mark.parametrize('menu',['🛒 Lịch Ecom','💰 Quỹ Shop','📋 Xem Lịch','📈 Theo Dõi KPI','📊 Target Ngày','📍 Thị Trường','🤖 AI Tư Vấn','👥 Quản Trị Admin'])
 def test_each_page_renders(app,menu):
     login(app)
-    app.sidebar.radio[0].set_value(menu).run()
+    if menu == '👥 Quản Trị Admin':
+        app.button(key='open_admin_tools').click().run()
+    else:
+        app.sidebar.radio[0].set_value(menu).run()
     assert not app.exception
     assert not [x.value for x in app.warning if 'bảo trì' in x.value]
 

@@ -145,3 +145,30 @@ def test_staff_split_permission_message(monkeypatch):
     a=app_for(monkeypatch,'staff');a.sidebar.radio[0].set_value('✂️ Chia Data').run()
     assert any('CHIA ĐỀU SỐ LIỆU' in m.value for m in a.info)
     assert not a.exception
+
+
+def test_admin_tools_open_only_on_request(monkeypatch):
+    a=app_for(monkeypatch)
+    assert '👥 Quản Trị Admin' not in a.sidebar.radio[0].options
+    assert not [w for w in a.selectbox if w.key=='admin_task']
+    a.button(key='open_admin_tools').click().run()
+    assert not a.exception
+    assert a.selectbox(key='admin_task').value=='Chọn tác vụ…'
+    assert not a.multiselect
+    a.selectbox(key='admin_task').set_value('Nhân sự & phân quyền').run()
+    assert not a.multiselect
+    a.selectbox(key='admin_employee_A').set_value('staff').run()
+    assert len(a.multiselect)==2 and not a.exception
+    a.button(key='open_admin_tools').click().run()
+    assert '👥 Quản Trị Admin' not in a.sidebar.radio[0].options
+    assert not a.multiselect
+
+
+def test_navigation_closes_editing(monkeypatch):
+    a=app_for(monkeypatch)
+    a.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    a.sidebar.toggle[0].set_value(True).run()
+    a.sidebar.radio[0].set_value('💰 Quỹ Shop').run()
+    a.sidebar.radio[0].set_value('🛒 Lịch Ecom').run()
+    assert not a.sidebar.toggle[0].value
+    assert not a.exception

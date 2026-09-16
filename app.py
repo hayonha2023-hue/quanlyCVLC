@@ -79,6 +79,9 @@ if "theme" not in st.session_state: st.session_state.theme = "Light"
 def close_settings_panels():
     st.session_state.show_bg = False
     st.session_state.show_pass = False
+    for key in list(st.session_state):
+        if str(key).startswith("editing_"):
+            st.session_state[key] = False
 
 # ==========================================
 # 2. THANH MENU BÊN TRÁI (SIDEBAR) VỚI TÍNH NĂNG CHỌN NHÁNH
@@ -86,7 +89,7 @@ def close_settings_panels():
 with st.sidebar:
     st.markdown('<div class="htcv-brand">HTCV</div><div class="htcv-subtitle">Không gian quản lý công việc</div>', unsafe_allow_html=True)
     st.write("Tài khoản: " + str(user_id))
-    st.caption("Web 2.3 • Công cụ & dữ liệu nhân viên")
+    st.caption("Web 2.4 • Không gian làm việc")
     if st.button("↻ Làm mới dữ liệu", use_container_width=True):
         sync.refresh(st.session_state, force=True)
         st.rerun()
@@ -117,33 +120,48 @@ with st.sidebar:
     st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
 
     menu_options = [list(PAGES)[0]] + TOOLS + list(PAGES)[1:] + ['🤖 AI Tư Vấn']
-    if st.session_state.get('is_admin'):
+    if st.session_state.get('is_admin') and st.session_state.get('navigation') == '👥 Quản Trị Admin':
         menu_options.append('👥 Quản Trị Admin')
+    if st.session_state.get('navigation') not in menu_options:
+        st.session_state.navigation = menu_options[0]
     menu = st.radio('Chức năng', menu_options, key='navigation', on_change=close_settings_panels)
     edit_perms = u_info.get('edit_permissions', []) or []
     edit_permission = {'🛒 Lịch Ecom':'SỬA LỊCH ECOM','💰 Quỹ Shop':'QUẢN LÝ QUỸ SHOP',
                        '📍 Thị Trường':'SỬA THỊ TRƯỜNG','📈 Theo Dõi KPI':'SỬA SỐ KPI'}
     can_edit = menu in edit_permission and (st.session_state.get('is_admin') or edit_permission[menu] in edit_perms)
-    edit_mode = st.toggle('Mở phần chỉnh sửa', value=False, key='editing_'+menu) if can_edit else False
+    edit_mode = False
+    if can_edit:
+        with st.expander('Chỉnh sửa dữ liệu', expanded=False):
+            edit_mode = st.toggle('Mở phần chỉnh sửa', value=False, key='editing_'+menu)
+            st.caption('Bật khi cần cập nhật. Chuyển chức năng sẽ trở về chế độ xem.')
+
+    if st.session_state.get('is_admin'):
+        def switch_admin():
+            st.session_state.admin_task = 'Chọn tác vụ…'
+            st.session_state.navigation = '🏠 Tổng quan' if st.session_state.get('navigation') == '👥 Quản Trị Admin' else '👥 Quản Trị Admin'
+            close_settings_panels()
+        st.button('Đóng công cụ quản trị' if menu == '👥 Quản Trị Admin' else '⚙ Công cụ quản trị',
+                  key='open_admin_tools', on_click=switch_admin, use_container_width=True)
 
     st.markdown("<br><hr style='border-color: rgba(150,150,150,0.1); margin: 10px 0px;'>", unsafe_allow_html=True)
 
-    if st.button("🖼️ Đổi hình nền", use_container_width=True):
-        st.session_state.show_bg = not st.session_state.show_bg
-        st.session_state.show_pass = False
+    with st.expander('Tài khoản & giao diện', expanded=False):
+        if st.button("🖼️ Đổi hình nền", use_container_width=True):
+            st.session_state.show_bg = not st.session_state.show_bg
+            st.session_state.show_pass = False
 
-    if st.button("🔑 Đổi mật khẩu", use_container_width=True):
-        st.session_state.show_pass = not st.session_state.show_pass
-        st.session_state.show_bg = False
+        if st.button("🔑 Đổi mật khẩu", use_container_width=True):
+            st.session_state.show_pass = not st.session_state.show_pass
+            st.session_state.show_bg = False
 
-    theme_label = "🌙 Giao diện Tối" if st.session_state.theme == "Light" else "☀️ Giao diện Sáng"
-    if st.button(theme_label, use_container_width=True):
-        st.session_state.theme = "Dark" if st.session_state.theme == "Light" else "Light"
-        st.rerun()
+        theme_label = "🌙 Giao diện Tối" if st.session_state.theme == "Light" else "☀️ Giao diện Sáng"
+        if st.button(theme_label, use_container_width=True):
+            st.session_state.theme = "Dark" if st.session_state.theme == "Light" else "Light"
+            st.rerun()
 
-    if st.button("🚪 Đăng xuất", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+        if st.button("🚪 Đăng xuất", use_container_width=True):
+            st.session_state.clear()
+            st.rerun()
 
 # ==========================================
 # 3. ĐIỀU HƯỚNG CHÍNH MÀN HÌNH

@@ -116,6 +116,7 @@ def phones(d):
            if not isinstance(phone,(dict,list)) and query in (str(name)+' '+str(phone)).casefold()], 'Danh bạ nội bộ','danh_ba')
 
 def overview(db,d):
+    st.markdown('<div class="htcv-hero"><h2>Công việc trong tầm tay</h2><p>Sắp lịch, đọc KPI và chia dữ liệu từ một nơi.</p></div>', unsafe_allow_html=True)
     result,meta=kpi_table(db,d['shop'])
     cols=st.columns(3)
     cols[0].metric('Ngày có lịch',len(mapping(d.get('detailed_history'))))

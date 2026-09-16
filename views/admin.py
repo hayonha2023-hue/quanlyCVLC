@@ -12,7 +12,8 @@ def delete_firebase_global(path):
     return save(path, method='DELETE')
 
 def render_admin():
-    st.markdown("<h3 style='margin-top: 0px; margin-bottom: 25px; font-weight:800;'>⚙️ Trung Tâm Điều Hành Quản Trị Hệ Thống</h3>", unsafe_allow_html=True)
+    st.title('Công cụ quản trị')
+    st.caption('Chọn tác vụ cần dùng. Chỉ phần bạn chọn được mở bên dưới.')
 
     full_db = st.session_state.get("db", {})
     current_shop = st.session_state.get("current_shop", "Shop Chính (Mặc định)")
@@ -38,11 +39,21 @@ def render_admin():
         st.warning("⛔ Bạn không có quyền truy cập khu vực này!")
         return
 
+    task = st.selectbox('Bạn muốn làm gì?',
+                        ['Chọn tác vụ…', 'Duyệt tài khoản mới', 'Nhân sự & phân quyền'],
+                        key='admin_task')
+    if task == 'Chọn tác vụ…':
+        with st.container(border=True):
+            st.subheader('Quản trị khi cần, làm việc gọn hơn')
+            st.write('Duyệt yêu cầu đăng ký hoặc chọn một nhân viên để điều chỉnh quyền.')
+            st.caption('Dùng nút Đóng công cụ quản trị ở menu để quay về Tổng quan.')
+        return
+
     # ==========================================
     # 1. DANH SÁCH DUYỆT TÀI KHOẢN MỚI
     # ==========================================
     pending = full_db.get("pending_users", {})
-    if pending:
+    if task == 'Duyệt tài khoản mới' and pending:
         st.markdown("<h5 style='color:#f59e0b; font-weight: bold;'>⏳ TÀI KHOẢN CHỜ PHÊ DUYỆT</h5>", unsafe_allow_html=True)
         for pu, pinfo in pending.items():
             req_shop = pinfo.get("shop_id", "Shop Chính (Mặc định)") if isinstance(pinfo, dict) else "Shop Chính (Mặc định)"
@@ -71,6 +82,12 @@ def render_admin():
                         st.warning(f"Đã từ chối tài khoản {pu}!"); time.sleep(1); st.rerun()
         st.divider()
 
+    if task == 'Duyệt tài khoản mới':
+        visible = [p for p in pending.values() if is_super_admin_user or
+                   (isinstance(p, dict) and p.get('shop_id', 'Shop Chính (Mặc định)') == current_shop)]
+        if not visible: st.info('Không có tài khoản đang chờ duyệt tại chi nhánh này.')
+        return
+
     # ==========================================
     # 2. QUẢN LÝ TÀI KHOẢN NHÂN VIÊN ĐÃ DUYỆT
     # ==========================================
@@ -80,7 +97,16 @@ def render_admin():
     shops_data = full_db.get("shops", {})
     all_shops = list(dict.fromkeys(["Shop Chính (Mặc định)"] + list(shops_data.keys())))
 
-    for u, uinfo in global_users.items():
+    candidates = {u: info for u, info in global_users.items()
+                  if isinstance(info, dict) and u.lower() != 'admin' and u != current_user
+                  and (is_super_admin_user or (info.get('shop_id', 'Shop Chính (Mặc định)') == current_shop
+                       and info.get('role', 'user') not in ('admin', 'super_admin')))}
+    if not candidates:
+        st.info('Không có tài khoản phù hợp để quản lý.'); return
+    selected = st.selectbox('Chọn nhân viên cần quản lý', ['— Chọn nhân viên —'] + sorted(candidates),
+                            key='admin_employee_'+current_shop)
+    if selected not in candidates: return
+    for u, uinfo in {selected: candidates[selected]}.items():
         # Bỏ qua tài khoản Admin đang đăng nhập (Tránh việc tự tay tước quyền của chính mình)
         if u.lower() == "admin" or u == current_user: continue
 
@@ -89,7 +115,8 @@ def render_admin():
 
         # Super Admin thấy tất cả. Admin nhánh chỉ thấy nhân viên nhánh mình
         if is_super_admin_user or (u_shop == current_shop and u_role not in ("admin", "super_admin")):
-            with st.expander(f"👤 {u} (Vai trò: {u_role.upper()} | 📍 {u_shop})"):
+            with st.container(border=True):
+                st.subheader(f"{u} · {u_shop}")
 
                 new_shop = u_shop
                 new_role = u_role

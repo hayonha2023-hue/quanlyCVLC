@@ -1,10 +1,18 @@
-# HTCV Web 2.3 — Công cụ làm việc và dữ liệu nhân viên
+# HTCV Web 2.4 — Công cụ làm việc và dữ liệu nhân viên
 
 Bản này sửa trực tiếp trên kho `hayonha2023-hue/quanlyCVLC`, nền commit `06a2ce3597767a8e27a2e397c0c8621c7bbceee8`.
 
+## Giao diện Web 2.4
+
+- Công cụ quản trị đóng mặc định; bấm **Công cụ quản trị** để mở, bấm **Đóng công cụ quản trị** để về Tổng quan.
+- Chọn đúng một tác vụ: duyệt tài khoản hoặc nhân sự/phân quyền. Khi quản lý nhân sự, chọn một người rồi mới hiện biểu mẫu của người đó.
+- Các thao tác sửa nằm trong **Chỉnh sửa dữ liệu**; chuyển chức năng tự trở về chế độ xem.
+- Đổi nền, mật khẩu, sáng/tối và đăng xuất gom vào **Tài khoản & giao diện**.
+- Nền sáng, khối nội dung tách rõ, menu chọn có điểm nhấn; các cột xếp dọc trên màn hình nhỏ.
+
 ## Nhân viên xem gì?
 
-Sau khi đăng nhập bằng tài khoản app, nhân viên xem toàn bộ các nhóm dữ liệu nghiệp vụ đã đồng bộ của chi nhánh được gán. Trang đầu là **Tổng quan**, phiên bản ở menu ghi **Web 2.3**.
+Sau khi đăng nhập bằng tài khoản app, nhân viên xem toàn bộ các nhóm dữ liệu nghiệp vụ đã đồng bộ của chi nhánh được gán. Trang đầu là **Tổng quan**, phiên bản ở menu ghi **Web 2.4**.
 
 | Màn hình web | Nguồn app trên Firebase | Nội dung |
 |---|---|---|
@@ -61,7 +69,7 @@ Kho GitHub chứa mã nguồn triển khai. Kiểm tra commit và nhánh trong S
 
 ## Kiểm tra đã thực hiện
 
-- 59 kiểm thử tự động đạt (Streamlit AppTest và logic đồng bộ), dùng dữ liệu giả, chặn mạng thật.
+- 61 kiểm thử tự động đạt (Streamlit AppTest và logic đồng bộ), dùng dữ liệu giả, chặn mạng thật.
 - Nhân viên mở đủ trang có dữ liệu; không hiển thị bản ghi chi nhánh khác hoặc mật khẩu/khóa API.
 - Lịch V2, lịch đã xóa/rỗng, lịch legacy, tích lũy, KPI app, Target Ngày có kết quả chốt.
 - Làm mới nhận thay đổi, mất mạng giữ dữ liệu cũ kèm trạng thái lỗi, tài khoản bị xóa kết thúc phiên, nhịp đọc 30 giây.
