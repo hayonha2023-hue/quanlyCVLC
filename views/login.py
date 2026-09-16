@@ -53,7 +53,7 @@ LOGIN_CSS = """
     color:#fff!important;font-size:39px!important;font-weight:750;line-height:1.23;
     letter-spacing:-.035em;margin:22px 0 16px;padding:0;
 }
-.htcv-login-story h2 span {color:#acd7ef;}
+.htcv-login-story h2 .htcv-login-emphasis {color:#acd7ef;}
 .htcv-login-story .htcv-login-intro {
     color:#c0d0e2!important;font-size:15px;line-height:1.7;max-width:350px;margin:0;
 }
@@ -86,14 +86,17 @@ LOGIN_CSS = """
 }
 .htcv-login-heading p {font-size:14px;color:#67778d!important;line-height:1.7;margin:0;}
 .st-key-htcv_login [data-testid="stWidgetLabel"] p {font-size:13px;font-weight:600;color:#30465f;}
-.st-key-htcv_login [data-baseweb="input"] {
+.st-key-htcv_login [data-baseweb="input"],
+.st-key-htcv_login [data-testid="stTextInputRootElement"] {
     min-height:52px;background:#f8fafc;border:1px solid #d8e1ed!important;
     border-radius:11px;transition:border-color .15s,box-shadow .15s;
 }
-.st-key-htcv_login [data-baseweb="input"]:focus-within {border-color:#367bbe!important;box-shadow:0 0 0 3px #367bbe15;}
+.st-key-htcv_login [data-baseweb="input"]:focus-within,
+.st-key-htcv_login [data-testid="stTextInputRootElement"]:focus-within {border-color:#367bbe!important;box-shadow:0 0 0 3px #367bbe15;}
 .st-key-htcv_login input {font-size:16px!important;background:transparent!important;color:#203c5c!important;}
 .st-key-htcv_login input::placeholder {color:#8493a5;opacity:1;}
-.st-key-htcv_login [data-baseweb="input"] button {min-width:44px;color:#637991;}
+.st-key-htcv_login [data-baseweb="input"] button,
+.st-key-htcv_login [data-testid="stTextInputRootElement"] button {min-width:44px;color:#637991;}
 .st-key-htcv_login [data-testid="stFormSubmitButton"] {margin-top:4px;}
 .st-key-htcv_login [data-testid="stFormSubmitButton"] button {
     min-height:52px;border-radius:11px;background:#1f5b99;border:1px solid #1f5b99;
@@ -102,6 +105,7 @@ LOGIN_CSS = """
 .st-key-htcv_login [data-testid="stFormSubmitButton"] button:hover {background:#174b80;border-color:#174b80;box-shadow:0 7px 16px #1f5b9926;}
 .st-key-htcv_login [data-testid="stFormSubmitButton"] button p {color:#fff!important;font-size:15px;font-weight:650;}
 .st-key-htcv_login [data-testid="stExpander"] {border:0;border-top:1px solid #edf1f6;border-radius:0;background:transparent;margin-top:8px;}
+.st-key-htcv_login [data-testid="stExpander"] details {border:0;border-radius:0;background:transparent;}
 .st-key-htcv_login [data-testid="stExpander"] summary {min-height:46px;padding:10px 0;}
 .st-key-htcv_login [data-testid="stExpander"] summary p {font-size:13px;color:#5e728c;}
 .st-key-htcv_login [data-testid="stExpanderDetails"] {padding:0 0 8px;}
@@ -156,7 +160,7 @@ def login_form():
         with story:
             st.markdown(f'''<section class="htcv-login-story" aria-label="Không gian làm việc HTCV">
 <div><div class="htcv-login-eyebrow">KẾT NỐI CÔNG VIỆC MỖI NGÀY</div>
-<h2>Mọi công việc.<br><span>Một không gian.</span></h2>
+<h2>Mọi công việc.<br><span class="htcv-login-emphasis">Một không gian.</span></h2>
 <p class="htcv-login-intro">Theo dõi công việc và phối hợp cùng đội ngũ, ngay trong một nơi quen thuộc.</p></div>
 <div class="htcv-login-features">
 <div class="htcv-login-feature"><div class="htcv-login-feature-icon">{calendar}</div><div><strong>Lịch &amp; ca làm</strong><small>Nắm rõ lịch làm việc của bạn và đội ngũ.</small></div></div>
