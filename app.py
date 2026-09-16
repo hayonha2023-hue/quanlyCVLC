@@ -9,6 +9,7 @@ from services import sync
 from views.employee import PAGES, render_employee
 from views.work_tools import TOOLS, render_tool
 from services.theme import apply_theme
+from views.login import login_form
 from PIL import Image, ImageOps
 
 st.set_page_config(page_title="HTCV Web System", layout="wide", initial_sidebar_state="expanded")
@@ -27,12 +28,10 @@ apply_theme(st.session_state.get('theme') == 'Dark')
 # 1. HỆ THỐNG ĐĂNG NHẬP
 # ==========================================
 if "user" not in st.session_state or not st.session_state.user:
-    st.markdown("<h2 style='text-align: center; color: #0ea5e9; margin-top: 50px;'>HỆ THỐNG QUẢN TRỊ HTCV</h2>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2.form("login_form"):
-        user_in = st.text_input("👤 Tài khoản").strip()
-        pass_in = st.text_input("🔑 Mật khẩu", type="password")
-        if st.form_submit_button("🚀 ĐĂNG NHẬP", use_container_width=True):
+    with login_form():
+        user_in = st.text_input("Tài khoản", placeholder="Nhập tên tài khoản", autocomplete="username").strip()
+        pass_in = st.text_input("Mật khẩu", type="password", placeholder="Nhập mật khẩu", autocomplete="current-password")
+        if st.form_submit_button("Đăng nhập →", type="primary", use_container_width=True):
             if not user_in or not pass_in:
                 st.error("Vui lòng nhập đầy đủ thông tin!")
             else:
