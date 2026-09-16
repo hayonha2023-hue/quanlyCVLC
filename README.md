@@ -1,10 +1,10 @@
-# HTCV Web 2.2 — Cổng nhân viên xem dữ liệu app
+# HTCV Web 2.3 — Công cụ làm việc và dữ liệu nhân viên
 
 Bản này sửa trực tiếp trên kho `hayonha2023-hue/quanlyCVLC`, nền commit `06a2ce3597767a8e27a2e397c0c8621c7bbceee8`.
 
 ## Nhân viên xem gì?
 
-Sau khi đăng nhập bằng tài khoản app, nhân viên xem toàn bộ các nhóm dữ liệu nghiệp vụ đã đồng bộ của chi nhánh được gán. Trang đầu là **Tổng quan**, phiên bản ở menu ghi **Web 2.2**.
+Sau khi đăng nhập bằng tài khoản app, nhân viên xem toàn bộ các nhóm dữ liệu nghiệp vụ đã đồng bộ của chi nhánh được gán. Trang đầu là **Tổng quan**, phiên bản ở menu ghi **Web 2.3**.
 
 | Màn hình web | Nguồn app trên Firebase | Nội dung |
 |---|---|---|
@@ -28,9 +28,17 @@ Web ưu tiên lịch V2 kể cả khi rỗng hoặc đã xóa. Không hồi sinh
 
 Đổi/sửa trên web: những người có quyền bật **Mở phần chỉnh sửa** tại Ecom, Quỹ, Thị Trường hoặc KPI. KPI ghi đúng `shops/<shop_id>/kpi/emp/<name>` (chi nhánh mặc định không có tiền tố `shops/...`). App nhận thay đổi khi đồng bộ Firebase. Target Ngày dùng app để chốt số và công thức; bộ tính Target web cũ không còn xuất hiện để tránh ghi sai cấu trúc app.
 
-## Phần nào chưa có dữ liệu để đưa lên web?
+## Ba công cụ bổ sung trong Web 2.3
 
-File **Lập Hàng**, file **Chia Data**, trạng thái gửi **Zalo PC**, ảnh đầu vào tạm của Quét AI và cấu hình **Thông báo** tùy chỉnh hiện được giữ trên máy tính, không thuộc những nhánh app gửi lên Firebase. Web không thể tự đọc các file đó từ ổ cứng. Bản này không thay đổi app hoặc ba file Lập Hàng được bảo vệ; không khẳng định đã đồng bộ các dữ liệu chỉ có trên máy. Không đổi trình duyệt thành công cụ điều khiển Zalo PC.
+- **Sắp lịch & Đảo ca**: danh sách ca sáng, chiều, 10h30 theo cấu hình app; đảo danh sách sáng/chiều; nhân viên đặc biệt tối đa hai ngày/tuần. Dùng thuật toán `ScheduleService` của app 2.0.76, chỉ đổi đồng hồ sang múi giờ Việt Nam. Tạo bản xem trước rồi bấm lưu riêng. Lưu cùng định dạng lịch V2, mốc công bằng và danh sách đầu vào của app. Giữ quyền `CHIA LỊCH TỰ ĐỘNG`, `ĐẢO TÊN CA`.
+- **Quét AI KPI**: tải ảnh JPG/PNG, phân tích bằng Groq với key đã cấu hình trên app hoặc key riêng của phiên. Model `qwen/qwen3.6-27b` theo [Groq Vision](https://console.groq.com/docs/vision). Xem và tải kết quả văn bản; không tự ghi số KPI từ nhận diện AI. Có hướng dẫn dùng Gemini qua web.
+- **Chia Data**: tải Excel XLS/XLSX, chọn người từ danh bạ/lịch trực hoặc nhập tên. Chia theo đúng thương và số dư như app, giữ thứ tự dòng, xuất Excel từng người trong ZIP. Cần quyền `CHIA ĐỀU SỐ LIỆU`, đã bổ sung tùy chọn này trong Quản Trị Admin. Kết quả chỉ ở phiên web, có nút dọn; không ghi các file vào ổ đĩa máy chủ hoặc Firebase.
+
+Giao diện có ba nút mở nhanh trên Tổng quan, menu đánh dấu chức năng đang chọn, chữ và nút rõ hơn, bảng và vùng nhập tách riêng. Giữ các trang dữ liệu của 2.2.
+
+Lưu lịch dùng [Firebase ETag / conditional PUT](https://firebase.google.com/docs/database/rest/save-data#section-conditional-requests): đọc mới quyền và dữ liệu gốc, giữ nguyên những nhánh không sửa, chỉ ghi nếu toàn bộ mốc dữ liệu vẫn khớp. Nếu ai đó sửa dữ liệu trong lúc lưu, lượt lưu bị từ chối thay vì ghi đè. Không tự lặp lại lượt lưu khi mất mạng. Cần làm mới để kiểm tra trạng thái. Kiểm tra khóa lịch và mốc lịch/tích lũy của bản xem trước trước khi ghi.
+
+**Giới hạn:** Lập Hàng và gửi tự động qua Zalo PC vẫn trên app máy tính. Ảnh Quét AI chỉ được gửi Groq khi người dùng bấm Phân tích. Chưa chạy API AI với key thật hoặc ghi lịch vào Firebase sản xuất trong quá trình kiểm thử.
 
 ## Chạy thử
 
@@ -46,14 +54,14 @@ ZIP là bản mã nguồn; tải ZIP không tự cập nhật website. Muốn `h
 1. Giữ bản mã đang chạy để có thể quay lại.
 2. Trong kho `hayonha2023-hue/quanlyCVLC`, cập nhật nội dung thư mục giải nén vào **gốc kho**, gồm `app.py`, `requirements.txt`, `services/`, `views/`, `.streamlit/config.toml`. Không bọc thêm thư mục `HTCV_WEB_2.2...` phía ngoài. Không thay Secrets của Streamlit.
 3. Commit vào đúng nhánh Streamlit đã liên kết; giữ đường dẫn chạy `app.py`.
-4. Khi Streamlit triển khai xong, menu phải ghi **Web 2.2 • Cổng xem dữ liệu nhân viên** và có **Tổng quan, Tích Lũy, Target Ngày, Danh Bạ**. Nếu vẫn ghi bản cũ, kiểm tra nhánh/commit triển khai trên Streamlit.
+4. Khi Streamlit triển khai xong, menu phải ghi **Web 2.3 • Công cụ & dữ liệu nhân viên** và có **Tổng quan, Tích Lũy, Target Ngày, Danh Bạ**. Nếu vẫn ghi bản cũ, kiểm tra nhánh/commit triển khai trên Streamlit.
 5. Dùng tài khoản nhân viên của một chi nhánh, so lịch, KPI và kết quả Target đã chốt trong app. Thay đổi thử một mục được phép trên app, lưu thành công rồi bấm Làm mới dữ liệu trên web.
 
-Kho GitHub chứa mã nguồn triển khai. Kiểm tra commit và nhánh trong Streamlit Cloud để xác nhận website đã nhận đúng bản Web 2.2. Không gửi mật khẩu hoặc token vào chat.
+Kho GitHub chứa mã nguồn triển khai. Kiểm tra commit và nhánh trong Streamlit Cloud để xác nhận website đã nhận đúng bản Web 2.3. Không gửi mật khẩu hoặc token vào chat.
 
 ## Kiểm tra đã thực hiện
 
-- 44 kiểm thử tự động đạt (Streamlit AppTest và logic đồng bộ), dùng dữ liệu giả, chặn mạng thật.
+- 59 kiểm thử tự động đạt (Streamlit AppTest và logic đồng bộ), dùng dữ liệu giả, chặn mạng thật.
 - Nhân viên mở đủ trang có dữ liệu; không hiển thị bản ghi chi nhánh khác hoặc mật khẩu/khóa API.
 - Lịch V2, lịch đã xóa/rỗng, lịch legacy, tích lũy, KPI app, Target Ngày có kết quả chốt.
 - Làm mới nhận thay đổi, mất mạng giữ dữ liệu cũ kèm trạng thái lỗi, tài khoản bị xóa kết thúc phiên, nhịp đọc 30 giây.

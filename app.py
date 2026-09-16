@@ -7,6 +7,7 @@ from services.database import fetch_data, save, DatabaseError
 from services.auth import authenticate, roles, resolve_username
 from services import sync
 from views.employee import PAGES, render_employee
+from views.work_tools import TOOLS, render_tool
 from services.theme import apply_theme
 from PIL import Image, ImageOps
 
@@ -85,7 +86,7 @@ def close_settings_panels():
 with st.sidebar:
     st.markdown('<div class="htcv-brand">HTCV</div><div class="htcv-subtitle">Không gian quản lý công việc</div>', unsafe_allow_html=True)
     st.write("Tài khoản: " + str(user_id))
-    st.caption("Web 2.2 • Cổng xem dữ liệu nhân viên")
+    st.caption("Web 2.3 • Công cụ & dữ liệu nhân viên")
     if st.button("↻ Làm mới dữ liệu", use_container_width=True):
         sync.refresh(st.session_state, force=True)
         st.rerun()
@@ -115,7 +116,7 @@ with st.sidebar:
 
     st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
 
-    menu_options = list(PAGES) + ['🤖 AI Tư Vấn']
+    menu_options = [list(PAGES)[0]] + TOOLS + list(PAGES)[1:] + ['🤖 AI Tư Vấn']
     if st.session_state.get('is_admin'):
         menu_options.append('👥 Quản Trị Admin')
     menu = st.radio('Chức năng', menu_options, key='navigation', on_change=close_settings_panels)
@@ -226,7 +227,9 @@ else:
             st.warning('Tài khoản không có quyền chỉnh sửa.'); st.stop()
         if st.session_state.get('sync_error') and menu != '🤖 AI Tư Vấn':
             st.warning('Cần tải được dữ liệu mới trước khi chỉnh sửa.'); st.stop()
-        if menu == '🛒 Lịch Ecom':
+        if menu in TOOLS:
+            render_tool(menu)
+        elif menu == '🛒 Lịch Ecom':
             from views.ecom import render_ecom
             render_ecom()
         elif menu == '💰 Quỹ Shop':

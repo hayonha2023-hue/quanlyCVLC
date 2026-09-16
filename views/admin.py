@@ -106,7 +106,7 @@ def render_admin():
                 view_options = ["XEM LỊCH", "TÍCH LŨY", "QUÉT AI KPI", "CHIA TARGET", "CHIA DATA", "THỊ TRƯỜNG", "HOÀN TÁC", "DANH BẠ", "LẬP HÀNG", "XUẤT EXCEL", "GỬI ZALO", "QUỸ SHOP", "LỊCH ECOM", "AI TƯ VẤN"]
                 new_perms = st.multiselect("Bật/tắt các tính năng xem:", view_options, default=[p for p in current_perms if p in view_options], key=f"perm_{u}")
 
-                edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA", "TÍNH TARGET"]
+                edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA", "TÍNH TARGET", "CHIA ĐỀU SỐ LIỆU", "SỬA LỊCH TRỰC", "SỬA SỐ TÍCH LŨY"]
                 new_edits = st.multiselect("Bật/tắt quyền chỉnh sửa (Thao tác):", edit_options, default=[p for p in current_edits if p in edit_options], key=f"edit_{u}")
 
                 if st.button("💾 LƯU CẤU HÌNH", key=f"save_{u}", type="primary", use_container_width=True):

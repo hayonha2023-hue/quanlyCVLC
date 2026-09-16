@@ -121,11 +121,26 @@ def overview(db,d):
     cols[0].metric('Ngày có lịch',len(mapping(d.get('detailed_history'))))
     cols[1].metric('Nhân sự KPI',len(result))
     cols[2].metric('Liên hệ',len(mapping(d.get('phones'))))
+    st.subheader('Công cụ làm việc')
+    from views.work_tools import TOOLS
+    def go(page):
+        st.session_state.navigation=page
+        st.session_state.show_bg=False
+        st.session_state.show_pass=False
+    for col,page,description in zip(st.columns(3),TOOLS,[
+        'Đảo danh sách ca, tạo lịch tuần tới và đồng bộ với app.',
+        'Tải ảnh KPI, đọc phân tích và tải kết quả.',
+        'Chọn người nhận, chia Excel và tải trọn bộ ZIP.'
+    ]):
+        with col.container(border=True):
+            st.markdown('### '+page)
+            st.write(description)
+            st.button('Mở chức năng',key='quick_'+page,on_click=go,args=(page,),use_container_width=True)
     st.subheader('Dữ liệu nhân viên có thể xem')
     st.write('Lịch trực và ảnh lịch · Tích lũy ca · KPI và ảnh KPI · Target Ngày đã chốt · Ecom · Quỹ Shop · Thị Trường · Danh Bạ')
     st.caption('Chọn chức năng ở menu bên trái. Trên điện thoại, mở menu bằng nút ở góc trên bên trái.')
     with st.expander('Các file làm việc trên máy tính'):
-        st.write('Lập Hàng và Chia Data hiện xử lý file trên máy tính, chưa đưa file lên Firebase. Web chưa thể hiện các file này. Thao tác gửi Zalo PC vẫn thực hiện trên máy tính.')
+        st.write('Chia Data đã có trong mục Công cụ làm việc. File Lập Hàng và thao tác gửi Zalo PC vẫn dùng trên app máy tính.')
     st.subheader('Lịch trực đã lưu')
     schedule(d)
 
