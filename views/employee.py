@@ -52,22 +52,31 @@ def gallery(value, label):
             st.warning(name + ': dữ liệu ảnh không đọc được. Hãy tải lại ảnh từ app.')
 
 def schedule(d):
-    tabs=st.tabs(['Lịch theo ca','Ảnh lịch','Lịch sử sửa'])
+    from views.schedule_board import render_board, people
+    tabs=st.tabs(['Lịch theo ngày','Bảng & tải lịch','Ảnh lịch','Lịch sử sửa'])
+    history=mapping(d.get('detailed_history'))
+    selected_history=history
+    query=''
     with tabs[0]:
-        state=mapping(d.get('schedule_lock'))
-        if state.get('locked'): st.info('Lịch đã chốt trên app.')
+        if mapping(d.get('schedule_lock')).get('locked'): st.info('Lịch đã chốt trên app.')
+        if history:
+            left,right=st.columns(2)
+            selected=left.selectbox('Ngày làm việc',['Tất cả ngày']+list(history),key='schedule_day_'+d['shop'])
+            query=right.text_input('Tìm nhân viên',placeholder='Nhập tên để tìm ca làm',key='schedule_person_'+d['shop']).strip()
+            if selected!='Tất cả ngày': selected_history={selected:history[selected]}
+            st.caption('Sáng · vàng  /  10h30 · tím  /  Chiều · xanh. Mỗi ô tên là một nhân viên.')
+            render_board(selected_history,query)
+        else:
+            empty_state('Chưa có lịch làm việc', 'Lịch sẽ xuất hiện sau khi được lưu và đồng bộ.')
+    with tabs[1]:
         result=[]
-        for day,shifts in mapping(d.get('detailed_history')).items():
-            for shift,names in mapping(shifts).items():
-                result.append({'Ngày':day,'Ca':shift,'Nhân viên':', '.join(map(str,names)) if isinstance(names,list) else str(names)})
-        if result:
-            days=list(dict.fromkeys(row['Ngày'] for row in result))
-            selected=st.selectbox('Ngày làm việc',['Tất cả ngày']+days,key='schedule_day_'+d['shop'])
-            if selected!='Tất cả ngày': result=[row for row in result if row['Ngày']==selected]
+        for day,shifts in selected_history.items():
+            if query and not any(query.casefold() in name.casefold() for value in mapping(shifts).values() for name in people(value)): continue
+            for shift,staff in mapping(shifts).items():
+                result.append({'Ngày':day,'Ca':shift,'Nhân viên':', '.join(people(staff))})
         table(result,'Lịch trực','lich_truc')
-    with tabs[1]: gallery(d.get('schedule_images'),'Ảnh lịch')
-    with tabs[2]:
-        # Only scheduling log entries, never user records or credentials.
+    with tabs[2]: gallery(d.get('schedule_images'),'Ảnh lịch')
+    with tabs[3]:
         logs=rows(d.get('schedule_edit_log'))
         if logs:
             for i,log in enumerate(logs[:100]):

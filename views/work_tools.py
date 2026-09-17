@@ -22,7 +22,10 @@ def _identity(prefix):
 
 
 def _schedule_table(history):
-    st.dataframe(pd.DataFrame([{'Ngày':day,**{shift:', '.join(staff) for shift,staff in shifts.items()}} for day,shifts in history.items()]),hide_index=True,use_container_width=True)
+    from views.schedule_board import render_board
+    render_board(history)
+    with st.expander('Xem dạng bảng'):
+        st.dataframe(pd.DataFrame([{'Ngày':day,**{shift:', '.join(staff) for shift,staff in shifts.items()}} for day,shifts in history.items()]),hide_index=True,use_container_width=True)
 
 
 def render_schedule():
