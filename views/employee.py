@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 from PIL import Image
 from services.app_data import mapping, rows, snapshot, kpi_table, target_tables, number
-from views.workspace import navigate, page_header
+from views.workspace import navigate, page_header, empty_state, ICONS
 
 PAGES = {
     '🏠 Tổng quan':'overview', '📋 Xem Lịch':'schedule', '📊 Tích Lũy':'stats',
@@ -17,12 +17,20 @@ PAGES = {
 
 def table(items, label, key):
     if not items:
-        st.info('Chưa có dữ liệu ' + label.lower() + ' được lưu từ app.')
+        empty_state('Chưa có dữ liệu', 'Dữ liệu '+label.lower()+' sẽ xuất hiện khi được lưu và đồng bộ.')
         return
     df=pd.DataFrame(items).fillna('')
-    st.dataframe(df, hide_index=True, use_container_width=True)
-    st.download_button('Tải bảng ' + label, df.to_csv(index=False).encode('utf-8-sig'),
-                       file_name=key+'.csv', mime='text/csv', key='download_'+key)
+    if len(df)>8:
+        query=st.text_input('Tìm trong bảng',key='search_'+key,placeholder='Nhập tên hoặc nội dung cần tìm').strip().casefold()
+        if query:
+            df=df[df.astype(str).apply(lambda col:col.str.casefold().str.contains(query,regex=False)).any(axis=1)]
+    st.caption(f'{len(df):,} dòng · {label}')
+    if df.empty:
+        empty_state('Không tìm thấy kết quả', 'Thử tên hoặc từ khóa khác.')
+    else:
+        st.dataframe(df, hide_index=True, use_container_width=True)
+    st.download_button('Tải CSV', df.to_csv(index=False).encode('utf-8-sig'),
+                       file_name=key+'.csv', mime='text/csv', key='download_'+key, icon=':material/download:')
 
 def gallery(value, label):
     if isinstance(value, str): value=[value]
@@ -52,6 +60,10 @@ def schedule(d):
         for day,shifts in mapping(d.get('detailed_history')).items():
             for shift,names in mapping(shifts).items():
                 result.append({'Ngày':day,'Ca':shift,'Nhân viên':', '.join(map(str,names)) if isinstance(names,list) else str(names)})
+        if result:
+            days=list(dict.fromkeys(row['Ngày'] for row in result))
+            selected=st.selectbox('Ngày làm việc',['Tất cả ngày']+days,key='schedule_day_'+d['shop'])
+            if selected!='Tất cả ngày': result=[row for row in result if row['Ngày']==selected]
         table(result,'Lịch trực','lich_truc')
     with tabs[1]: gallery(d.get('schedule_images'),'Ảnh lịch')
     with tabs[2]:
@@ -123,17 +135,19 @@ def overview(db,d):
     day_name = ['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ nhật'][now.weekday()]
     page_header('Tổng quan', f'{day_name}, {now:%d/%m/%Y}')
     result,meta=kpi_table(db,d['shop'])
+    from views.work_tools import TOOLS
+    with st.container(key='overview_tools'):
+        for col,page,label in zip(st.columns(3), TOOLS, ['Sắp lịch & đảo ca', 'Quét AI KPI', 'Chia data']):
+            col.button(label, icon=ICONS[page], key='quick_'+page, on_click=navigate, args=(page,), use_container_width=True)
+    st.markdown('<div class="workspace-section-title">Dữ liệu chi nhánh</div>', unsafe_allow_html=True)
     with st.container(key='overview_metrics'):
         cols=st.columns(3)
         cols[0].metric('Ngày có lịch',len(mapping(d.get('detailed_history'))), help='Số ngày trong lịch đang lưu của chi nhánh.')
         cols[1].metric('Nhân sự KPI',len(result), help='Số nhân viên có dữ liệu trong bảng KPI của chi nhánh.')
         cols[2].metric('Liên hệ',len(mapping(d.get('phones'))), help='Số liên hệ trong danh bạ chung.')
-    from views.work_tools import TOOLS
-    with st.container(key='overview_tools'):
-        for col,page,label in zip(st.columns(3), TOOLS, ['Sắp lịch & đảo ca', 'Quét AI KPI', 'Chia data']):
-            col.button(label, key='quick_'+page, on_click=navigate, args=(page,), use_container_width=True)
     st.markdown('<div class="workspace-section-title">Lịch làm việc</div>', unsafe_allow_html=True)
-    schedule(d)
+    with st.container(border=True):
+        schedule(d)
     with st.expander('Các file làm việc trên máy tính'):
         st.write('Chia Data đã có trong mục Công cụ làm việc. File Lập Hàng và thao tác gửi Zalo PC vẫn dùng trên app máy tính.')
 

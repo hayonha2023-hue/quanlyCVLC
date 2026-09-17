@@ -33,7 +33,7 @@ if "user" not in st.session_state or not st.session_state.user:
     with login_form():
         user_in = st.text_input("Tài khoản", placeholder="Nhập tên tài khoản", autocomplete="username").strip()
         pass_in = st.text_input("Mật khẩu", type="password", placeholder="Nhập mật khẩu", autocomplete="current-password")
-        if st.form_submit_button("Đăng nhập →", type="primary", use_container_width=True):
+        if st.form_submit_button("Đăng nhập", type="primary", use_container_width=True):
             if not user_in or not pass_in:
                 st.error("Vui lòng nhập đầy đủ thông tin!")
             else:
@@ -90,10 +90,7 @@ def close_settings_panels():
 # ==========================================
 with st.sidebar:
     sidebar_identity(user_id, st.session_state.get('is_admin'), st.session_state.get('is_super_admin'))
-    st.caption("Web 2.6")
-    if st.button("Làm mới dữ liệu", use_container_width=True):
-        sync.refresh(st.session_state, force=True)
-        st.rerun()
+    st.caption("Web 2.7")
 
     # 🔓 MỞ KHÓA CHỌN CHI NHÁNH CHO ADMIN
     if st.session_state.get("is_super_admin", False):
@@ -116,7 +113,7 @@ with st.sidebar:
             st.rerun()
     else:
         # Nhân viên thường chỉ được xem (Khóa cứng nhánh)
-        st.markdown(f"📍 {st.session_state.get('current_shop', 'Shop Chính (Mặc định)')}")
+        st.caption(st.session_state.get("current_shop", "Shop Chính (Mặc định)"))
 
     menu_options = [list(PAGES)[0]] + TOOLS + list(PAGES)[1:] + ['🤖 AI Tư Vấn']
     if st.session_state.get('is_admin') and st.session_state.get('navigation') == '👥 Quản Trị Admin':
@@ -140,6 +137,10 @@ with st.sidebar:
         st.button('Đóng công cụ quản trị' if menu == '👥 Quản Trị Admin' else 'Công cụ quản trị',
                   key='open_admin_tools', on_click=switch_admin, use_container_width=True)
 
+    st.divider()
+    if st.button("Làm mới dữ liệu", icon=":material/refresh:", use_container_width=True):
+        sync.refresh(st.session_state, force=True)
+        st.rerun()
     with st.expander('Tài khoản & giao diện', expanded=False):
         if st.button("Đổi hình nền", use_container_width=True):
             st.session_state.show_bg = not st.session_state.show_bg
@@ -163,12 +164,12 @@ with st.sidebar:
 # ==========================================
 mobile_navigation(menu_options)
 if st.session_state.show_bg:
-    st.info("🖼️ ĐỔI HÌNH NỀN CÁ NHÂN (Tự động áp dụng sau khi tải xong)")
+    st.info("Đổi hình nền cá nhân")
     bg_up = st.file_uploader("Chọn ảnh (Hệ thống tự nén cho nhẹ)", type=["png", "jpg", "jpeg"])
     c_bg1, c_bg2, c_bg3 = st.columns(3)
 
     if bg_up:
-        if c_bg1.button("💾 ÁP DỤNG", type="primary", use_container_width=True):
+        if c_bg1.button("Áp dụng hình nền", type="primary", use_container_width=True):
             img = Image.open(bg_up)
             img = ImageOps.exif_transpose(img)
             img.thumbnail((1920, 1080))
@@ -183,24 +184,24 @@ if st.session_state.show_bg:
 
     current_bg = u_info.get("bg_image", "")
     if current_bg:
-        if c_bg2.button("🗑️ XÓA NỀN", use_container_width=True):
+        if c_bg2.button("Xóa hình nền", use_container_width=True):
             delete_firebase_user(f"users/{user_id}/bg_image")
             st.session_state.db["users"][user_id]["bg_image"] = ""
             st.session_state.show_bg = False
             st.success("Đã xóa nền!"); time.sleep(1); st.rerun()
 
-    if c_bg3.button("❌ ĐÓNG CÀI ĐẶT", use_container_width=True):
+    if c_bg3.button("Đóng cài đặt", use_container_width=True):
         st.session_state.show_bg = False
         st.rerun()
 
 elif st.session_state.show_pass:
-    st.info("🔑 THAY ĐỔI MẬT KHẨU")
+    st.info("Đổi mật khẩu")
     c_p1, c_p2 = st.columns(2)
     old_p = c_p1.text_input("Nhập mật khẩu cũ", type="password")
     new_p = c_p2.text_input("Nhập mật khẩu mới", type="password")
 
     c_btn1, c_btn2, c_btn3 = st.columns(3)
-    if c_btn1.button("💾 CẬP NHẬT", type="primary", use_container_width=True):
+    if c_btn1.button("Lưu mật khẩu", type="primary", use_container_width=True):
         if not new_p.strip():
             st.error("Mật khẩu mới không được để trống.")
         elif old_p == str(u_info.get("pass", "")):
@@ -212,7 +213,7 @@ elif st.session_state.show_pass:
         else:
             st.error("❌ Mật khẩu cũ sai!")
 
-    if c_btn2.button("❌ ĐÓNG", use_container_width=True):
+    if c_btn2.button("Đóng", use_container_width=True):
         st.session_state.show_pass = False
         st.rerun()
 

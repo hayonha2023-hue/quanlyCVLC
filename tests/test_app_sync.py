@@ -143,3 +143,29 @@ def test_kpi_writes_exact_desktop_path(monkeypatch):
     record={'base':100,'short':20,'tgt':120,'sold':91}
     view.update_kpi_db('A','An',record)
     fake.assert_called_once_with('shops/A/kpi/emp/An',record)
+
+
+def test_schedule_day_filter_preserves_shift_rows(staff, monkeypatch):
+    cloud=copy.deepcopy(CLOUD)
+    cloud['shops']['A']['schedule_v2']['days'].append({
+        'date_label':'17/09 - Thứ Năm', 'shifts':[{'name':'Chiều','staff':['Cúc']}]})
+    monkeypatch.setattr(database,'request',lambda *a,**kw:copy.deepcopy(cloud))
+    staff.sidebar.button(key='nav_📋 Xem Lịch').click().run()
+    staff.selectbox(key='schedule_day_A').set_value('17/09 - Thứ Năm').run()
+    assert not staff.exception
+    frame=staff.dataframe[0].value
+    assert frame['Ngày'].tolist()==['17/09 - Thứ Năm']
+    assert frame['Nhân viên'].tolist()==['Cúc']
+
+
+def test_report_search_treats_punctuation_literally(staff, monkeypatch):
+    cloud=copy.deepcopy(CLOUD)
+    cloud['shops']['A']['kpi']['emp']={f'Nhân viên {i}':{'base':100,'tgt':100,'sold':i} for i in range(12)}
+    cloud['shops']['A']['kpi']['emp']['An [A]']={'base':100,'tgt':100,'sold':30}
+    monkeypatch.setattr(database,'request',lambda *a,**kw:copy.deepcopy(cloud))
+    staff.sidebar.button(key='nav_📈 Theo Dõi KPI').click().run()
+    staff.text_input(key='search_kpi').set_value('[a]').run()
+    assert not staff.exception
+    assert staff.dataframe[0].value['Nhân viên'].tolist()==['An [A]']
+    staff.text_input(key='search_kpi').set_value('không tồn tại').run()
+    assert not staff.exception and not staff.dataframe

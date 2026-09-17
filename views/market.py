@@ -32,19 +32,19 @@ def render_market():
 
     # NẾU LÀ ADMIN -> HIỆN FORM THÊM LỊCH
     if can_edit:
-        with st.expander("➕ THÊM / SỬA LỊCH THỊ TRƯỜNG (Quyền Admin)", expanded=False):
+        with st.expander("Thêm hoặc sửa lịch", expanded=False):
             with st.form("market_form"):
                 c1, c2 = st.columns(2)
-                m_date = c1.date_input("Kế hoạch Ngày")
-                m_loc = c2.text_input("📍 Địa Điểm (Tuyến)", placeholder="VD: Huyện A, Tỉnh B...")
+                m_date = c1.date_input("Ngày công tác")
+                m_loc = c2.text_input("Địa điểm / tuyến", placeholder="VD: Huyện A, Tỉnh B...")
 
                 # Tự động lấy danh sách nhân sự từ KPI để cho vào menu chọn
                 kpi_emp = db.get("kpi", {}).get("emp", {})
                 danh_sach_nv = list(kpi_emp.keys()) if kpi_emp else ["An", "Hoàng", "Lan", "Hương", "Duyên", "Đạt", "Ngọc", "Dịu", "Huyền", "Nhài"]
 
-                m_emps = st.multiselect("👥 Chọn Nhân viên đi tuyến:", danh_sach_nv)
+                m_emps = st.multiselect("Nhân viên đi tuyến", danh_sach_nv)
 
-                submit_market = st.form_submit_button("💾 LƯU LỊCH THỊ TRƯỜNG", type="primary", use_container_width=True)
+                submit_market = st.form_submit_button("Lưu lịch thị trường", type="primary", use_container_width=True)
 
                 if submit_market:
                     if m_loc and m_emps:
@@ -66,7 +66,7 @@ def render_market():
                     else:
                         st.error("❌ Vui lòng nhập địa điểm và chọn ít nhất 1 nhân viên!")
 
-    st.markdown("<hr style='margin-top:5px; margin-bottom:20px;'>", unsafe_allow_html=True)
+    st.divider()
 
     # HIỂN THỊ BẢNG LỊCH CHO NHÂN VIÊN XEM
     if not market_data:
@@ -76,9 +76,9 @@ def render_market():
         for d, inf in market_data.items():
             display_date = d.replace("-", "/") # Đổi ngược lại thành dấu / cho đẹp mắt
             market_list.append({
-                "Kế hoạch Ngày": display_date,
-                "📍 Địa Điểm": inf.get("dia_diem", ""),
-                "👥 Tuyến": ", ".join(inf.get("nhan_vien", [])) if isinstance(inf.get("nhan_vien"), list) else inf.get("nhan_vien", "")
+                "Ngày công tác": display_date,
+                "Địa điểm": inf.get("dia_diem", ""),
+                "Nhân viên": ", ".join(inf.get("nhan_vien", [])) if isinstance(inf.get("nhan_vien"), list) else inf.get("nhan_vien", "")
             })
 
         st.dataframe(pd.DataFrame(market_list), hide_index=True, use_container_width=True)
@@ -86,8 +86,8 @@ def render_market():
         # Admin được quyền Hủy lịch
         if can_edit:
             c_del1, c_del2 = st.columns([3, 1])
-            del_date = c_del1.selectbox("Chọn ngày để xóa lịch:", list(market_data.keys()), format_func=lambda x: x.replace("-", "/"), label_visibility="collapsed")
-            if c_del2.button("❌ HỦY LỊCH NÀY", type="primary", use_container_width=True):
+            del_date = c_del1.selectbox("Ngày cần xóa", list(market_data.keys()), format_func=lambda x: x.replace("-", "/"), label_visibility="visible")
+            if c_del2.button("Xóa lịch đã chọn", type="primary", use_container_width=True):
                 db_path = f"market_history/{del_date}" if shop_id == "Shop Chính (Mặc định)" else f"shops/{shop_id}/market_history/{del_date}"
                 save(db_path, method='DELETE')
                 st.success("✅ Đã xóa lịch thành công!")

@@ -1,3 +1,7 @@
+# HTCV Web 2.7
+
+Đăng nhập một cột, giao diện chung cho biểu mẫu và báo cáo, điều hướng bằng biểu tượng nét đơn. Tổng quan ưu tiên ba công cụ làm việc; lịch có bộ lọc ngày, bảng dài có tìm kiếm và xuất CSV theo kết quả lọc. Dùng Streamlit 1.64.0 đã kiểm thử để đồng nhất bộ dựng giao diện giữa môi trường kiểm tra và triển khai.
+
 # HTCV Web 2.6 — Quản lý nội bộ
 
 ## Giao diện Web 2.6

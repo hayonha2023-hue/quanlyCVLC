@@ -99,7 +99,7 @@ def test_failed_ecom_save_never_reports_success(app,monkeypatch):
         if method != 'GET':raise database.DatabaseError('offline')
         return original_request(method,*args,**kwargs)
     monkeypatch.setattr(database,'request',fail_write)
-    next(b for b in app.button if 'LƯU LỊCH ECOM' in b.label).click().run()
+    next(b for b in app.button if 'Lưu lịch Ecom' in b.label).click().run()
     assert app.error
     assert not app.success
     assert app.session_state['db']==before
@@ -116,7 +116,18 @@ def test_ecom_inputs_change_with_shop(app):
 def test_staff_write_controls_disabled(app):
     login(app,'staff','staff-test')
     app.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
-    assert not [b for b in app.button if 'LƯU LỊCH ECOM' in b.label]
+    assert not [b for b in app.button if 'Lưu lịch Ecom' in b.label]
     assert not app.sidebar.toggle
     app.sidebar.button(key='nav_'+'💰 Quỹ Shop').click().run()
-    assert not [b for b in app.button if 'GHI PHIẾU' in b.label]
+    assert not [b for b in app.button if 'Lưu phiếu' in b.label]
+
+
+@pytest.mark.parametrize('menu',['🛒 Lịch Ecom','💰 Quỹ Shop','📈 Theo Dõi KPI','📍 Thị Trường'])
+@pytest.mark.parametrize('theme',['Light','Dark'])
+def test_editing_views_render_in_both_themes(app, menu, theme):
+    login(app)
+    app.session_state.theme=theme
+    app.sidebar.button(key='nav_'+menu).click().run()
+    app.sidebar.toggle[0].set_value(True).run()
+    assert not app.exception
+    assert app.sidebar.toggle[0].value

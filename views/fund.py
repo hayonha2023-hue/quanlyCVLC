@@ -60,16 +60,15 @@ def render_fund():
 
     # 5. Form nhập liệu Ghi Phiếu (Dàn hàng ngang dưới cùng)
     with st.form("fund_form", clear_on_submit=False):
-        st.markdown("<b>GHI PHIẾU MỚI</b>", unsafe_allow_html=True)
-        col1, col2, col3, col4 = st.columns([2, 3, 5, 2])
+        st.subheader("Ghi phiếu thu chi")
+        col1, col2, col3 = st.columns([2, 3, 5])
         with col1:
-            loai_gd = st.selectbox("Phân Loại", ["Thu", "Chi", "Chi Riêng"], label_visibility="collapsed")
+            loai_gd = st.selectbox("Loại phiếu", ["Thu", "Chi", "Chi Riêng"], label_visibility="visible")
         with col2:
-            gia_tri = st.number_input("Giá trị", min_value=0, step=1000, label_visibility="collapsed", placeholder="Nhập số tiền...")
+            gia_tri = st.number_input("Số tiền (đồng)", min_value=0, step=1000, label_visibility="visible", placeholder="Nhập số tiền...")
         with col3:
-            ly_do = st.text_input("Lý do", label_visibility="collapsed", placeholder="Nội dung...")
-        with col4:
-            submit = st.form_submit_button("💾 GHI PHIẾU", type="primary", use_container_width=True)
+            ly_do = st.text_input("Lý do", label_visibility="visible", placeholder="Nội dung...")
+        submit = st.form_submit_button("Lưu phiếu", type="primary", use_container_width=True)
 
         if submit:
             if gia_tri <= 0 or not ly_do:

@@ -37,14 +37,14 @@ def render_schedule():
         a,b=prefix+'Sáng',prefix+'Chiều'
         st.session_state[a],st.session_state[b]=st.session_state[b],st.session_state[a]
         st.session_state.pop(draft_key,None)
-    st.subheader('1. Danh sách từng ca')
-    st.button('Đảo danh sách Sáng ⇄ Chiều',on_click=swap,disabled=not can_swap,use_container_width=True)
+    st.subheader('Danh sách nhân viên')
     pools={}
     for column,shift in zip(st.columns(len(shifts)),shifts):
         with column:
             raw=st.text_area('Ca '+shift,key=prefix+shift,height=180,placeholder='Mỗi dòng một nhân viên')
             pools[shift]=names(raw)
             st.caption(f'{len(pools[shift])} nhân viên')
+    st.button('Đảo danh sách Sáng ⇄ Chiều',on_click=swap,disabled=not can_swap,icon=':material/swap_horiz:')
     with st.expander('Tùy chọn nhân viên đặc biệt', expanded=False):
         special=st.text_input('Nhân viên đặc biệt (cách nhau bằng dấu phẩy)',value=str(settings.get('entry_ex','') or ''),key=prefix+'_special',help='Tối đa 2 ngày mỗi tuần, ưu tiên không liền nhau như app.')
     if not can_make: st.info('Quản trị cần cấp quyền CHIA LỊCH TỰ ĐỘNG để bạn tạo và lưu lịch.')
@@ -56,7 +56,8 @@ def render_schedule():
         except ValueError as exc: st.error(str(exc))
     draft=st.session_state.get(draft_key)
     if draft:
-        st.subheader('2. Kiểm tra lịch tuần tiếp theo')
+        st.divider()
+        st.subheader('Lịch xem trước')
         _schedule_table(draft['history'])
         short=sum(len(staff)<3 for shifts_ in draft['history'].values() for staff in shifts_.values())
         if short: st.warning(f'Có {short} ca dưới 3 người vì danh sách hoặc quy tắc không đủ người. Hãy kiểm tra trước khi lưu.')
@@ -66,7 +67,7 @@ def render_schedule():
             except (DatabaseError,ValueError) as exc: st.error(str(exc))
             else:
                 st.session_state.pop(draft_key,None)
-                st.success('Đã lưu lịch lên Firebase. App sẽ nhận lịch khi đồng bộ.')
+                st.success('Đã lưu lịch. App sẽ nhận lịch khi đồng bộ.')
     else:
         current,_=schedule_data(data)
         if current:
@@ -75,7 +76,7 @@ def render_schedule():
 
 def render_scanner():
     db,user,shop=_context(); prefix=_identity('scan')
-    uploaded=st.file_uploader('1. Chọn ảnh KPI',type=['png','jpg','jpeg'],key=prefix+'_upload')
+    uploaded=st.file_uploader('Ảnh KPI',type=['png','jpg','jpeg'],key=prefix+'_upload')
     keys=mapping(db.get('settings')).get('api_keys') or []
     if not isinstance(keys,list): keys=[]
     with st.expander('Kết nối AI'):
@@ -88,7 +89,7 @@ def render_scanner():
         except ValueError as exc: st.error(str(exc)); return
         with st.expander('Xem ảnh đã chọn',expanded=True): st.image(preview,width=600)
         st.caption('Khi bấm Phân tích, ảnh được gửi tới dịch vụ AI Groq. Kết quả không tự ghi vào số KPI.')
-        if st.button('2. Phân tích ảnh KPI',type='primary',use_container_width=True):
+        if st.button('Phân tích ảnh KPI',type='primary',use_container_width=True):
             try:
                 with st.spinner('Đang đọc bảng và phân tích KPI…'):
                     result=analyze(raw,keys)
@@ -110,10 +111,11 @@ def render_split():
     db,user,shop=_context(); prefix=_identity('split')
     if not allowed(db,user,shop,'CHIA ĐỀU SỐ LIỆU'):
         st.info('Quản trị cần cấp quyền CHIA ĐỀU SỐ LIỆU để bạn sử dụng chức năng này.'); return
-    uploaded=st.file_uploader('1. Chọn file Excel (tối đa 20 MB)',type=['xlsx','xls'],key=prefix+'_upload')
+    uploaded=st.file_uploader('File Excel · tối đa 20 MB',type=['xlsx','xls'],key=prefix+'_upload')
     contacts=list(mapping(db.get('phones')))
     history,_=schedule_data(shop_data(db,shop))
-    st.subheader('2. Chọn người nhận')
+    st.divider()
+    st.subheader('Người nhận')
     source=st.radio('Lấy danh sách từ',['Danh bạ','Lịch trực','Nhập tên'],horizontal=True,key=prefix+'_source')
     if source=='Lịch trực':
         if not history: st.info('Chi nhánh chưa có lịch trực.'); return
@@ -129,7 +131,7 @@ def render_split():
     if uploaded:
         content=uploaded.getvalue()
         signature=hashlib.sha256(content+'\n'.join(recipients).encode()).hexdigest()
-        if st.button('3. Chia file',type='primary',disabled=not recipients,use_container_width=True):
+        if st.button('Chia file',type='primary',disabled=not recipients,use_container_width=True):
             try:
                 with st.spinner('Đang chia file…'): archive,report=split_workbook(content,uploaded.name,recipients)
                 st.session_state[prefix+'_result']=(signature,archive,report)
@@ -148,7 +150,7 @@ def render_split():
 def render_tool(page):
     sync_status()
     title, description, steps = {
-        TOOLS[0]: ('Sắp lịch & đảo ca', 'Chủ động phân ca cho đội ngũ. Kiểm tra lịch trước khi lưu.', ['Nhập nhân viên', 'Xem trước lịch', 'Lưu & đồng bộ']),
+        TOOLS[0]: ('Sắp lịch & đảo ca', 'Nhập danh sách từng ca, tạo lịch tuần và kiểm tra trước khi lưu.', ['Nhập nhân viên', 'Xem trước lịch', 'Lưu & đồng bộ']),
         TOOLS[1]: ('Quét AI KPI', 'Đọc bảng KPI từ ảnh và xem phân tích kết quả làm việc.', ['Chọn ảnh', 'Phân tích', 'Xem & tải kết quả']),
         TOOLS[2]: ('Chia data', 'Chia đều dữ liệu Excel cho danh sách người nhận bạn chọn.', ['Tải file Excel', 'Chọn người nhận', 'Chia & tải ZIP']),
     }[page]

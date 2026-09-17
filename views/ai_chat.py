@@ -69,6 +69,6 @@ def render_ai_chat():
                 st.session_state.vaccine_chat.append({"role": "assistant", "content": reply})
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🗑️ Làm Mới Cuộc Trò Chuyện", type="secondary", use_container_width=True):
+    if st.button("Cuộc trò chuyện mới", type="secondary", use_container_width=True):
         st.session_state.vaccine_chat = [{"role": "assistant", "content": "Chào bạn! Tôi là Bác sĩ chuyên gia tư vấn Vắc xin. Bạn cần hỗ trợ thông tin gì về các loại vắc xin, phác đồ tiêm hay chống chỉ định không?"}]
         st.rerun()

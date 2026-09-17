@@ -26,9 +26,10 @@ def render_kpi():
     person=st.selectbox('Nhân viên',list(records),key='kpi_person_'+shop)
     record=records[person]
     with st.form('kpi_edit_'+shop+'_'+person):
-        base=st.number_input('Target gốc',value=int(number(record.get('base'))),step=1)
-        short=st.number_input('Thiếu / dư tháng trước',value=int(number(record.get('short'))),step=1)
-        sold=st.number_input('Đã bán',min_value=0,value=max(0,int(number(record.get('sold')))),step=1)
+        c1,c2,c3=st.columns(3)
+        base=c1.number_input('Target gốc',value=int(number(record.get('base'))),step=1)
+        short=c2.number_input('Thiếu / dư tháng trước',value=int(number(record.get('short'))),step=1)
+        sold=c3.number_input('Đã bán',min_value=0,value=max(0,int(number(record.get('sold')))),step=1)
         if st.form_submit_button('Lưu KPI',type='primary'):
             update_kpi_db(shop,person,{'base':base,'short':short,'tgt':base+short,'sold':sold})
             st.success('Đã lưu KPI. App đọc lại Firebase sẽ nhận dữ liệu mới.')

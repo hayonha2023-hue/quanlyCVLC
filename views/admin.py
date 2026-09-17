@@ -45,7 +45,7 @@ def render_admin():
                         key='admin_task')
     if task == 'Chọn tác vụ…':
         with st.container(border=True):
-            st.subheader('Quản trị khi cần, làm việc gọn hơn')
+            st.subheader('Chọn tác vụ quản trị')
             st.write('Duyệt yêu cầu đăng ký hoặc chọn một nhân viên để điều chỉnh quyền.')
             st.caption('Dùng nút Đóng công cụ quản trị ở menu để quay về Tổng quan.')
         return
@@ -55,7 +55,7 @@ def render_admin():
     # ==========================================
     pending = full_db.get("pending_users", {})
     if task == 'Duyệt tài khoản mới' and pending:
-        st.markdown("<h5 style='color:#f59e0b; font-weight: bold;'>⏳ TÀI KHOẢN CHỜ PHÊ DUYỆT</h5>", unsafe_allow_html=True)
+        st.subheader("Tài khoản chờ duyệt")
         for pu, pinfo in pending.items():
             req_shop = pinfo.get("shop_id", "Shop Chính (Mặc định)") if isinstance(pinfo, dict) else "Shop Chính (Mặc định)"
 
@@ -64,7 +64,7 @@ def render_admin():
                 with st.container():
                     c1, c2, c3 = st.columns([4, 2, 2])
                     c1.markdown(f"**👤 Tên Đăng Nhập:** `{pu}` (📍 {req_shop})")
-                    if c2.button("✅ Phê duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
+                    if c2.button("Phê duyệt", key=f"ok_{pu}", type="primary", use_container_width=True):
                         pwd = pinfo.get("pass", "123456") if isinstance(pinfo, dict) else pinfo
 
                         # Cấp quyền mặc định khi mới duyệt
@@ -78,7 +78,7 @@ def render_admin():
                         delete_firebase_global(f"pending_users/{pu}")
                         st.success(f"Đã duyệt tài khoản {pu}!"); time.sleep(1); st.rerun()
 
-                    if c3.button("❌ Bác bỏ", key=f"rej_{pu}", use_container_width=True):
+                    if c3.button("Từ chối", key=f"rej_{pu}", use_container_width=True):
                         delete_firebase_global(f"pending_users/{pu}")
                         st.warning(f"Đã từ chối tài khoản {pu}!"); time.sleep(1); st.rerun()
         st.divider()
@@ -92,7 +92,7 @@ def render_admin():
     # ==========================================
     # 2. QUẢN LÝ TÀI KHOẢN NHÂN VIÊN ĐÃ DUYỆT
     # ==========================================
-    st.markdown("<h5 style='color:#10b981; font-weight: bold;'>👥 QUẢN LÝ NHÂN SỰ & PHÂN QUYỀN</h5>", unsafe_allow_html=True)
+    st.subheader("Nhân sự và phân quyền")
 
     global_users = full_db.get("users", {})
     shops_data = full_db.get("shops", {})
@@ -125,8 +125,8 @@ def render_admin():
                 # Chỉ Super Admin mới được điều chuyển Shop và nâng cấp Admin
                 if is_super_admin_user:
                     col_s1, col_s2 = st.columns(2)
-                    new_shop = col_s1.selectbox("🏢 Điều chuyển Shop:", all_shops, index=all_shops.index(u_shop) if u_shop in all_shops else 0, key=f"shop_{u}")
-                    new_role = col_s2.selectbox("👑 Cấp bậc:", ["user", "admin", "super_admin"], index=["user", "admin", "super_admin"].index(u_role) if u_role in ("user", "admin", "super_admin") else 0, key=f"role_{u}")
+                    new_shop = col_s1.selectbox("Chi nhánh", all_shops, index=all_shops.index(u_shop) if u_shop in all_shops else 0, key=f"shop_{u}")
+                    new_role = col_s2.selectbox("Vai trò", ["user", "admin", "super_admin"], index=["user", "admin", "super_admin"].index(u_role) if u_role in ("user", "admin", "super_admin") else 0, key=f"role_{u}")
 
                 current_perms = uinfo.get("permissions", [])
                 current_edits = uinfo.get("edit_permissions", [])
@@ -137,7 +137,7 @@ def render_admin():
                 edit_options = ["SỬA SỐ KPI", "UP ẢNH KPI", "CHIA LỊCH TỰ ĐỘNG", "UP ẢNH LỊCH TRỰC", "SỬA LỊCH ECOM", "SỬA THỊ TRƯỜNG", "QUẢN LÝ QUỸ SHOP", "ĐẢO TÊN CA", "TÍNH TARGET", "CHIA ĐỀU SỐ LIỆU", "SỬA LỊCH TRỰC", "SỬA SỐ TÍCH LŨY"]
                 new_edits = st.multiselect("Bật/tắt quyền chỉnh sửa (Thao tác):", edit_options, default=[p for p in current_edits if p in edit_options], key=f"edit_{u}")
 
-                if st.button("💾 LƯU CẤU HÌNH", key=f"save_{u}", type="primary", use_container_width=True):
+                if st.button("Lưu phân quyền", key=f"save_{u}", type="primary", use_container_width=True):
                     update_firebase_global(f"users/{u}", {
                         "pass": uinfo.get("pass"),
                         "bg_image": uinfo.get("bg_image", ""),

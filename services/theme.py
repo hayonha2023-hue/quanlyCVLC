@@ -1,63 +1,66 @@
-"""Shared responsive shell; no fixed heights or hidden scrolling."""
+"""One shared visual system for forms, tables, reports and administration."""
 import re
 import streamlit as st
 
+
 def apply_theme(dark=False, background=''):
-    bg,card,text,muted,border = ('#101827','#182235','#f1f5f9','#b4c1d5','#334155') if dark else ('#f4f7fb','#ffffff','#172a43','#53657b','#e1e8f0')
-    image = f'background-image:linear-gradient({bg}dd,{bg}dd),url("data:image/jpeg;base64,{background}");background-size:cover;' if background and re.fullmatch(r'[A-Za-z0-9+/=]+',background) else ''
-    st.markdown(f'''<style>
-    :root {{ --htcv-card:{card}; --htcv-text:{text}; }}
-    [data-testid="stMainBlockContainer"] {{max-width:1180px;}}
-    [data-testid="stSidebar"] {{box-shadow:4px 0 24px #10284606;}}
-    [data-testid="stExpander"] {{border:1px solid {border};border-radius:12px;background:{card};}}
-    [data-testid="stExpander"] summary {{min-height:48px;}}
-    [data-testid="stVerticalBlockBorderWrapper"] {{border-color:{border};box-shadow:0 3px 14px #10284605;}}
-    .stButton button {{transition:background .15s,border-color .15s;}}
-    .stButton button:hover {{border-color:#487fc0;}}
-    button:focus-visible,input:focus-visible,textarea:focus-visible {{outline:3px solid #609ee5!important;outline-offset:2px;}}
+    bg, card, ink, muted, line, soft, accent = (
+        ('#101b28','#192838','#edf2f8','#a6b7c9','#344759','#223448','#91bdea') if dark else
+        ('#f3f5f8','#ffffff','#203149','#66778a','#dae2eb','#edf3f9','#214e78'))
+    backdrop = f'background-image:linear-gradient({bg}ed,{bg}ed),url("data:image/jpeg;base64,{background}");background-size:cover;background-attachment:fixed;' if background and re.fullmatch(r'[A-Za-z0-9+/=]+',background) else ''
+    st.markdown(f"""<style>
+    :root {{--htcv-card:{card};--htcv-text:{ink};--ink:{ink};--muted:{muted};--line:{line};--soft:{soft};--accent:{accent};}}
+    .stApp {{background:{bg};color:{ink};{backdrop}}}
+    [data-testid="stHeader"] {{background:{bg};}}
+    [data-testid="stMainBlockContainer"] {{max-width:1200px;padding:2.4rem 2rem 3rem;}}
+    [data-testid="stSidebar"] {{background:{card};border-right:1px solid {line};box-shadow:none;}}
+    [data-testid="stSidebarUserContent"] {{padding:1.5rem 1rem;}}
+    h1,h2,h3,h4,h5,h6,p,label,[data-testid="stMarkdownContainer"] {{color:{ink};}}
+    h1 {{font-size:28px!important;letter-spacing:-.03em;}}
+    h2 {{font-size:21px!important;}} h3 {{font-size:17px!important;}}
+    p,label {{font-size:14px;line-height:1.6;}}
+    [data-testid="stCaptionContainer"] p {{color:{muted};font-size:12px;}}
+    [data-testid="stWidgetLabel"] p {{font-size:13px;font-weight:600;}}
+    [data-testid="stTextInputRootElement"],[data-testid="stTextAreaRootElement"],[data-baseweb="input"],[data-baseweb="textarea"],[data-baseweb="select"]>div {{background:{card};border:1px solid {line}!important;border-radius:7px;min-height:44px;}}
+    input,textarea {{font-size:16px!important;background:{card}!important;color:{ink}!important;}}
+    [data-baseweb="select"]>div {{color:{ink};}}
+    button:focus-visible,input:focus-visible,textarea:focus-visible {{outline:3px solid #75a9d4!important;outline-offset:2px;}}
+    .stButton button,.stDownloadButton button,.stFormSubmitButton button,.stLinkButton a {{min-height:44px;border-radius:7px;}}
+    button[kind="secondary"],button[kind="secondaryFormSubmit"] {{background:{card};border:1px solid {line};color:{ink};}}
+    button[kind="primary"],button[kind="primaryFormSubmit"] {{background:#214e78;border:1px solid #214e78;color:#fff;}}
+    button[kind="primary"] p,button[kind="primaryFormSubmit"] p {{color:#fff!important;}}
+    button:disabled {{opacity:.55;}}
+    [data-testid="stForm"],[data-testid="stVerticalBlockBorderWrapper"] {{border-color:{line};border-radius:9px;background:{card};box-shadow:none;}}
+    [data-testid="stForm"] {{padding:20px;}}
+    [data-testid="stExpander"] {{background:transparent;border:0;}}
+    [data-testid="stExpander"] details {{border:1px solid {line};border-radius:8px;background:{card};}}
+    [data-testid="stExpander"] summary {{min-height:46px;}}
+    [data-testid="stExpander"] summary p {{font-size:13px;color:{ink};}}
+    [data-testid="stMetric"] {{background:{card};border:1px solid {line};border-radius:8px;padding:14px 16px;}}
+    [data-testid="stMetricLabel"] p {{color:{muted};font-size:12px;}}
+    [data-testid="stMetricValue"] {{color:{ink};font-size:26px!important;}}
+    [data-testid="stDataFrame"] {{border:1px solid {line};border-radius:8px;overflow:hidden;}}
+    [data-testid="stFileUploaderDropzone"] {{background:{soft};border:1px dashed #96acc1;border-radius:8px;padding:24px;}}
+    [data-testid="stTabs"] [role="tablist"] {{gap:22px;overflow-x:auto;border-bottom:1px solid {line};}}
+    [data-testid="stTabs"] [role="tab"] {{min-height:46px;white-space:nowrap;}}
+    [data-testid="stTabs"] [role="tab"] p {{color:{muted};font-size:13px;}}
+    [data-testid="stTabs"] [aria-selected="true"] p {{color:{accent};font-weight:650;}}
+    [data-testid="stAlert"] {{border-radius:8px;}} [data-testid="stAlert"] p {{font-size:13px;}}
     [data-testid="stImage"] img {{max-width:100%;height:auto;}}
-    .htcv-hero {{padding:1.6rem 1.8rem;border-radius:20px;background:linear-gradient(120deg,#17375c,#226591);margin-bottom:1.5rem;}}
-    .htcv-hero h2,.htcv-hero p {{color:white!important;margin:.15rem 0;}}
-    .htcv-hero p {{opacity:.9;}}
+    hr {{border-color:{line};}}
+    .workspace-empty {{padding:32px 20px;border:1px dashed {line};border-radius:8px;text-align:center;background:{card};}}
+    .workspace-empty strong {{display:block;color:{ink};font-size:15px;margin-bottom:6px;}}
+    .workspace-empty p {{color:{muted};font-size:13px;margin:0;}}
     @media(max-width:700px) {{
+      [data-testid="stMainBlockContainer"] {{padding:3.5rem 1rem 2rem;}}
       [data-testid="stHorizontalBlock"] {{flex-wrap:wrap;}}
       [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{width:100%!important;flex:1 1 100%!important;min-width:0!important;}}
-      .htcv-hero {{padding:1.15rem;border-radius:14px;}}
-      h1 {{font-size:1.6rem!important;}}
+      h1 {{font-size:24px!important;}}
+      [data-testid="stForm"] {{padding:14px;}}
+      .stButton button,.stDownloadButton button,.stFormSubmitButton button {{min-height:46px;}}
     }}
-    .stApp {{background:{bg};color:{text};{image}}}
-    [data-testid="stHeader"] {{background:{bg};}}
-    [data-testid="stSidebar"] {{background:{card};border-right:1px solid {border};}}
-    .block-container {{max-width:1280px;padding-top:2.5rem;padding-bottom:3rem;}}
-    [data-testid="stSidebar"] .block-container {{padding-top:1rem;}}
-    [data-testid="stSidebar"] [role="radiogroup"] {{gap:.4rem;}}
-    [data-testid="stSidebar"] [role="radiogroup"] label {{padding:.65rem .8rem;border-radius:10px;border:1px solid transparent;min-height:46px;}}
-    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {{background:#e7effd;border-color:#a9c5ef;}}
-    [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p {{color:#164b91!important;font-weight:700;}}
-    [data-testid="stVerticalBlockBorderWrapper"] {{background:{card};border-radius:14px;}}
-    [data-testid="stDataFrame"] {{border:1px solid {border};border-radius:10px;}}
-    h1 {{font-size:2rem!important;letter-spacing:-.025em;}}
-    h2 {{font-size:1.5rem!important;}}
-    h3 {{font-size:1.12rem!important;}}
-    p,label {{font-size:1rem;line-height:1.6;}}
-    [data-baseweb="input"],[data-baseweb="textarea"],[data-baseweb="select"]>div {{border:1px solid {border}!important;border-radius:8px;}}
-    button[kind="secondary"] {{background:{card};border:1px solid {border};color:{text};}}
-    [data-testid="stFileUploaderDropzone"] {{background:{card};border:2px dashed {border};}}
-    h1,h2,h3,h4,h5,h6,p,label,[data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"] {{color:{text};}}
-    [data-testid="stCaptionContainer"] p {{color:{muted};}}
-    [data-testid="stForm"],.html-card {{background:{card};border:1px solid {border};border-radius:16px;padding:1.2rem;}}
-    [data-testid="stMetric"] {{background:{card};border:1px solid {border};border-radius:14px;padding:1rem;}}
-    .stButton button,.stFormSubmitButton button {{min-height:44px;border-radius:10px;}}
-    button[kind="primary"] {{background:#1769d2;color:white;}}
-    button[kind="primary"] p {{color:white!important;}}
-    input,textarea,[data-baseweb="select"]>div {{background:{card}!important;color:{text}!important;}}
-    [data-testid="stTabs"] button p,[data-testid="stExpander"] summary p {{color:{text};}}
-    .stTabs [data-baseweb="tab-list"] {{overflow-x:auto;gap:1rem;}}
-    .schedule-card .shift-row,.schedule-card b {{color:#172b45;}}
-    .htcv-brand {{font-size:1.5rem;font-weight:800;letter-spacing:.03em;color:#1769d2;}}
-    .htcv-subtitle {{font-size:.9rem;color:{muted};margin-bottom:1.5rem;}}
-    @media(max-width:700px) {{.block-container {{padding:1rem .75rem 2rem;}} h1 {{font-size:1.6rem;}} .stButton button {{min-height:48px;}}}}
-    </style>''',unsafe_allow_html=True)
+    @media(prefers-reduced-motion:reduce) {{* {{scroll-behavior:auto!important;transition:none!important;}}}}
+    </style>""",unsafe_allow_html=True)
     if st.session_state.get('user'):
         from services.workspace_theme import apply_workspace_theme
         apply_workspace_theme(dark)

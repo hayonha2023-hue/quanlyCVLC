@@ -15,6 +15,16 @@ LABELS = {
 }
 
 
+ICONS = {
+    '🏠 Tổng quan': ':material/home:', '⚡ Sắp lịch & Đảo ca': ':material/calendar_month:',
+    '🔍 Quét AI KPI': ':material/document_scanner:', '✂️ Chia Data': ':material/table_view:',
+}
+
+
+def empty_state(title, description):
+    st.markdown(f'<div class="workspace-empty"><strong>{escape(title)}</strong><p>{escape(description)}</p></div>', unsafe_allow_html=True)
+
+
 def navigate(page):
     st.session_state.navigation = page
     st.session_state.show_bg = False
@@ -27,7 +37,7 @@ def navigate(page):
 def sidebar_identity(user, admin=False, super_admin=False):
     role = 'Quản trị hệ thống' if super_admin else ('Quản trị chi nhánh' if admin else 'Nhân viên')
     st.markdown(f'''<div class="workspace-brand"><span class="workspace-logo">H</span>
-<div><strong>HTCV</strong><small>QUẢN LÝ NỘI BỘ</small></div></div>
+<div><strong>HTCV</strong><small>Quản lý nội bộ</small></div></div>
 <div class="workspace-account"><span class="workspace-avatar">{escape(str(user)[:1].upper())}</span>
 <div><strong>{escape(str(user))}</strong><small>{role}</small></div></div>''', unsafe_allow_html=True)
 
@@ -40,12 +50,12 @@ def sidebar_navigation(options, tools):
     with st.container(key='workspace_navigation'):
         st.markdown('<div class="workspace-menu-label">LÀM VIỆC</div>', unsafe_allow_html=True)
         for page in primary:
-            st.button(LABELS.get(page, page), key='nav_'+page, type='primary' if selected == page else 'secondary',
+            st.button(LABELS.get(page, page), icon=ICONS.get(page), key='nav_'+page, type='primary' if selected == page else 'secondary',
                       on_click=navigate, args=(page,), use_container_width=True)
         reports = [page for page in options if page not in primary and page != '👥 Quản Trị Admin']
         with st.expander('Dữ liệu & báo cáo', expanded=selected in reports):
             for page in reports:
-                st.button(LABELS.get(page, page), key='nav_'+page, type='primary' if selected == page else 'secondary',
+                st.button(LABELS.get(page, page), icon=ICONS.get(page), key='nav_'+page, type='primary' if selected == page else 'secondary',
                           on_click=navigate, args=(page,), use_container_width=True)
     return selected
 
@@ -74,5 +84,5 @@ def sync_status():
 
 
 def workflow_steps(labels):
-    with st.expander('Hướng dẫn', expanded=False):
-        st.caption(' → '.join(labels))
+    steps = ''.join(f'<span><b>{i}</b>{escape(label)}</span>' for i, label in enumerate(labels, 1))
+    st.markdown(f'<div class="workspace-steps">{steps}</div>', unsafe_allow_html=True)

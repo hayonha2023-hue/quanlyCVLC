@@ -32,7 +32,7 @@ def render_ecom():
     with st.form("ecom_form"):
         inputs = {}
         for d in days:
-            st.markdown(f"<p style='color: #0D6EFD; font-weight: bold; margin-bottom: 0px;'>{d}</p>", unsafe_allow_html=True)
+            st.markdown(f"**{d}**")
             col1, col2 = st.columns(2)
 
             # Lấy dữ liệu cũ để điền sẵn vào ô
@@ -41,18 +41,18 @@ def render_ecom():
             old_c = old_val.get("Chiều", "") if isinstance(old_val, dict) else ""
 
             with col1:
-                s_val = st.text_input("🌅 Sáng:", value=old_s, key=f"ecom_{shop_id}_s_{d}", disabled=not can_edit)
+                s_val = st.text_input("Ca sáng", value=old_s, key=f"ecom_{shop_id}_s_{d}", disabled=not can_edit)
             with col2:
-                c_val = st.text_input("🌇 Chiều:", value=old_c, key=f"ecom_{shop_id}_c_{d}", disabled=not can_edit)
+                c_val = st.text_input("Ca chiều", value=old_c, key=f"ecom_{shop_id}_c_{d}", disabled=not can_edit)
 
             inputs[d] = {"Sáng": s_val.strip(), "Chiều": c_val.strip()}
-            st.markdown("<hr style='margin-top: 5px; margin-bottom: 15px;'>", unsafe_allow_html=True)
+            st.divider()
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            submitted = st.form_submit_button("💾 LƯU LỊCH ECOM", disabled=not can_edit, type="primary", use_container_width=True)
+            submitted = st.form_submit_button("Lưu lịch Ecom", disabled=not can_edit, type="primary", use_container_width=True)
         with col_btn2:
-            swap_btn = st.form_submit_button("🔄 ĐẢO CA (SÁNG ⇄ CHIỀU)", disabled=not can_edit, use_container_width=True)
+            swap_btn = st.form_submit_button("Đảo ca sáng / chiều", disabled=not can_edit, use_container_width=True)
 
         # Xử lý nút LƯU
         if submitted:
