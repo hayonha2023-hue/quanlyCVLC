@@ -19,3 +19,10 @@ def test_shift_order_and_empty_search_result():
     html=board_html({'Thứ 2':{'Chiều':['A'],'Sáng':['B'],'10h30':['C']}})
     assert html.index('Ca Sáng') < html.index('Ca 10h30') < html.index('Ca Chiều')
     assert board_html({'Thứ 2':{'Sáng':['An']}},'không có')==''
+
+
+def test_search_accepts_vietnamese_names_without_accents():
+    html=board_html({'17/09 - Thứ Năm':{'Sáng':['Bình','Đặng']}} ,'BINH')
+    assert 'schedule-person match">Bình' in html
+    assert 'schedule-date">17/09' in html and 'schedule-weekday">Thứ Năm' in html
+    assert 'schedule-person match">Đặng' in board_html({'Thứ 2':{'Sáng':['Đặng']}},'dang')

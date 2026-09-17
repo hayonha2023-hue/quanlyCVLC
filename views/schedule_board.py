@@ -1,11 +1,15 @@
 """Readable schedule cards shared by published schedules and draft previews."""
 from html import escape
+import re
+import unicodedata
 import streamlit as st
 
 BOARD_CSS = '''<style>
 .schedule-board {display:grid;gap:16px;margin:8px 0 18px;}
 .schedule-day {border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--htcv-card);}
-.schedule-day-title {padding:14px 18px;background:var(--soft);border-bottom:1px solid var(--line);font-size:18px;font-weight:750;color:var(--ink);}
+.schedule-day-title {display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--soft);border-bottom:1px solid var(--line);font-size:18px;font-weight:750;color:var(--ink);}
+.schedule-date {font-size:27px;letter-spacing:-.035em;font-weight:800;color:var(--accent);line-height:1.2;}
+.schedule-weekday {font-size:16px;line-height:1.4;color:var(--ink);}
 .schedule-shifts {display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;}
 .schedule-shift {padding:16px 18px;border-right:1px solid var(--line);min-width:0;}
 .schedule-shift:last-child {border-right:0;}
@@ -38,12 +42,24 @@ def people(value):
     return [str(value).strip()] if str(value).strip() else []
 
 
+def name_key(value):
+    text=unicodedata.normalize('NFD',str(value).strip().casefold().replace('đ','d'))
+    return ''.join(c for c in text if not unicodedata.combining(c))
+
+
+def day_heading(day):
+    label=str(day)
+    match=re.fullmatch(r'(\d{1,2}/\d{1,2}(?:/\d{4})?)\s*[-–·]\s*(.+)',label)
+    if not match: return escape(label)
+    return f'<span class="schedule-date">{escape(match[1])}</span><span class="schedule-weekday">{escape(match[2])}</span>'
+
+
 def board_html(history, query=''):
-    query=query.strip().casefold()
+    query=name_key(query)
     days=[]
     for day, shifts in history.items():
         if not isinstance(shifts,dict): continue
-        if query and not any(query in name.casefold() for value in shifts.values() for name in people(value)):
+        if query and not any(query in name_key(name) for value in shifts.values() for name in people(value)):
             continue
         panels=[]
         ordered=[shift for shift in ['Sáng','10h30','Chiều'] if shift in shifts]
@@ -51,11 +67,11 @@ def board_html(history, query=''):
         for shift in ordered:
             staff=people(shifts[shift])
             color={'Sáng':'morning','Chiều':'afternoon','10h30':'midday'}.get(shift,'other')
-            chips=''.join('<span class="schedule-person'+(' match' if query and query in name.casefold() else '')+'">'+escape(name)+'</span>' for name in staff)
+            chips=''.join('<span class="schedule-person'+(' match' if query and query in name_key(name) else '')+'">'+escape(name)+'</span>' for name in staff)
             if not chips: chips='<span class="schedule-vacant">Chưa phân công</span>'
             panels.append(f'<section class="schedule-shift {color}"><div class="schedule-shift-title"><strong>Ca {escape(str(shift))}</strong><span class="schedule-count">{len(staff)} người</span></div><div class="schedule-people">{chips}</div></section>')
         if not panels: panels=['<div class="schedule-shift"><span class="schedule-vacant">Chưa có ca làm</span></div>']
-        days.append(f'<article class="schedule-day"><div class="schedule-day-title">{escape(str(day))}</div><div class="schedule-shifts">{"".join(panels)}</div></article>')
+        days.append(f'<article class="schedule-day"><div class="schedule-day-title">{day_heading(day)}</div><div class="schedule-shifts">{"".join(panels)}</div></article>')
     return '<div class="schedule-board">'+''.join(days)+'</div>' if days else ''
 
 

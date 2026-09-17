@@ -52,7 +52,7 @@ def gallery(value, label):
             st.warning(name + ': dữ liệu ảnh không đọc được. Hãy tải lại ảnh từ app.')
 
 def schedule(d):
-    from views.schedule_board import render_board, people
+    from views.schedule_board import render_board, people, name_key
     tabs=st.tabs(['Lịch theo ngày','Bảng & tải lịch','Ảnh lịch','Lịch sử sửa'])
     history=mapping(d.get('detailed_history'))
     selected_history=history
@@ -64,14 +64,14 @@ def schedule(d):
             selected=left.selectbox('Ngày làm việc',['Tất cả ngày']+list(history),key='schedule_day_'+d['shop'])
             query=right.text_input('Tìm nhân viên',placeholder='Nhập tên để tìm ca làm',key='schedule_person_'+d['shop']).strip()
             if selected!='Tất cả ngày': selected_history={selected:history[selected]}
-            st.caption('Sáng · vàng  /  10h30 · tím  /  Chiều · xanh. Mỗi ô tên là một nhân viên.')
+            st.caption('Tìm tên có dấu hoặc không dấu. Tên phù hợp được viền đậm trong ca làm.')
             render_board(selected_history,query)
         else:
             empty_state('Chưa có lịch làm việc', 'Lịch sẽ xuất hiện sau khi được lưu và đồng bộ.')
     with tabs[1]:
         result=[]
         for day,shifts in selected_history.items():
-            if query and not any(query.casefold() in name.casefold() for value in mapping(shifts).values() for name in people(value)): continue
+            if query and not any(name_key(query) in name_key(name) for value in mapping(shifts).values() for name in people(value)): continue
             for shift,staff in mapping(shifts).items():
                 result.append({'Ngày':day,'Ca':shift,'Nhân viên':', '.join(people(staff))})
         table(result,'Lịch trực','lich_truc')
