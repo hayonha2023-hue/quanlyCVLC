@@ -42,4 +42,4 @@ def login_form():
             yield
         with st.expander('Hỗ trợ đăng nhập'):
             st.write('Dùng tài khoản đang sử dụng trên app HTCV. Nếu quên mật khẩu hoặc chưa có tài khoản, liên hệ quản trị viên chi nhánh.')
-    st.markdown('<div class="login-footer">HTCV · Web 2.7.1</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-footer">HTCV · Web 2.7.2</div>', unsafe_allow_html=True)

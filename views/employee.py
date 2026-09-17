@@ -96,22 +96,46 @@ def kpi(db,d):
     tabs=st.tabs(['KPI tháng','Ảnh KPI'])
     with tabs[0]:
         result,meta=kpi_table(db,d['shop'])
-        if meta: st.caption(f"Tháng: {meta.get('m','')} • Tổng target: {meta.get('tot',0)}")
-        table(result,'KPI','kpi')
+        from views.target_cards import render_cards, display_number
+        if meta: st.caption(f"Tháng {meta.get('m','')} · Tổng target đã lưu: {display_number(meta.get('tot'))}")
+        if result:
+            person=st.selectbox('Xem nhanh KPI của nhân viên',[row['Nhân viên'] for row in result],key='kpi_summary_'+d['shop'])
+            row=next(row for row in result if row['Nhân viên']==person)
+            render_cards([dict(row,**{'Chỉ số':person})],[
+                ('Target tháng','CHỈ TIÊU THÁNG','goal'),('Đã bán','ĐÃ BÁN','done'),
+                ('Còn thiếu','CÒN THIẾU','remaining'),('Vượt','VƯỢT CHỈ TIÊU','done')])
+            if row['Target tháng']>0:
+                st.progress(min(1.0,max(0.0,row['Hoàn thành (%)']/100)),text='Hoàn thành '+display_number(row['Hoàn thành (%)'])+'%')
+            else: st.caption('Chưa có chỉ tiêu dương để tính tỷ lệ hoàn thành.')
+        with st.expander('Bảng KPI đầy đủ và tải file'):
+            table(result,'KPI','kpi')
     with tabs[1]: gallery(d.get('kpi_images'),'Ảnh KPI')
 
 def target(d):
     data=mapping(d.get('daily_targets')); result=mapping(data.get('results'))
     if data.get('date_updated'):
         st.caption('App chốt lúc '+str(data['date_updated'])+' • '+str(data.get('updated_by','')))
-    columns=st.columns(3)
-    columns[0].metric('Nhân sự',result.get('nv',data.get('nv','—')))
-    columns[1].metric('Nhân sự ca sáng',result.get('staff_ca1',data.get('staff_ca1','—')))
-    columns[2].metric('Nhân sự ca chiều',result.get('staff_ca2',data.get('staff_ca2','—')))
+    from views.target_cards import render_cards, display_number
+    with st.expander('Nhân sự dùng để chia target'):
+        columns=st.columns(3)
+        columns[0].metric('Tổng nhân sự',display_number(result.get('nv',data.get('nv'))))
+        columns[1].metric('Ca sáng',display_number(result.get('staff_ca1',data.get('staff_ca1'))))
+        columns[2].metric('Ca chiều',display_number(result.get('staff_ca2',data.get('staff_ca2'))))
     inputs,outputs=target_tables(data)
-    tabs=st.tabs(['Kết quả / người','Kết quả / ca','Ca / người','Số liệu đầu vào'])
-    for tab,key,label in zip(tabs,outputs,('Target mỗi người','Target mỗi ca','Target ca mỗi người')):
-        with tab: table(outputs[key],label,key)
+    units={name:str(record.get('unit') or record.get('don_vi') or '') for name,record in mapping(data.get('metrics')).items() if isinstance(record,dict)}
+    tabs=st.tabs(['Mỗi người','Tổng từng ca','Mỗi người trong ca','Số liệu gốc'])
+    scopes=[
+        ('per_employee','Target mỗi người',[('Ngày / người','MỖI NGƯỜI / NGÀY','goal'),('Tháng / người','MỖI NGƯỜI / THÁNG','neutral')]),
+        ('per_shift','Target mỗi ca',[('Tổng ngày','TỔNG CẢ NGÀY','goal'),('Ca sáng','CA SÁNG','neutral'),('Ca chiều','CA CHIỀU','neutral')]),
+        ('per_shift_person','Target ca mỗi người',[('Ca sáng / người','MỖI NGƯỜI / CA SÁNG','goal'),('Ca chiều / người','MỖI NGƯỜI / CA CHIỀU','neutral')]),
+    ]
+    for tab,(key,label,fields) in zip(tabs,scopes):
+        with tab:
+            render_cards(outputs[key],fields,units)
+            if outputs[key]:
+                with st.expander('Xem bảng và tải file'):
+                    table(outputs[key],label,key)
+            else: empty_state('Chưa có kết quả đã lưu', 'Lưu kết quả Target ngày trên app để xem tại đây.')
     with tabs[3]: table(inputs,'Đầu vào Target','target_inputs')
     if data and not result:
         st.info('App chưa lưu kết quả đã tính. Mở Target Ngày trên app và bấm Lưu để xem đúng kết quả đã chốt ở đây.')

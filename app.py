@@ -90,7 +90,7 @@ def close_settings_panels():
 # ==========================================
 with st.sidebar:
     sidebar_identity(user_id, st.session_state.get('is_admin'), st.session_state.get('is_super_admin'))
-    st.caption("Web 2.7.1")
+    st.caption("Web 2.7.2")
 
     # 🔓 MỞ KHÓA CHỌN CHI NHÁNH CHO ADMIN
     if st.session_state.get("is_super_admin", False):
