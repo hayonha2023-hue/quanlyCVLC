@@ -90,7 +90,7 @@ def close_settings_panels():
 # ==========================================
 with st.sidebar:
     sidebar_identity(user_id, st.session_state.get('is_admin'), st.session_state.get('is_super_admin'))
-    st.caption("Web 2.7.2")
+    st.caption("Web 2.8")
 
     # 🔓 MỞ KHÓA CHỌN CHI NHÁNH CHO ADMIN
     if st.session_state.get("is_super_admin", False):
@@ -164,7 +164,7 @@ with st.sidebar:
 # ==========================================
 mobile_navigation(menu_options)
 if st.session_state.show_bg:
-    st.info("Đổi hình nền cá nhân")
+    st.subheader("Đổi hình nền cá nhân")
     bg_up = st.file_uploader("Chọn ảnh (Hệ thống tự nén cho nhẹ)", type=["png", "jpg", "jpeg"])
     c_bg1, c_bg2, c_bg3 = st.columns(3)
 
@@ -195,7 +195,7 @@ if st.session_state.show_bg:
         st.rerun()
 
 elif st.session_state.show_pass:
-    st.info("Đổi mật khẩu")
+    st.subheader("Đổi mật khẩu")
     c_p1, c_p2 = st.columns(2)
     old_p = c_p1.text_input("Nhập mật khẩu cũ", type="password")
     new_p = c_p2.text_input("Nhập mật khẩu mới", type="password")

@@ -8,6 +8,8 @@ import streamlit as st
 from PIL import Image
 from services.app_data import mapping, rows, snapshot, kpi_table, target_tables, number
 from views.workspace import navigate, page_header, empty_state, ICONS
+from views.readability import readable_dataframe, record_cards
+from views.target_cards import display_number
 
 PAGES = {
     '🏠 Tổng quan':'overview', '📋 Xem Lịch':'schedule', '📊 Tích Lũy':'stats',
@@ -24,11 +26,11 @@ def table(items, label, key):
         query=st.text_input('Tìm trong bảng',key='search_'+key,placeholder='Nhập tên hoặc nội dung cần tìm').strip().casefold()
         if query:
             df=df[df.astype(str).apply(lambda col:col.str.casefold().str.contains(query,regex=False)).any(axis=1)]
-    st.caption(f'{len(df):,} dòng · {label}')
+    st.markdown(f'**{label}** · {len(df):,} dòng')
     if df.empty:
         empty_state('Không tìm thấy kết quả', 'Thử tên hoặc từ khóa khác.')
     else:
-        st.dataframe(df, hide_index=True, use_container_width=True)
+        readable_dataframe(df)
     st.download_button('Tải CSV', df.to_csv(index=False).encode('utf-8-sig'),
                        file_name=key+'.csv', mime='text/csv', key='download_'+key, icon=':material/download:')
 
@@ -107,7 +109,8 @@ def kpi(db,d):
             if row['Target tháng']>0:
                 st.progress(min(1.0,max(0.0,row['Hoàn thành (%)']/100)),text='Hoàn thành '+display_number(row['Hoàn thành (%)'])+'%')
             else: st.caption('Chưa có chỉ tiêu dương để tính tỷ lệ hoàn thành.')
-        with st.expander('Bảng KPI đầy đủ và tải file'):
+        with st.container():
+            st.subheader('Bảng KPI đầy đủ')
             table(result,'KPI','kpi')
     with tabs[1]: gallery(d.get('kpi_images'),'Ảnh KPI')
 
@@ -116,7 +119,7 @@ def target(d):
     if data.get('date_updated'):
         st.caption('App chốt lúc '+str(data['date_updated'])+' • '+str(data.get('updated_by','')))
     from views.target_cards import render_cards, display_number
-    with st.expander('Nhân sự dùng để chia target'):
+    with st.expander('Nhân sự dùng để chia target', expanded=True):
         columns=st.columns(3)
         columns[0].metric('Tổng nhân sự',display_number(result.get('nv',data.get('nv'))))
         columns[1].metric('Ca sáng',display_number(result.get('staff_ca1',data.get('staff_ca1'))))
@@ -133,7 +136,7 @@ def target(d):
         with tab:
             render_cards(outputs[key],fields,units)
             if outputs[key]:
-                with st.expander('Xem bảng và tải file'):
+                with st.container():
                     table(outputs[key],label,key)
             else: empty_state('Chưa có kết quả đã lưu', 'Lưu kết quả Target ngày trên app để xem tại đây.')
     with tabs[3]: table(inputs,'Đầu vào Target','target_inputs')
@@ -141,27 +144,37 @@ def target(d):
         st.info('App chưa lưu kết quả đã tính. Mở Target Ngày trên app và bấm Lưu để xem đúng kết quả đã chốt ở đây.')
 
 def ecom(d):
+    from views.schedule_board import render_board, people
     data=mapping(d.get('ecom_history')); order=['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ Nhật']
-    table([{'Ngày':day,'Sáng':mapping(data[day]).get('Sáng',data[day] if isinstance(data[day],str) else ''),
-            'Chiều':mapping(data[day]).get('Chiều','')} for day in order+sorted(set(data)-set(order)) if day in data], 'Lịch Ecom','ecom')
+    items=[{'Ngày':day,'Sáng':mapping(data[day]).get('Sáng',data[day] if isinstance(data[day],str) else ''),
+            'Chiều':mapping(data[day]).get('Chiều','')} for day in order+sorted(set(data)-set(order)) if day in data]
+    if items:
+        render_board({row['Ngày']:{'Sáng':people(row['Sáng']),'Chiều':people(row['Chiều'])} for row in items}, show_counts=False)
+    table(items,'Lịch Ecom','ecom')
 
 def fund(d):
     items=[v for v in mapping(d.get('quy_shop')).values() if isinstance(v,dict)]
     total=lambda kind:sum(number(v.get('amount')) for v in items if v.get('type')==kind)
     cols=st.columns(4)
     for col,label,value in zip(cols,['Tồn quỹ','Tổng thu','Tổng chi','Chi riêng'],[total('Thu')-total('Chi')-total('Chi Riêng'),total('Thu'),total('Chi'),total('Chi Riêng')]):
-        col.metric(label,f'{value:,.0f} đ')
+        col.metric(label,display_number(value)+' ₫')
     table([{'Ngày':v.get('date',''),'Loại':v.get('type',''),'Số tiền':number(v.get('amount')),
             'Nội dung':v.get('desc',''),'Người ghi':v.get('user','')} for v in reversed(items)],'Quỹ shop','quy_shop')
 
 def market(d):
-    table([{'Ngày':date,'Địa điểm':v.get('dia_diem',''),'Nhân viên':', '.join(map(str,rows(v.get('nhan_vien'))))}
-           for date,v in mapping(d.get('market_history')).items() if isinstance(v,dict)],'Thị trường','thi_truong')
+    items=[{'Ngày':date.replace('-','/'),'Địa điểm':v.get('dia_diem',''),'Nhân viên':', '.join(map(str,rows(v.get('nhan_vien'))))}
+           for date,v in mapping(d.get('market_history')).items() if isinstance(v,dict)]
+    record_cards(items,'Ngày',[('Địa điểm','ĐỊA ĐIỂM / TUYẾN'),('Nhân viên','NHÂN VIÊN')])
+    table(items,'Thị trường','thi_truong')
 
 def phones(d):
-    query=st.text_input('Tìm tên hoặc số điện thoại',key='find_phone').casefold().strip()
-    table([{'Tên':name,'Số điện thoại':str(phone)} for name,phone in mapping(d.get('phones')).items()
-           if not isinstance(phone,(dict,list)) and query in (str(name)+' '+str(phone)).casefold()], 'Danh bạ nội bộ','danh_ba')
+    from views.schedule_board import name_key
+    query=name_key(st.text_input('Tìm tên hoặc số điện thoại',key='find_phone'))
+    items=[{'Tên':name,'Số điện thoại':str(phone)} for name,phone in mapping(d.get('phones')).items()
+           if not isinstance(phone,(dict,list)) and query in name_key(str(name)+' '+str(phone))]
+    if query or len(items)<=12:
+        record_cards(items,'Tên',[('Số điện thoại','SỐ ĐIỆN THOẠI')])
+    table(items,'Danh bạ nội bộ','danh_ba')
 
 def overview(db,d):
     now = datetime.now(ZoneInfo('Asia/Ho_Chi_Minh'))

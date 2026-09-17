@@ -9,7 +9,7 @@ LOGIN_CSS = """<style>
 .login-brand {display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 30px;}
 .login-mark {display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:#214e78;color:white;font-size:27px;font-weight:750;}
 .login-brand strong {font-size:24px;letter-spacing:.03em;color:#203149;display:block;line-height:1.2;}
-.login-brand small {font-size:12px;color:#66778a;display:block;margin-top:3px;}
+.login-brand small {font-size:13px;color:#66778a;display:block;margin-top:3px;}
 .st-key-htcv_login {padding:30px;background:#fff;border:1px solid #dae2eb;border-radius:12px;box-shadow:0 8px 28px #20314908;}
 .st-key-htcv_login [data-testid="stForm"] {padding:0;border:0;background:transparent;}
 .login-heading h1 {font-size:25px!important;color:#203149!important;letter-spacing:-.02em;padding:0;margin:0 0 8px;}
@@ -23,8 +23,8 @@ LOGIN_CSS = """<style>
 .st-key-htcv_login [data-testid="stExpander"] {background:transparent;border:0;border-top:1px solid #e5ebf1;border-radius:0;margin-top:14px;}
 .st-key-htcv_login [data-testid="stExpander"] details {border:0;background:transparent;}
 .st-key-htcv_login [data-testid="stExpander"] summary {padding-left:0;min-height:44px;}
-.st-key-htcv_login [data-testid="stExpander"] p {font-size:13px;color:#67778a;}
-.login-footer {text-align:center;font-size:12px;color:#738194;margin-top:22px;}
+.st-key-htcv_login [data-testid="stExpander"] p {font-size:14px;color:#67778a;}
+.login-footer {text-align:center;font-size:13px;color:#738194;margin-top:22px;}
 @media(max-width:600px) {
 .stApp:has(.login-brand) [data-testid="stMainBlockContainer"] {padding:4rem 20px 24px;}
 .st-key-htcv_login {padding:24px;}
@@ -42,4 +42,4 @@ def login_form():
             yield
         with st.expander('Hỗ trợ đăng nhập'):
             st.write('Dùng tài khoản đang sử dụng trên app HTCV. Nếu quên mật khẩu hoặc chưa có tài khoản, liên hệ quản trị viên chi nhánh.')
-    st.markdown('<div class="login-footer">HTCV · Web 2.7.2</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-footer">HTCV · Web 2.8</div>', unsafe_allow_html=True)

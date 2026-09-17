@@ -54,7 +54,7 @@ def day_heading(day):
     return f'<span class="schedule-date">{escape(match[1])}</span><span class="schedule-weekday">{escape(match[2])}</span>'
 
 
-def board_html(history, query=''):
+def board_html(history, query='', show_counts=True):
     query=name_key(query)
     days=[]
     for day, shifts in history.items():
@@ -69,14 +69,15 @@ def board_html(history, query=''):
             color={'Sáng':'morning','Chiều':'afternoon','10h30':'midday'}.get(shift,'other')
             chips=''.join('<span class="schedule-person'+(' match' if query and query in name_key(name) else '')+'">'+escape(name)+'</span>' for name in staff)
             if not chips: chips='<span class="schedule-vacant">Chưa phân công</span>'
-            panels.append(f'<section class="schedule-shift {color}"><div class="schedule-shift-title"><strong>Ca {escape(str(shift))}</strong><span class="schedule-count">{len(staff)} người</span></div><div class="schedule-people">{chips}</div></section>')
+            count=f'{len(staff)} người' if show_counts else ''
+            panels.append(f'<section class="schedule-shift {color}"><div class="schedule-shift-title"><strong>Ca {escape(str(shift))}</strong><span class="schedule-count">{count}</span></div><div class="schedule-people">{chips}</div></section>')
         if not panels: panels=['<div class="schedule-shift"><span class="schedule-vacant">Chưa có ca làm</span></div>']
         days.append(f'<article class="schedule-day"><div class="schedule-day-title">{day_heading(day)}</div><div class="schedule-shifts">{"".join(panels)}</div></article>')
     return '<div class="schedule-board">'+''.join(days)+'</div>' if days else ''
 
 
-def render_board(history, query=''):
+def render_board(history, query='', show_counts=True):
     st.markdown(BOARD_CSS,unsafe_allow_html=True)
-    html=board_html(history,query)
+    html=board_html(history,query,show_counts)
     if html: st.markdown(html,unsafe_allow_html=True)
     else: st.info('Không có lịch phù hợp với tên đang tìm.' if query else 'Chưa có lịch làm việc.')

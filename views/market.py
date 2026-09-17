@@ -1,3 +1,4 @@
+from views.readability import readable_dataframe
 from views.workspace import page_header, sync_status
 from services.database import save, shop_path
 import streamlit as st
@@ -32,7 +33,7 @@ def render_market():
 
     # NẾU LÀ ADMIN -> HIỆN FORM THÊM LỊCH
     if can_edit:
-        with st.expander("Thêm hoặc sửa lịch", expanded=False):
+        with st.expander("Thêm hoặc sửa lịch", expanded=True):
             with st.form("market_form"):
                 c1, c2 = st.columns(2)
                 m_date = c1.date_input("Ngày công tác")
@@ -81,7 +82,7 @@ def render_market():
                 "Nhân viên": ", ".join(inf.get("nhan_vien", [])) if isinstance(inf.get("nhan_vien"), list) else inf.get("nhan_vien", "")
             })
 
-        st.dataframe(pd.DataFrame(market_list), hide_index=True, use_container_width=True)
+        readable_dataframe(pd.DataFrame(market_list))
 
         # Admin được quyền Hủy lịch
         if can_edit:

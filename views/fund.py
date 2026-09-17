@@ -1,3 +1,5 @@
+from views.readability import readable_dataframe
+from views.target_cards import display_number
 from views.workspace import page_header, sync_status
 import copy
 import pandas as pd
@@ -38,18 +40,18 @@ def render_fund():
 
     # 3. Hiển thị 4 Khối Thống Kê
     for col, label, value in zip(st.columns(4), ['Tồn quỹ','Tổng thu','Tổng chi','Chi riêng'], [ton_quy,tong_thu,tong_chi,chi_rieng]):
-        col.metric(label, f'{value:,.0f} ₫')
+        col.metric(label, display_number(value)+' ₫')
 
     # 4. Hiển thị Danh sách Giao Dịch
     # Sắp xếp theo ID (chuỗi số thời gian) để cái mới nhất nổi lên đầu
     sorted_funds = sorted(fund_data.items(), key=lambda x: x[0], reverse=True)
 
     if sorted_funds:
-        st.dataframe(pd.DataFrame([{
+        readable_dataframe(pd.DataFrame([{
             'Ngày': item.get('date',''), 'Loại': item.get('type',''),
             'Số tiền': float(item.get('amount',0)), 'Nội dung': item.get('desc',''),
             'Người ghi': item.get('user',''),
-        } for _,item in sorted_funds]), hide_index=True, use_container_width=True)
+        } for _,item in sorted_funds]))
     else:
         st.info('Chưa có phiếu thu chi. Bạn có thể ghi phiếu đầu tiên bên dưới.')
 

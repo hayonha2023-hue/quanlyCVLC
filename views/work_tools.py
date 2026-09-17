@@ -1,3 +1,4 @@
+from views.readability import readable_dataframe
 """Interactive workflows, scoped by account and shop; drafts survive reruns."""
 import hashlib
 import pandas as pd
@@ -24,8 +25,8 @@ def _identity(prefix):
 def _schedule_table(history):
     from views.schedule_board import render_board
     render_board(history)
-    with st.expander('Xem dạng bảng'):
-        st.dataframe(pd.DataFrame([{'Ngày':day,**{shift:', '.join(staff) for shift,staff in shifts.items()}} for day,shifts in history.items()]),hide_index=True,use_container_width=True)
+    with st.expander('Bảng lịch đầy đủ', expanded=True):
+        readable_dataframe(pd.DataFrame([{'Ngày':day,**{shift:', '.join(staff) for shift,staff in shifts.items()}} for day,shifts in history.items()]))
 
 
 def render_schedule():
@@ -143,7 +144,7 @@ def render_split():
         result=st.session_state.get(prefix+'_result')
         if result and result[0]==signature:
             st.success('Đã chia xong. Bấm tải ZIP bên dưới để lấy các file.')
-            st.dataframe(result[2],hide_index=True,use_container_width=True)
+            readable_dataframe(result[2])
             st.download_button('Tải tất cả file ZIP',result[1],file_name='HTCV_Data_da_chia.zip',mime='application/zip',type='primary',use_container_width=True)
             if st.button('Dọn kết quả khỏi phiên web'):
                 st.session_state.pop(prefix+'_result',None); st.rerun()

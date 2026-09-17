@@ -1,3 +1,4 @@
+from views.readability import readable_dataframe
 """Write KPI records in the same emp/base/short/tgt/sold schema as HTCV."""
 import streamlit as st
 from views.workspace import page_header, sync_status
@@ -18,7 +19,7 @@ def render_kpi():
     page_header('Cập nhật KPI', 'Chọn nhân viên và điều chỉnh các số liệu cần cập nhật.', 'CHỈNH SỬA DỮ LIỆU')
     records,meta,schema=kpi_records(st.session_state.db,shop)
     values,_=kpi_table(st.session_state.db,shop)
-    if values:st.dataframe(values,hide_index=True,use_container_width=True)
+    if values:readable_dataframe(values)
     if not records:
         st.info('Chưa có nhân viên KPI. Tạo bảng và chia target trên app trước.');return
     if schema != 'desktop':

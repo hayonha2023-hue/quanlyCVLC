@@ -1,3 +1,7 @@
+# HTCV Web 2.8 — Dễ đọc trên mọi màn hình
+
+Tăng cỡ chữ, nhãn và vùng bấm dùng chung. Bảng dữ liệu có dòng cao hơn, số định dạng Việt Nam và giữ số gốc khi tải CSV. Hiện trực tiếp bảng KPI và kết quả Target; mở sẵn bảng lịch xem trước. Bổ sung thẻ lịch Ecom, tuyến thị trường và liên hệ. Các mục chọn trên điện thoại xuống dòng. Không thay công thức, cấu trúc lưu trữ hoặc dữ liệu đã lưu.
+
 # HTCV Web 2.7
 
 Đăng nhập một cột, giao diện chung cho biểu mẫu và báo cáo, điều hướng bằng biểu tượng nét đơn. Tổng quan ưu tiên ba công cụ làm việc; lịch có bộ lọc ngày, bảng dài có tìm kiếm và xuất CSV theo kết quả lọc. Dùng Streamlit 1.64.0 đã kiểm thử để đồng nhất bộ dựng giao diện giữa môi trường kiểm tra và triển khai.

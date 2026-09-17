@@ -9,11 +9,11 @@ CSS='''<style>
 .target-cards {display:grid;gap:14px;margin:12px 0 20px;}
 .target-card {background:var(--htcv-card);border:1px solid var(--line);border-radius:9px;overflow:hidden;}
 .target-card-head {padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink);font-size:17px;font-weight:700;}
-.target-card-head small {display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:4px;}
+.target-card-head small {display:block;font-size:14px;font-weight:400;color:var(--muted);margin-top:4px;}
 .target-values {display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));}
 .target-value {padding:18px 16px;border-right:1px solid var(--line);min-width:0;}
 .target-value:last-child {border-right:0;}
-.target-value span {display:block;color:var(--muted);font-size:13px;font-weight:550;margin-bottom:8px;}
+.target-value span {display:block;color:var(--muted);font-size:14px;font-weight:550;margin-bottom:8px;}
 .target-value strong {display:block;color:var(--ink);font-size:clamp(22px,2.4vw,32px);font-weight:750;font-variant-numeric:tabular-nums;line-height:1.25;overflow-wrap:anywhere;}
 .target-value.goal {border-top:3px solid #5185bd;}
 .target-value.done {border-top:3px solid #47917a;}
@@ -23,7 +23,7 @@ CSS='''<style>
 .target-values {grid-template-columns:repeat(2,minmax(0,1fr));}
 .target-value {padding:14px 12px;border-bottom:1px solid var(--line);}
 .target-value strong {font-size:23px;}
-.target-value span {font-size:12px;}
+.target-value span {font-size:14px;}
 .target-card-head {font-size:16px;}
 }
 @media(max-width:360px) {.target-values {grid-template-columns:1fr;}}
