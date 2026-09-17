@@ -13,7 +13,7 @@ from views.login import login_form
 from views.workspace import sidebar_identity, sidebar_navigation, mobile_navigation, sync_status
 from PIL import Image, ImageOps
 
-st.set_page_config(page_title="HTCV | Không gian làm việc", layout="wide", initial_sidebar_state="auto")
+st.set_page_config(page_title="HTCV | Quản lý nội bộ", layout="wide", initial_sidebar_state="auto")
 
 FIREBASE_URL = "https://htcv-5c857-default-rtdb.firebaseio.com/htcv.json"
 
@@ -90,8 +90,8 @@ def close_settings_panels():
 # ==========================================
 with st.sidebar:
     sidebar_identity(user_id, st.session_state.get('is_admin'), st.session_state.get('is_super_admin'))
-    st.caption("Web 2.5 • Không gian làm việc")
-    if st.button("↻ Làm mới dữ liệu", use_container_width=True):
+    st.caption("Web 2.6")
+    if st.button("Làm mới dữ liệu", use_container_width=True):
         sync.refresh(st.session_state, force=True)
         st.rerun()
 
@@ -108,7 +108,7 @@ with st.sidebar:
         cur_idx = all_shops.index(cur_shop)
 
         # Bố trí Khung chọn (Dropdown)
-        selected_shop = st.selectbox("📍 Chi Nhánh", all_shops, index=cur_idx)
+        selected_shop = st.selectbox("Chi nhánh", all_shops, index=cur_idx)
 
         # Nếu Admin đổi nhánh -> Lưu vào RAM và Tải lại trang để load số liệu nhánh mới
         if selected_shop != cur_shop:
@@ -137,24 +137,24 @@ with st.sidebar:
             st.session_state.admin_task = 'Chọn tác vụ…'
             st.session_state.navigation = '🏠 Tổng quan' if st.session_state.get('navigation') == '👥 Quản Trị Admin' else '👥 Quản Trị Admin'
             close_settings_panels()
-        st.button('Đóng công cụ quản trị' if menu == '👥 Quản Trị Admin' else '⚙ Công cụ quản trị',
+        st.button('Đóng công cụ quản trị' if menu == '👥 Quản Trị Admin' else 'Công cụ quản trị',
                   key='open_admin_tools', on_click=switch_admin, use_container_width=True)
 
     with st.expander('Tài khoản & giao diện', expanded=False):
-        if st.button("🖼️ Đổi hình nền", use_container_width=True):
+        if st.button("Đổi hình nền", use_container_width=True):
             st.session_state.show_bg = not st.session_state.show_bg
             st.session_state.show_pass = False
 
-        if st.button("🔑 Đổi mật khẩu", use_container_width=True):
+        if st.button("Đổi mật khẩu", use_container_width=True):
             st.session_state.show_pass = not st.session_state.show_pass
             st.session_state.show_bg = False
 
-        theme_label = "🌙 Giao diện Tối" if st.session_state.theme == "Light" else "☀️ Giao diện Sáng"
+        theme_label = "Giao diện Tối" if st.session_state.theme == "Light" else "Giao diện Sáng"
         if st.button(theme_label, use_container_width=True):
             st.session_state.theme = "Dark" if st.session_state.theme == "Light" else "Light"
             st.rerun()
 
-        if st.button("🚪 Đăng xuất", use_container_width=True):
+        if st.button("Đăng xuất", use_container_width=True):
             st.session_state.clear()
             st.rerun()
 

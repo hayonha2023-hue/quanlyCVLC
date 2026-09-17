@@ -7,7 +7,7 @@ import streamlit as st
 LOGIN_CSS = """
 <style>
 .stApp:has(.htcv-login-brandbar) {
-    background:radial-gradient(ellipse at 12% 0%,#e9f0fb 0,transparent 48%),#f5f7fb;
+    background:#f4f6f8;
     color:#182d4a;
 }
 .stApp:has(.htcv-login-brandbar) [data-testid="stHeader"] {background:transparent;}
@@ -22,7 +22,7 @@ LOGIN_CSS = """
 .htcv-login-monogram {
     display:grid;place-items:center;width:42px;height:42px;border-radius:13px;
     background:#173b64;color:white;font-size:25px;font-weight:800;
-    box-shadow:0 4px 12px #173b6417;
+    box-shadow:none;
 }
 .htcv-login-wordmark {font-size:23px;font-weight:800;letter-spacing:.035em;color:#19375b;}
 .htcv-login-web {
@@ -31,8 +31,8 @@ LOGIN_CSS = """
 }
 .htcv-login-brandnote {color:#62738a;font-size:13px;}
 .st-key-htcv_login {
-    background:#fff;border:1px solid #e3e9f2;border-radius:24px;
-    box-shadow:0 24px 70px -28px #15355638;overflow:hidden;
+    background:#fff;border:1px solid #e3e9f2;border-radius:10px;
+    box-shadow:none;overflow:hidden;
 }
 .st-key-htcv_login [data-testid="stHorizontalBlock"] {gap:0;align-items:stretch;}
 .st-key-htcv_login [data-testid="stColumn"] {min-width:0!important;}
@@ -41,16 +41,11 @@ LOGIN_CSS = """
 .htcv-login-story {
     position:relative;overflow:hidden;box-sizing:border-box;min-height:590px;height:100%;
     padding:46px 40px 34px;display:flex;flex-direction:column;justify-content:space-between;
-    background:radial-gradient(ellipse at 100% 0,#245a83 0,transparent 65%),#152e50;
-}
-.htcv-login-story::after {
-    content:"";position:absolute;width:330px;height:330px;border:1px solid #ffffff0b;
-    border-radius:50%;right:-205px;bottom:-155px;box-shadow:0 0 0 46px #ffffff03,0 0 0 92px #ffffff02;
-    pointer-events:none;
+    background:#203c59;
 }
 .htcv-login-eyebrow {font-size:11px;font-weight:700;letter-spacing:.16em;color:#a6cce6;}
 .htcv-login-story h2 {
-    color:#fff!important;font-size:39px!important;font-weight:750;line-height:1.23;
+    color:#fff!important;font-size:29px!important;font-weight:750;line-height:1.23;
     letter-spacing:-.035em;margin:22px 0 16px;padding:0;
 }
 .htcv-login-story h2 .htcv-login-emphasis {color:#acd7ef;}
@@ -92,7 +87,7 @@ LOGIN_CSS = """
     border-radius:11px;transition:border-color .15s,box-shadow .15s;
 }
 .st-key-htcv_login [data-baseweb="input"]:focus-within,
-.st-key-htcv_login [data-testid="stTextInputRootElement"]:focus-within {border-color:#367bbe!important;box-shadow:0 0 0 3px #367bbe15;}
+.st-key-htcv_login [data-testid="stTextInputRootElement"]:focus-within {border-color:#367bbe!important;box-shadow:none;}
 .st-key-htcv_login input {font-size:16px!important;background:transparent!important;color:#203c5c!important;}
 .st-key-htcv_login input::placeholder {color:#8493a5;opacity:1;}
 .st-key-htcv_login [data-baseweb="input"] button,
@@ -100,9 +95,9 @@ LOGIN_CSS = """
 .st-key-htcv_login [data-testid="stFormSubmitButton"] {margin-top:4px;}
 .st-key-htcv_login [data-testid="stFormSubmitButton"] button {
     min-height:52px;border-radius:11px;background:#1f5b99;border:1px solid #1f5b99;
-    box-shadow:0 5px 12px #1f5b991c;transition:background .15s,box-shadow .15s;
+    box-shadow:none;transition:background .15s,box-shadow .15s;
 }
-.st-key-htcv_login [data-testid="stFormSubmitButton"] button:hover {background:#174b80;border-color:#174b80;box-shadow:0 7px 16px #1f5b9926;}
+.st-key-htcv_login [data-testid="stFormSubmitButton"] button:hover {background:#174b80;border-color:#174b80;box-shadow:none;}
 .st-key-htcv_login [data-testid="stFormSubmitButton"] button p {color:#fff!important;font-size:15px;font-weight:650;}
 .st-key-htcv_login [data-testid="stExpander"] {border:0;border-top:1px solid #edf1f6;border-radius:0;background:transparent;margin-top:8px;}
 .st-key-htcv_login [data-testid="stExpander"] details {border:0;border-radius:0;background:transparent;}
@@ -115,14 +110,14 @@ LOGIN_CSS = """
 .htcv-login-footer {text-align:center;color:#7b899b;font-size:12px;margin-top:22px;line-height:1.7;}
 @media(max-width:900px) {
     .htcv-login-story {padding:38px 28px;}
-    .htcv-login-story h2 {font-size:33px!important;}
+    .htcv-login-story h2 {font-size:26px!important;}
     .st-key-htcv_login [data-testid="stColumn"]:nth-child(2) {padding:32px 28px;}
 }
 @media(max-width:760px) {
     .stApp:has(.htcv-login-brandbar) [data-testid="stMainBlockContainer"] {max-width:500px;padding:2.5rem 1.15rem 1.5rem;}
     .htcv-login-brandbar {margin-bottom:24px;}
     .htcv-login-brandnote {display:none;}
-    .st-key-htcv_login {border-radius:20px;box-shadow:0 16px 40px -25px #15355630;}
+    .st-key-htcv_login {border-radius:10px;box-shadow:none;}
     .st-key-htcv_login [data-testid="stHorizontalBlock"] {flex-wrap:wrap;}
     .st-key-htcv_login [data-testid="stColumn"]:first-child {display:none;}
     .st-key-htcv_login [data-testid="stColumn"]:nth-child(2) {width:100%!important;flex:1 1 100%!important;padding:30px 24px 24px;}
@@ -159,21 +154,21 @@ def login_form():
         story, panel = st.columns([1.04, 1], gap="small")
         with story:
             st.markdown(f'''<section class="htcv-login-story" aria-label="Không gian làm việc HTCV">
-<div><div class="htcv-login-eyebrow">KẾT NỐI CÔNG VIỆC MỖI NGÀY</div>
-<h2>Mọi công việc.<br><span class="htcv-login-emphasis">Một không gian.</span></h2>
-<p class="htcv-login-intro">Theo dõi công việc và phối hợp cùng đội ngũ, ngay trong một nơi quen thuộc.</p></div>
+<div><div class="htcv-login-eyebrow">HTCV · NỘI BỘ</div>
+<h2>Quản lý lịch làm việc<br><span class="htcv-login-emphasis">và dữ liệu chi nhánh</span></h2>
+<p class="htcv-login-intro">Lịch trực, KPI, phân công nhân sự và chia dữ liệu.</p></div>
 <div class="htcv-login-features">
-<div class="htcv-login-feature"><div class="htcv-login-feature-icon">{calendar}</div><div><strong>Lịch &amp; ca làm</strong><small>Nắm rõ lịch làm việc của bạn và đội ngũ.</small></div></div>
-<div class="htcv-login-feature"><div class="htcv-login-feature-icon">{chart}</div><div><strong>KPI &amp; kết quả</strong><small>Theo dõi chỉ tiêu, chủ động tiến độ.</small></div></div>
-<div class="htcv-login-feature"><div class="htcv-login-feature-icon">{data}</div><div><strong>Dữ liệu công việc</strong><small>Tra cứu thuận tiện, xử lý tập trung.</small></div></div>
+<div class="htcv-login-feature"><div class="htcv-login-feature-icon">{calendar}</div><div><strong>Lịch &amp; ca làm</strong><small>Lịch trực và phân công ca.</small></div></div>
+<div class="htcv-login-feature"><div class="htcv-login-feature-icon">{chart}</div><div><strong>KPI &amp; kết quả</strong><small>Chỉ tiêu và kết quả theo tháng.</small></div></div>
+<div class="htcv-login-feature"><div class="htcv-login-feature-icon">{data}</div><div><strong>Dữ liệu công việc</strong><small>Danh bạ và chia file Excel.</small></div></div>
 </div><div class="htcv-login-story-footer">{account}<span>Một tài khoản, sử dụng trên app và web.</span></div>
 </section>''', unsafe_allow_html=True)
         with panel:
             with st.form("login_form", border=False):
                 st.markdown('''<div class="htcv-login-heading">
-<div class="htcv-login-kicker">ĐĂNG NHẬP HTCV</div>
-<h1>Chào mừng trở lại</h1>
-<p>Đăng nhập để bắt đầu ngày làm việc của bạn.</p>
+
+<h1>Đăng nhập</h1>
+<p>Sử dụng tài khoản HTCV đã được cấp.</p>
 </div>''', unsafe_allow_html=True)
                 yield
             with st.expander("Bạn cần hỗ trợ đăng nhập?", expanded=False):
@@ -181,4 +176,4 @@ def login_form():
                          "Nếu quên mật khẩu hoặc chưa có tài khoản, hãy liên hệ quản trị viên "
                          "của chi nhánh để được hỗ trợ.")
             st.markdown('<div class="htcv-login-account-note">Dành cho nhân viên và quản trị viên HTCV</div>', unsafe_allow_html=True)
-    st.markdown('<div class="htcv-login-footer">HTCV · Công việc kết nối, đội ngũ đồng hành.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="htcv-login-footer">HTCV · Quản lý nội bộ</div>', unsafe_allow_html=True)

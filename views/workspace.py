@@ -4,6 +4,17 @@ from html import escape
 import streamlit as st
 
 
+LABELS = {
+    '🏠 Tổng quan': 'Tổng quan', '⚡ Sắp lịch & Đảo ca': 'Sắp lịch & đảo ca',
+    '🔍 Quét AI KPI': 'Quét AI KPI', '✂️ Chia Data': 'Chia data',
+    '📋 Xem Lịch': 'Lịch làm việc', '📊 Tích Lũy': 'Tích lũy ca',
+    '📈 Theo Dõi KPI': 'KPI tháng', '📊 Target Ngày': 'Target ngày',
+    '🛒 Lịch Ecom': 'Lịch Ecom', '💰 Quỹ Shop': 'Quỹ shop',
+    '📍 Thị Trường': 'Lịch thị trường', '📞 Danh Bạ': 'Danh bạ',
+    '🤖 AI Tư Vấn': 'Tư vấn AI', '👥 Quản Trị Admin': 'Quản trị',
+}
+
+
 def navigate(page):
     st.session_state.navigation = page
     st.session_state.show_bg = False
@@ -16,7 +27,7 @@ def navigate(page):
 def sidebar_identity(user, admin=False, super_admin=False):
     role = 'Quản trị hệ thống' if super_admin else ('Quản trị chi nhánh' if admin else 'Nhân viên')
     st.markdown(f'''<div class="workspace-brand"><span class="workspace-logo">H</span>
-<div><strong>HTCV</strong><small>KHÔNG GIAN LÀM VIỆC</small></div></div>
+<div><strong>HTCV</strong><small>QUẢN LÝ NỘI BỘ</small></div></div>
 <div class="workspace-account"><span class="workspace-avatar">{escape(str(user)[:1].upper())}</span>
 <div><strong>{escape(str(user))}</strong><small>{role}</small></div></div>''', unsafe_allow_html=True)
 
@@ -29,12 +40,12 @@ def sidebar_navigation(options, tools):
     with st.container(key='workspace_navigation'):
         st.markdown('<div class="workspace-menu-label">LÀM VIỆC</div>', unsafe_allow_html=True)
         for page in primary:
-            st.button(page, key='nav_'+page, type='primary' if selected == page else 'secondary',
+            st.button(LABELS.get(page, page), key='nav_'+page, type='primary' if selected == page else 'secondary',
                       on_click=navigate, args=(page,), use_container_width=True)
         reports = [page for page in options if page not in primary and page != '👥 Quản Trị Admin']
         with st.expander('Dữ liệu & báo cáo', expanded=selected in reports):
             for page in reports:
-                st.button(page, key='nav_'+page, type='primary' if selected == page else 'secondary',
+                st.button(LABELS.get(page, page), key='nav_'+page, type='primary' if selected == page else 'secondary',
                           on_click=navigate, args=(page,), use_container_width=True)
     return selected
 
@@ -44,12 +55,11 @@ def mobile_navigation(options):
     def change():
         navigate(st.session_state.mobile_destination)
     with st.container(key='workspace_mobile_navigation'):
-        st.selectbox('Đi đến chức năng', options, key='mobile_destination', on_change=change)
+        st.selectbox('Đi đến chức năng', options, key='mobile_destination', on_change=change, format_func=lambda page: LABELS.get(page, page))
 
 
 def page_header(title, description, eyebrow='KHÔNG GIAN LÀM VIỆC'):
     st.markdown(f'''<div class="workspace-page-heading">
-<div class="workspace-eyebrow">{escape(eyebrow)}</div>
 <h1>{escape(title)}</h1><p>{escape(description)}</p></div>''', unsafe_allow_html=True)
 
 
@@ -64,5 +74,5 @@ def sync_status():
 
 
 def workflow_steps(labels):
-    steps = ''.join(f'<div><span>{i:02d}</span>{escape(label)}</div>' for i, label in enumerate(labels, 1))
-    st.markdown(f'<div class="workspace-steps">{steps}</div>', unsafe_allow_html=True)
+    with st.expander('Hướng dẫn', expanded=False):
+        st.caption(' → '.join(labels))

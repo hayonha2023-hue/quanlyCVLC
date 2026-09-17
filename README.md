@@ -1,4 +1,10 @@
-# HTCV Web 2.5 — Không gian làm việc
+# HTCV Web 2.6 — Quản lý nội bộ
+
+## Giao diện Web 2.6
+
+- Bỏ khẩu hiệu, thẻ giới thiệu và số thứ tự trang trí. Tổng quan ưu tiên số liệu, nút thao tác và lịch làm việc.
+- Menu dùng tên chức năng nhất quán, giảm emoji, bóng đổ, nền chuyển màu và bo góc.
+- Hướng dẫn các công cụ thu gọn trong mục Hướng dẫn; giữ nhãn Quét AI KPI để phân biệt đúng chức năng.
 
 ## Giao diện Web 2.5
 

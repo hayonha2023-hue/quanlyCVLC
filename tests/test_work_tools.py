@@ -193,7 +193,7 @@ def test_mobile_navigation_and_sidebar_stay_in_sync(monkeypatch):
 
 def test_mobile_staff_menu_excludes_administration(monkeypatch):
     a=app_for(monkeypatch,'staff')
-    assert '👥 Quản Trị Admin' not in a.selectbox(key='mobile_destination').options
+    assert 'Quản trị' not in a.selectbox(key='mobile_destination').options
     assert not [b for b in a.button if b.key == 'open_admin_tools']
     a.selectbox(key='mobile_destination').set_value('✂️ Chia Data').run()
     assert any('CHIA ĐỀU SỐ LIỆU' in m.value for m in a.info)
