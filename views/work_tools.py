@@ -41,7 +41,7 @@ def render_schedule():
         a,b=prefix+'Sáng',prefix+'Chiều'
         st.session_state[a],st.session_state[b]=st.session_state[b],st.session_state[a]
         st.session_state.pop(draft_key,None)
-    st.subheader('Danh sách nhân viên')
+    st.subheader('1. Nhập nhân viên cho từng ca')
     pools={}
     for column,shift in zip(st.columns(len(shifts)),shifts):
         with column:
@@ -61,7 +61,7 @@ def render_schedule():
     draft=st.session_state.get(draft_key)
     if draft:
         st.divider()
-        st.subheader('Lịch xem trước')
+        st.subheader('2. Kiểm tra lịch trước khi lưu')
         _schedule_table(draft['history'])
         short=sum(len(staff)<3 for shifts_ in draft['history'].values() for staff in shifts_.values())
         if short: st.warning(f'Có {short} ca dưới 3 người vì danh sách hoặc quy tắc không đủ người. Hãy kiểm tra trước khi lưu.')
@@ -80,7 +80,7 @@ def render_schedule():
 
 def render_scanner():
     db,user,shop=_context(); prefix=_identity('scan')
-    uploaded=st.file_uploader('Ảnh KPI',type=['png','jpg','jpeg'],key=prefix+'_upload')
+    uploaded=st.file_uploader('1. Chọn ảnh bảng KPI',type=['png','jpg','jpeg'],key=prefix+'_upload')
     keys=mapping(db.get('settings')).get('api_keys') or []
     if not isinstance(keys,list): keys=[]
     with st.expander('Kết nối AI'):
@@ -115,11 +115,11 @@ def render_split():
     db,user,shop=_context(); prefix=_identity('split')
     if not allowed(db,user,shop,'CHIA ĐỀU SỐ LIỆU'):
         st.info('Quản trị cần cấp quyền CHIA ĐỀU SỐ LIỆU để bạn sử dụng chức năng này.'); return
-    uploaded=st.file_uploader('File Excel · tối đa 20 MB',type=['xlsx','xls'],key=prefix+'_upload')
+    uploaded=st.file_uploader('1. Chọn file Excel · tối đa 20 MB',type=['xlsx','xls'],key=prefix+'_upload')
     contacts=list(mapping(db.get('phones')))
     history,_=schedule_data(shop_data(db,shop))
     st.divider()
-    st.subheader('Người nhận')
+    st.subheader('2. Chọn người nhận')
     source=st.radio('Lấy danh sách từ',['Danh bạ','Lịch trực','Nhập tên'],horizontal=True,key=prefix+'_source')
     if source=='Lịch trực':
         if not history: st.info('Chi nhánh chưa có lịch trực.'); return
@@ -155,8 +155,8 @@ def render_tool(page):
     sync_status()
     title, description, steps = {
         TOOLS[0]: ('Sắp lịch & đảo ca', 'Nhập danh sách từng ca, tạo lịch tuần và kiểm tra trước khi lưu.', ['Nhập nhân viên', 'Xem trước lịch', 'Lưu & đồng bộ']),
-        TOOLS[1]: ('Quét AI KPI', 'Đọc bảng KPI từ ảnh và xem phân tích kết quả làm việc.', ['Chọn ảnh', 'Phân tích', 'Xem & tải kết quả']),
-        TOOLS[2]: ('Chia data', 'Chia đều dữ liệu Excel cho danh sách người nhận bạn chọn.', ['Tải file Excel', 'Chọn người nhận', 'Chia & tải ZIP']),
+        TOOLS[1]: ('Đọc ảnh KPI', 'Đọc bảng KPI từ ảnh và xem phân tích kết quả làm việc.', ['Chọn ảnh', 'Phân tích', 'Xem & tải kết quả']),
+        TOOLS[2]: ('Chia file Excel', 'Chia đều dữ liệu Excel cho danh sách người nhận bạn chọn.', ['Tải file Excel', 'Chọn người nhận', 'Chia & tải ZIP']),
     }[page]
     page_header(title, description, 'CÔNG CỤ LÀM VIỆC')
     workflow_steps(steps)

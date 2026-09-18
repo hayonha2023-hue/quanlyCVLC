@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 from PIL import Image
 from services.app_data import mapping, rows, snapshot, kpi_table, target_tables, number
-from views.workspace import navigate, page_header, empty_state, ICONS
+from views.workspace import navigate, page_header, empty_state, ICONS, LABELS
 from views.readability import readable_dataframe, record_cards
 from views.target_cards import display_number
 
@@ -126,7 +126,7 @@ def target(d):
         columns[2].metric('Ca chiều',display_number(result.get('staff_ca2',data.get('staff_ca2'))))
     inputs,outputs=target_tables(data)
     units={name:str(record.get('unit') or record.get('don_vi') or '') for name,record in mapping(data.get('metrics')).items() if isinstance(record,dict)}
-    tabs=st.tabs(['Mỗi người','Tổng từng ca','Mỗi người trong ca','Số liệu gốc'])
+    tabs=st.tabs(['Chỉ tiêu mỗi người','Chỉ tiêu từng ca','Mỗi người theo ca','Số liệu gốc'])
     scopes=[
         ('per_employee','Target mỗi người',[('Ngày / người','MỖI NGƯỜI / NGÀY','goal'),('Tháng / người','MỖI NGƯỜI / THÁNG','neutral')]),
         ('per_shift','Target mỗi ca',[('Tổng ngày','TỔNG CẢ NGÀY','goal'),('Ca sáng','CA SÁNG','neutral'),('Ca chiều','CA CHIỀU','neutral')]),
@@ -179,23 +179,40 @@ def phones(d):
 def overview(db,d):
     now = datetime.now(ZoneInfo('Asia/Ho_Chi_Minh'))
     day_name = ['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ nhật'][now.weekday()]
-    page_header('Tổng quan', f'{day_name}, {now:%d/%m/%Y}')
-    result,meta=kpi_table(db,d['shop'])
+    page_header('Bạn cần làm gì?', f'{day_name}, {now:%d/%m/%Y} · Chọn một mục bên dưới để bắt đầu.')
     from views.work_tools import TOOLS
+    groups = [
+        ('Xem lịch & kết quả', [
+            ('📋 Xem Lịch', 'Xem lịch làm việc', 'Tìm ngày, ca làm và tên nhân viên.'),
+            ('📊 Target Ngày', 'Xem chỉ tiêu ngày', 'Biết mỗi người, mỗi ca cần đạt bao nhiêu.'),
+            ('📈 Theo Dõi KPI', 'Xem kết quả tháng', 'Đối chiếu đã bán, còn thiếu và tỷ lệ hoàn thành.'),
+        ]),
+        ('Tạo & xử lý công việc', [
+            (TOOLS[0], 'Sắp lịch & đảo ca', 'Nhập nhân viên → xem trước → lưu lịch.'),
+            (TOOLS[1], 'Đọc ảnh KPI', 'Chọn ảnh bảng KPI để phân tích kết quả.'),
+            (TOOLS[2], 'Chia file Excel', 'Chọn file và người nhận, tải các file đã chia.'),
+        ]),
+    ]
     with st.container(key='overview_tools'):
-        for col,page,label in zip(st.columns(3), TOOLS, ['Sắp lịch & đảo ca', 'Quét AI KPI', 'Chia data']):
-            col.button(label, icon=ICONS[page], key='quick_'+page, on_click=navigate, args=(page,), use_container_width=True)
-    st.markdown('<div class="workspace-section-title">Dữ liệu chi nhánh</div>', unsafe_allow_html=True)
-    with st.container(key='overview_metrics'):
-        cols=st.columns(3)
-        cols[0].metric('Ngày có lịch',len(mapping(d.get('detailed_history'))), help='Số ngày trong lịch đang lưu của chi nhánh.')
-        cols[1].metric('Nhân sự KPI',len(result), help='Số nhân viên có dữ liệu trong bảng KPI của chi nhánh.')
-        cols[2].metric('Liên hệ',len(mapping(d.get('phones'))), help='Số liên hệ trong danh bạ chung.')
-    st.markdown('<div class="workspace-section-title">Lịch làm việc</div>', unsafe_allow_html=True)
-    with st.container(border=True):
-        schedule(d)
-    with st.expander('Các file làm việc trên máy tính'):
-        st.write('Chia Data đã có trong mục Công cụ làm việc. File Lập Hàng và thao tác gửi Zalo PC vẫn dùng trên app máy tính.')
+        for heading, actions in groups:
+            st.subheader(heading)
+            for col, (page, label, description) in zip(st.columns(3), actions):
+                with col:
+                    with st.container(border=True):
+                        st.button(label, icon=ICONS.get(page), key='quick_'+page,
+                                  on_click=navigate, args=(page,), use_container_width=True)
+                        st.caption(description)
+    st.subheader('Tra cứu thêm')
+    extras=['📊 Tích Lũy','🛒 Lịch Ecom','📍 Thị Trường','💰 Quỹ Shop','📞 Danh Bạ','🤖 AI Tư Vấn']
+    for start in (0,3):
+        for col,page in zip(st.columns(3), extras[start:start+3]):
+            col.button(LABELS[page], key='home_'+page, on_click=navigate, args=(page,), use_container_width=True)
+    with st.expander('Hướng dẫn sử dụng nhanh'):
+        st.markdown('**Xem thông tin:** chọn Lịch làm việc, Chỉ tiêu ngày hoặc Kết quả tháng.\n\n'
+                    '**Tạo lịch:** nhập danh sách, kiểm tra lịch xem trước rồi bấm Lưu lịch và đồng bộ.\n\n'
+                    '**Sửa dữ liệu:** người có quyền sẽ thấy nút bật Chỉnh sửa ở đầu màn hình tương ứng.\n\n'
+                    '**Cập nhật dữ liệu:** mở menu bên trái và chọn Làm mới dữ liệu.\n\n'
+                    '**Lập Hàng và gửi Zalo PC:** tiếp tục sử dụng trên ứng dụng máy tính.')
 
 def render_employee(page):
     db=st.session_state.get('db',{});d=snapshot(db,st.session_state.current_shop)
@@ -205,8 +222,8 @@ def render_employee(page):
     descriptions = {
         'schedule': ('Lịch làm việc', 'Theo dõi các ca làm, ảnh lịch và lịch sử điều chỉnh.'),
         'stats': ('Tích lũy ca làm', 'Tổng số ca và phân bổ ca làm của từng nhân viên.'),
-        'kpi': ('KPI tháng', 'Đối chiếu chỉ tiêu, kết quả đã bán và mức hoàn thành của đội ngũ.'),
-        'target': ('Target ngày', 'Xem chỉ tiêu mỗi người, mỗi ca và số liệu đã chốt.'),
+        'kpi': ('Kết quả tháng · KPI', 'Đối chiếu chỉ tiêu, kết quả đã bán và mức hoàn thành của đội ngũ.'),
+        'target': ('Chỉ tiêu ngày · Target', 'Xem chỉ tiêu mỗi người, mỗi ca và số liệu đã chốt.'),
         'ecom': ('Lịch Ecom', 'Phân công ca sáng và ca chiều theo từng ngày trong tuần.'),
         'fund': ('Quỹ shop', 'Theo dõi số dư, thu chi và chi tiết các phiếu quỹ.'),
         'market': ('Lịch thị trường', 'Tra cứu tuyến, địa điểm và nhân viên được phân công.'),

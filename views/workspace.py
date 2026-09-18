@@ -5,10 +5,10 @@ import streamlit as st
 
 
 LABELS = {
-    '🏠 Tổng quan': 'Tổng quan', '⚡ Sắp lịch & Đảo ca': 'Sắp lịch & đảo ca',
-    '🔍 Quét AI KPI': 'Quét AI KPI', '✂️ Chia Data': 'Chia data',
+    '🏠 Tổng quan': 'Trang chính', '⚡ Sắp lịch & Đảo ca': 'Sắp lịch & đảo ca',
+    '🔍 Quét AI KPI': 'Đọc ảnh KPI', '✂️ Chia Data': 'Chia file Excel',
     '📋 Xem Lịch': 'Lịch làm việc', '📊 Tích Lũy': 'Tích lũy ca',
-    '📈 Theo Dõi KPI': 'KPI tháng', '📊 Target Ngày': 'Target ngày',
+    '📈 Theo Dõi KPI': 'Kết quả tháng · KPI', '📊 Target Ngày': 'Chỉ tiêu ngày · Target',
     '🛒 Lịch Ecom': 'Lịch Ecom', '💰 Quỹ Shop': 'Quỹ shop',
     '📍 Thị Trường': 'Lịch thị trường', '📞 Danh Bạ': 'Danh bạ',
     '🤖 AI Tư Vấn': 'Tư vấn AI', '👥 Quản Trị Admin': 'Quản trị',
@@ -46,16 +46,19 @@ def sidebar_navigation(options, tools):
     if st.session_state.get('navigation') not in options:
         st.session_state.navigation = options[0]
     selected = st.session_state.navigation
-    primary = [options[0]] + tools
+    groups = [
+        ('HẰNG NGÀY', [options[0], '📋 Xem Lịch', '📊 Target Ngày', '📈 Theo Dõi KPI']),
+        ('TẠO & XỬ LÝ', tools),
+        ('TRA CỨU', ['📊 Tích Lũy', '🛒 Lịch Ecom', '📍 Thị Trường', '💰 Quỹ Shop', '📞 Danh Bạ', '🤖 AI Tư Vấn']),
+    ]
     with st.container(key='workspace_navigation'):
-        st.markdown('<div class="workspace-menu-label">LÀM VIỆC</div>', unsafe_allow_html=True)
-        for page in primary:
-            st.button(LABELS.get(page, page), icon=ICONS.get(page), key='nav_'+page, type='primary' if selected == page else 'secondary',
-                      on_click=navigate, args=(page,), use_container_width=True)
-        reports = [page for page in options if page not in primary and page != '👥 Quản Trị Admin']
-        with st.expander('Dữ liệu & báo cáo', expanded=selected in reports):
-            for page in reports:
-                st.button(LABELS.get(page, page), icon=ICONS.get(page), key='nav_'+page, type='primary' if selected == page else 'secondary',
+        for label, pages in groups:
+            st.markdown(f'<div class="workspace-menu-label">{label}</div>', unsafe_allow_html=True)
+            for page in pages:
+                if page not in options:
+                    continue
+                st.button(LABELS.get(page, page), icon=ICONS.get(page), key='nav_'+page,
+                          type='primary' if selected == page else 'secondary',
                           on_click=navigate, args=(page,), use_container_width=True)
     return selected
 
@@ -65,7 +68,7 @@ def mobile_navigation(options):
     def change():
         navigate(st.session_state.mobile_destination)
     with st.container(key='workspace_mobile_navigation'):
-        st.selectbox('Đi đến chức năng', options, key='mobile_destination', on_change=change, format_func=lambda page: LABELS.get(page, page))
+        st.selectbox('Bạn muốn làm gì?', options, key='mobile_destination', on_change=change, format_func=lambda page: LABELS.get(page, page))
 
 
 def page_header(title, description, eyebrow='KHÔNG GIAN LÀM VIỆC'):

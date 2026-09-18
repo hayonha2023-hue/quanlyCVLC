@@ -90,7 +90,7 @@ def close_settings_panels():
 # ==========================================
 with st.sidebar:
     sidebar_identity(user_id, st.session_state.get('is_admin'), st.session_state.get('is_super_admin'))
-    st.caption("Web 2.8")
+    st.caption("Web 2.9")
 
     # 🔓 MỞ KHÓA CHỌN CHI NHÁNH CHO ADMIN
     if st.session_state.get("is_super_admin", False):
@@ -123,11 +123,6 @@ with st.sidebar:
     edit_permission = {'🛒 Lịch Ecom':'SỬA LỊCH ECOM','💰 Quỹ Shop':'QUẢN LÝ QUỸ SHOP',
                        '📍 Thị Trường':'SỬA THỊ TRƯỜNG','📈 Theo Dõi KPI':'SỬA SỐ KPI'}
     can_edit = menu in edit_permission and (st.session_state.get('is_admin') or edit_permission[menu] in edit_perms)
-    edit_mode = False
-    if can_edit:
-        with st.expander('Chỉnh sửa dữ liệu', expanded=False):
-            edit_mode = st.toggle('Mở phần chỉnh sửa', value=False, key='editing_'+menu)
-            st.caption('Bật khi cần cập nhật. Chuyển chức năng sẽ trở về chế độ xem.')
 
     if st.session_state.get('is_admin'):
         def switch_admin():
@@ -163,6 +158,12 @@ with st.sidebar:
 # 3. ĐIỀU HƯỚNG CHÍNH MÀN HÌNH
 # ==========================================
 mobile_navigation(menu_options)
+edit_mode = False
+if can_edit and not (st.session_state.show_bg or st.session_state.show_pass):
+    with st.container(border=True, key='workspace_edit_mode'):
+        edit_mode = st.toggle('Chỉnh sửa dữ liệu', value=False, key='editing_'+menu)
+        st.caption('Đang chỉnh sửa. Kiểm tra thông tin rồi bấm nút lưu trong biểu mẫu.' if edit_mode
+                   else 'Đang xem dữ liệu. Bật khi bạn cần cập nhật thông tin trong mục này.')
 if st.session_state.show_bg:
     st.subheader("Đổi hình nền cá nhân")
     bg_up = st.file_uploader("Chọn ảnh (Hệ thống tự nén cho nhẹ)", type=["png", "jpg", "jpeg"])

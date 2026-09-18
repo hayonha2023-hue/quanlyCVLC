@@ -89,9 +89,12 @@ def test_staff_sees_populated_app_data(staff,menu,monkeypatch):
     monkeypatch.setattr(database,'request',request)
     staff.sidebar.button(key='nav_'+menu).click().run()
     assert not staff.exception
+    if menu == '🏠 Tổng quan':
+        staff.button(key='quick_📋 Xem Lịch').click().run()
+        assert not staff.exception
     assert staff.dataframe
     assert not writes
-    assert not staff.sidebar.toggle
+    assert not staff.toggle
     displayed=' '.join(str(frame.value) for frame in staff.dataframe)
     assert 'PRIVATE_B' not in displayed and 'OUTDATED_LEGACY' not in displayed
     assert 'NOT_FOR_EMPLOYEES' not in displayed and 'test-password' not in displayed

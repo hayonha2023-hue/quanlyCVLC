@@ -92,7 +92,7 @@ def test_failed_ecom_save_never_reports_success(app,monkeypatch):
     login(app)
     before=copy.deepcopy(app.session_state['db'])
     app.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
-    app.sidebar.toggle[0].set_value(True).run()
+    app.toggle[0].set_value(True).run()
     app.text_input[0].set_value('Changed')
     original_request=database.request
     def fail_write(method,*args,**kwargs):
@@ -107,7 +107,7 @@ def test_failed_ecom_save_never_reports_success(app,monkeypatch):
 def test_ecom_inputs_change_with_shop(app):
     login(app)
     app.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
-    app.sidebar.toggle[0].set_value(True).run()
+    app.toggle[0].set_value(True).run()
     app.text_input[0].set_value('Draft for main shop').run()
     app.sidebar.selectbox[0].set_value('A').run()
     assert app.text_input[0].value==''
@@ -117,7 +117,7 @@ def test_staff_write_controls_disabled(app):
     login(app,'staff','staff-test')
     app.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
     assert not [b for b in app.button if 'Lưu lịch Ecom' in b.label]
-    assert not app.sidebar.toggle
+    assert not app.toggle
     app.sidebar.button(key='nav_'+'💰 Quỹ Shop').click().run()
     assert not [b for b in app.button if 'Lưu phiếu' in b.label]
 
@@ -128,6 +128,6 @@ def test_editing_views_render_in_both_themes(app, menu, theme):
     login(app)
     app.session_state.theme=theme
     app.sidebar.button(key='nav_'+menu).click().run()
-    app.sidebar.toggle[0].set_value(True).run()
+    app.toggle[0].set_value(True).run()
     assert not app.exception
-    assert app.sidebar.toggle[0].value
+    assert app.toggle[0].value

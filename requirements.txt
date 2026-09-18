@@ -1,4 +1,4 @@
-# HTCV Web 2.8 deployment refresh
+# HTCV Web 2.9 deployment refresh
 streamlit==1.64.0
 pandas>=2.2,<3
 requests>=2.32,<3

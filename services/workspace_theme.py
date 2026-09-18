@@ -12,7 +12,7 @@ def apply_workspace_theme(dark=False):
     .workspace-avatar {display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--soft);color:var(--accent);font-weight:650;}
     .workspace-account strong {display:block;color:var(--ink);font-size:15px;overflow-wrap:anywhere;}
     .workspace-account small {color:var(--muted);font-size:13px;}
-    .workspace-menu-label {font-size:10px;letter-spacing:.09em;font-weight:650;color:var(--muted);margin:14px 0 6px;}
+    .workspace-menu-label {font-size:12px;letter-spacing:.04em;font-weight:650;color:var(--muted);margin:14px 0 6px;}
     [data-testid="stSidebar"] .stButton button {font-size:15px;}
     .st-key-workspace_navigation .stButton button {justify-content:flex-start;background:transparent;border:1px solid transparent;padding:9px 12px;}
     .st-key-workspace_navigation .stButton button p {font-size:15px;}
@@ -28,14 +28,17 @@ def apply_workspace_theme(dark=False):
     .workspace-sync.ready::before {background:#428674;}
     .workspace-page-heading {margin:6px 0 18px;}
     .workspace-page-heading h1 {padding:0;margin:0 0 7px;font-weight:700;line-height:1.3;}
-    .workspace-page-heading p {color:var(--muted);font-size:14px;margin:0;}
+    .workspace-page-heading p {color:var(--muted);font-size:16px;margin:0;}
     .workspace-section-title {font-size:17px;font-weight:650;color:var(--ink);margin:10px 0;}
     .workspace-steps {display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:14px;color:var(--muted);}
     .workspace-steps span {display:flex;align-items:center;gap:7px;}
     .workspace-steps b {display:grid;place-items:center;width:22px;height:22px;border:1px solid var(--line);border-radius:50%;font-size:13px;font-weight:600;}
-    .st-key-overview_tools .stButton button {justify-content:flex-start;min-height:70px;background:var(--htcv-card);border:1px solid var(--line);padding:16px;color:var(--accent);}
+    .st-key-overview_tools .stButton button {justify-content:flex-start;min-height:64px;background:var(--htcv-card);border:1px solid var(--line);padding:16px;color:var(--accent);}
     .st-key-overview_tools .stButton button p {font-size:15px;font-weight:600;}
     .st-key-overview_tools .stButton button:hover {border-color:var(--accent);background:var(--soft);}
+    .st-key-overview_tools [data-testid="stVerticalBlockBorderWrapper"] {height:100%;}
+    .st-key-overview_tools [data-testid="stCaptionContainer"] {padding:0 4px;min-height:52px;}
+    .st-key-workspace_edit_mode {margin-bottom:16px;}
     .st-key-workspace_mobile_navigation {display:none;}
     @media(max-width:700px) {
       .st-key-workspace_mobile_navigation {display:block;}

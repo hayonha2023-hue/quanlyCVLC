@@ -130,7 +130,8 @@ def test_new_pages_render(monkeypatch,page):
     assert not a.exception
     from html import unescape
     heading = next(m.value for m in a.markdown if 'workspace-page-heading' in m.value and '<h1>' in m.value)
-    assert page.split(' ', 1)[1].casefold() in unescape(heading).casefold()
+    expected = {'⚡ Sắp lịch & Đảo ca':'Sắp lịch & đảo ca', '🔍 Quét AI KPI':'Đọc ảnh KPI', '✂️ Chia Data':'Chia file Excel'}
+    assert expected[page].casefold() in unescape(heading).casefold()
 
 
 def test_swap_then_preview_no_automatic_write(monkeypatch):
@@ -169,10 +170,10 @@ def test_admin_tools_open_only_on_request(monkeypatch):
 def test_navigation_closes_editing(monkeypatch):
     a=app_for(monkeypatch)
     a.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
-    a.sidebar.toggle[0].set_value(True).run()
+    a.toggle[0].set_value(True).run()
     a.sidebar.button(key='nav_'+'💰 Quỹ Shop').click().run()
     a.sidebar.button(key='nav_'+'🛒 Lịch Ecom').click().run()
-    assert not a.sidebar.toggle[0].value
+    assert not a.toggle[0].value
     assert not a.exception
 
 
@@ -180,7 +181,7 @@ def test_mobile_navigation_and_sidebar_stay_in_sync(monkeypatch):
     a=app_for(monkeypatch)
     a.selectbox(key='mobile_destination').set_value('🛒 Lịch Ecom').run()
     assert a.session_state.navigation == '🛒 Lịch Ecom'
-    a.sidebar.toggle[0].set_value(True).run()
+    a.toggle[0].set_value(True).run()
     a.selectbox(key='mobile_destination').set_value('⚡ Sắp lịch & Đảo ca').run()
     assert not a.session_state['editing_🛒 Lịch Ecom']
     assert a.text_area and not a.exception
